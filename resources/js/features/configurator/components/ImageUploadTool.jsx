@@ -92,7 +92,7 @@ export default function ImageUploadTool() {
                     +
                 </span>
                 <span className="text-sm font-semibold text-slate-800">
-                    {isReading ? 'Preparing image…' : `Select ${area.label} design texture`}
+                    {isReading ? 'Preparing image…' : `Add ${area.label} logo`}
                 </span>
                 <span className="mt-1 text-xs text-slate-500">PNG, JPEG or WebP · max 2 MB</span>
             </button>
@@ -109,7 +109,7 @@ export default function ImageUploadTool() {
                 </p>
             )}
             <p className="text-xs leading-5 text-slate-500">
-                Your file is applied live to the selected side of the 3D shirt. Drag, resize, and rotate it in the print-area editor.
+                Your logo is applied above the selected shirt pattern. Drag, resize, and rotate it in the print-area editor.
             </p>
         </div>
     );

@@ -1,6 +1,7 @@
 import ColorPalette from './ColorPalette';
 import ImageUploadTool from './ImageUploadTool';
 import LayersPanel from './LayersPanel';
+import PatternGallery from './PatternGallery';
 
 export const CONFIGURATOR_TOOLS = [
     { id: 'product', label: 'Product', shortLabel: 'Product' },
@@ -11,7 +12,19 @@ export const CONFIGURATOR_TOOLS = [
 
 export function ToolPanelContent({ tool }) {
     if (tool === 'colors') return <ColorPalette />;
-    if (tool === 'image') return <ImageUploadTool />;
+    if (tool === 'image') {
+        return (
+            <div className="space-y-5">
+                <PatternGallery />
+                <div className="border-t border-slate-100 pt-5">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Add logo
+                    </p>
+                    <ImageUploadTool />
+                </div>
+            </div>
+        );
+    }
     if (tool === 'layers') return <LayersPanel />;
 
     return (

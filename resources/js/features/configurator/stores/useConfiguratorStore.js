@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
+import {
+    createDefaultPatternColors,
+    SHIRT_PATTERNS_BY_ID,
+} from '../config/patterns';
 import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
 import {
     createLocalDesignPayload,
@@ -20,11 +24,15 @@ const clone = (value) => {
 
 const createSnapshot = (state) => ({
     shirtColors: { ...state.shirtColors },
+    selectedPatternId: state.selectedPatternId,
+    patternColors: clone(state.patternColors),
     designObjects: state.designObjects.map((object) => ({ ...object })),
 });
 
 const restoreSnapshot = (snapshot) => ({
     shirtColors: { ...snapshot.shirtColors },
+    selectedPatternId: snapshot.selectedPatternId ?? null,
+    patternColors: clone(snapshot.patternColors ?? createDefaultPatternColors()),
     designObjects: snapshot.designObjects.map((object) => ({ ...object })),
 });
 
@@ -42,6 +50,8 @@ export const useConfiguratorStore = create((set, get) => ({
     cameraView: 'front',
     cameraRequestId: 0,
     shirtColors: { ...DEFAULT_SHIRT_COLORS },
+    selectedPatternId: null,
+    patternColors: createDefaultPatternColors(),
     designObjects: [],
     selectedObjectId: null,
     isDirty: false,
@@ -77,6 +87,42 @@ export const useConfiguratorStore = create((set, get) => ({
 
         set({
             shirtColors: { ...state.shirtColors, [zoneId]: color },
+            past: pushHistory(state.past, createSnapshot(state)),
+            future: [],
+            isDirty: true,
+        });
+    },
+
+    setPattern: (patternId) => {
+        const state = get();
+        const nextPatternId = patternId && SHIRT_PATTERNS_BY_ID[patternId]
+            ? patternId
+            : null;
+        if (state.selectedPatternId === nextPatternId) return;
+
+        set({
+            selectedPatternId: nextPatternId,
+            past: pushHistory(state.past, createSnapshot(state)),
+            future: [],
+            isDirty: true,
+        });
+    },
+
+    setPatternColor: (colorId, color) => {
+        const state = get();
+        const patternId = state.selectedPatternId;
+        const pattern = SHIRT_PATTERNS_BY_ID[patternId];
+        if (!pattern?.colors.some((slot) => slot.id === colorId)) return;
+        if (state.patternColors[patternId]?.[colorId] === color) return;
+
+        set({
+            patternColors: {
+                ...state.patternColors,
+                [patternId]: {
+                    ...state.patternColors[patternId],
+                    [colorId]: color,
+                },
+            },
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -218,6 +264,8 @@ export const useConfiguratorStore = create((set, get) => ({
             cameraView: 'front',
             cameraRequestId: state.cameraRequestId + 1,
             shirtColors: { ...DEFAULT_SHIRT_COLORS },
+            selectedPatternId: null,
+            patternColors: createDefaultPatternColors(),
             designObjects: [],
             selectedObjectId: null,
             past: pushHistory(state.past, createSnapshot(state)),
@@ -256,6 +304,8 @@ export const useConfiguratorStore = create((set, get) => ({
 
             set((state) => ({
                 shirtColors: draft.shirtColors,
+                selectedPatternId: draft.selectedPatternId,
+                patternColors: draft.patternColors,
                 designObjects: draft.designObjects,
                 activeDesignAreaId: draft.activeDesignAreaId,
                 cameraView: area.cameraView,

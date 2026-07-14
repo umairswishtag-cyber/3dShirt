@@ -1,7 +1,13 @@
 import { DESIGN_AREAS_BY_ID, DESIGN_TEXTURE_SIZE } from '../config/designAreas';
+import {
+    createPatternSvgSource,
+    SHIRT_PATTERNS_BY_ID,
+} from '../config/patterns';
 
 const canvases = new Map();
 const imagePromises = new Map();
+const patternSourcePromises = new Map();
+const patternImagePromises = new Map();
 const renderVersions = new Map();
 
 function getImage(source) {
@@ -21,6 +27,59 @@ function getImage(source) {
     return imagePromises.get(source);
 }
 
+function getPatternSource(pattern) {
+    if (!patternSourcePromises.has(pattern.id)) {
+        patternSourcePromises.set(
+            pattern.id,
+            fetch(pattern.assetUrl).then((response) => {
+                if (!response.ok) {
+                    throw new Error(`The ${pattern.name} pattern could not be loaded.`);
+                }
+
+                return response.text();
+            }),
+        );
+    }
+
+    return patternSourcePromises.get(pattern.id);
+}
+
+function getPatternImage(patternId, colors) {
+    const pattern = SHIRT_PATTERNS_BY_ID[patternId];
+    if (!pattern) return Promise.resolve(null);
+
+    const cacheKey = `${patternId}:${pattern.colors
+        .map((slot) => colors?.[slot.id] ?? slot.source)
+        .join(':')}`;
+
+    if (!patternImagePromises.has(cacheKey)) {
+        patternImagePromises.set(
+            cacheKey,
+            getPatternSource(pattern).then((source) => {
+                const recoloredSource = createPatternSvgSource(source, pattern, colors);
+
+                return new Promise((resolve, reject) => {
+                    const blob = new Blob([recoloredSource], { type: 'image/svg+xml' });
+                    const objectUrl = URL.createObjectURL(blob);
+                    const image = new Image();
+                    image.decoding = 'async';
+                    image.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(image);
+                    };
+                    image.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        reject(new Error(`The ${pattern.name} pattern could not be rendered.`));
+                    };
+                    image.src = objectUrl;
+                });
+            }),
+        );
+    }
+
+    return patternImagePromises.get(cacheKey);
+}
+
 export function getDesignTextureCanvas(areaId) {
     if (!canvases.has(areaId)) {
         const canvas = document.createElement('canvas');
@@ -33,7 +92,7 @@ export function getDesignTextureCanvas(areaId) {
     return canvases.get(areaId);
 }
 
-export async function renderDesignArea(areaId, objects) {
+export async function renderDesignArea(areaId, objects, patternSelection = null) {
     const area = DESIGN_AREAS_BY_ID[areaId];
     const canvas = getDesignTextureCanvas(areaId);
     const context = canvas.getContext('2d');
@@ -44,19 +103,27 @@ export async function renderDesignArea(areaId, objects) {
         .filter((object) => object.type === 'image')
         .sort((left, right) => (left.zIndex ?? 0) - (right.zIndex ?? 0));
 
-    const images = await Promise.all(
-        imageObjects.map(async (object) => {
+    const [patternImage, images] = await Promise.all([
+        patternSelection?.id
+            ? getPatternImage(patternSelection.id, patternSelection.colors).catch(() => null)
+            : null,
+        Promise.all(imageObjects.map(async (object) => {
             try {
                 return await getImage(object.source);
             } catch {
                 return null;
             }
-        }),
-    );
+        })),
+    ]);
 
     if (renderVersions.get(areaId) !== version) return canvas;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (patternImage) {
+        context.drawImage(patternImage, 0, 0, canvas.width, canvas.height);
+    }
+
     context.save();
     context.beginPath();
     context.rect(
@@ -89,4 +156,3 @@ export async function renderDesignArea(areaId, objects) {
     context.restore();
     return canvas;
 }
-

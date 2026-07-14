@@ -15,6 +15,12 @@ export function useDesignTexture(areaId) {
         (state) => state.designObjects.filter((object) => object.areaId === areaId),
         shallow,
     );
+    const selectedPatternId = useConfiguratorStore((state) => state.selectedPatternId);
+    const patternColors = useConfiguratorStore((state) =>
+        state.selectedPatternId
+            ? state.patternColors[state.selectedPatternId]
+            : null,
+    );
     const canvas = useMemo(() => getDesignTextureCanvas(areaId), [areaId]);
     const texture = useMemo(() => {
         const nextTexture = new CanvasTexture(canvas);
@@ -27,7 +33,10 @@ export function useDesignTexture(areaId) {
     useEffect(() => {
         let active = true;
 
-        renderDesignArea(areaId, objects).then(() => {
+        renderDesignArea(areaId, objects, {
+            id: selectedPatternId,
+            colors: patternColors,
+        }).then(() => {
             if (!active) return;
             texture.needsUpdate = true;
             invalidate();
@@ -36,10 +45,9 @@ export function useDesignTexture(areaId) {
         return () => {
             active = false;
         };
-    }, [areaId, invalidate, objects, texture]);
+    }, [areaId, invalidate, objects, patternColors, selectedPatternId, texture]);
 
     useEffect(() => () => texture.dispose(), [texture]);
 
     return texture;
 }
-

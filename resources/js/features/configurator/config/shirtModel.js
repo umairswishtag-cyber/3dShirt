@@ -17,7 +17,7 @@ export const SHIRT_MODEL = {
     printAreas: {
         front: {
             meshName: 'Object_10',
-            outwardNormalZ: 1,
+            outwardNormalZ: null,
             uvBounds: {
                 min: [-236.45164489746094, -406.00201416015625],
                 max: [236.44277954101562, 297.2185974121094],
@@ -25,7 +25,7 @@ export const SHIRT_MODEL = {
         },
         back: {
             meshName: 'Object_14',
-            outwardNormalZ: -1,
+            outwardNormalZ: null,
             uvBounds: {
                 min: [-250.21524047851562, -369.1955261230469],
                 max: [249.80685424804688, 343.9002380371094],

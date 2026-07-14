@@ -1,6 +1,7 @@
 import { SHIRT_COLOR_PALETTE, SHIRT_ZONES } from '../config/shirtZones';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import ShirtZoneSelector from './ShirtZoneSelector';
+import PatternColorControls from './PatternColorControls';
 
 export default function ColorPalette() {
     const activeShirtZoneId = useConfiguratorStore((state) => state.activeShirtZoneId);
@@ -10,6 +11,7 @@ export default function ColorPalette() {
 
     return (
         <div className="space-y-5">
+            <PatternColorControls />
             <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                     Shirt zone
@@ -56,4 +58,3 @@ export default function ColorPalette() {
         </div>
     );
 }
-
