@@ -1,0 +1,8 @@
+Cloth Damage Brush Kit (for ZBrush & Blender)
+
+Source: https://sketchfab.com/3d-models/cloth-damage-brush-kit-for-zbrush-blender-b642a48ce66840d8be9ac088f8c221ba
+Author: Alixyz (https://sketchfab.com/ali_kh23)
+License metadata in the supplied GLB: Sketchfab Standard License.
+
+Confirm that your intended distribution complies with the Sketchfab Standard
+License before deploying this raw GLB publicly.

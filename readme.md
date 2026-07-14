@@ -1,5 +1,21 @@
 # Laravel-Inertia-React Boilerplate for Shopify App Development Documentation
 
+## 3D Configurator Administration
+
+The storefront configurator now uses an authenticated, database-backed administration module. Administrators can upload men’s, women’s, unisex, and kids’ GLB products; create garment categories; enable colors, patterns, and logos independently; upload product-specific SVG patterns; and publish changes to the storefront.
+
+See [Configurator Admin Guide](docs/configurator-admin.md) for setup, GLB mesh/UV bindings, SVG color detection, publishing, routes, service boundaries, and upload limits.
+
+After login, administrators are redirected to `/admin`, where they can create a GLB product, manage the storefront catalog, preview the storefront, or open the existing orders dashboard.
+
+After pulling these changes run:
+
+```bash
+php artisan migrate --seed
+php artisan storage:link
+npm run build
+```
+
 ## Project Setup
 
 Follow these steps to set up the boilerplate for your Shopify app (embedded and non-embedded).

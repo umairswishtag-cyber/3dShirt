@@ -4,14 +4,19 @@ import ShirtZoneSelector from './ShirtZoneSelector';
 import PatternColorControls from './PatternColorControls';
 
 export default function ColorPalette() {
+    const product = useConfiguratorStore((state) => state.product);
     const activeShirtZoneId = useConfiguratorStore((state) => state.activeShirtZoneId);
     const color = useConfiguratorStore((state) => state.shirtColors[state.activeShirtZoneId]);
     const setShirtZoneColor = useConfiguratorStore((state) => state.setShirtZoneColor);
-    const activeZone = SHIRT_ZONES.find((zone) => zone.id === activeShirtZoneId);
+    const activeZone = product.colorZoneOptions?.find((zone) => zone.id === activeShirtZoneId)
+        ?? SHIRT_ZONES.find((zone) => zone.id === activeShirtZoneId);
+    const palette = product.allowedColors?.length
+        ? product.allowedColors.map((value) => ({ name: value, value }))
+        : SHIRT_COLOR_PALETTE;
 
     return (
         <div className="space-y-5">
-            <PatternColorControls />
+            {product.capabilities.patterns && <PatternColorControls />}
             <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                     Shirt zone
@@ -26,7 +31,7 @@ export default function ColorPalette() {
                     <span className="font-mono text-xs text-slate-500">{color}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
-                    {SHIRT_COLOR_PALETTE.map((swatch) => (
+                    {palette.map((swatch) => (
                         <button
                             key={swatch.value}
                             type="button"

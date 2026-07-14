@@ -12,7 +12,7 @@ function HeaderButton({ children, className = '', ...props }) {
     );
 }
 
-export default function ConfiguratorHeader({ onReset }) {
+export default function ConfiguratorHeader({ onReset, onChangeProduct }) {
     const product = useConfiguratorStore((state) => state.product);
     const isDirty = useConfiguratorStore((state) => state.isDirty);
     const lastSavedAt = useConfiguratorStore((state) => state.lastSavedAt);
@@ -31,6 +31,13 @@ export default function ConfiguratorHeader({ onReset }) {
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
                         <h1 className="truncate text-sm font-bold text-slate-950 sm:text-base">{product.name}</h1>
+                        <button
+                            type="button"
+                            onClick={onChangeProduct}
+                            className="hidden text-[10px] font-bold text-blue-700 underline sm:inline"
+                        >
+                            Change
+                        </button>
                         <span className="hidden rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 sm:inline">
                             Configurator
                         </span>

@@ -2,6 +2,7 @@ import ColorPalette from './ColorPalette';
 import ImageUploadTool from './ImageUploadTool';
 import LayersPanel from './LayersPanel';
 import PatternGallery from './PatternGallery';
+import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export const CONFIGURATOR_TOOLS = [
     { id: 'product', label: 'Product', shortLabel: 'Product' },
@@ -11,21 +12,41 @@ export const CONFIGURATOR_TOOLS = [
 ];
 
 export function ToolPanelContent({ tool }) {
+    const product = useConfiguratorStore((state) => state.product);
+
     if (tool === 'colors') return <ColorPalette />;
     if (tool === 'image') {
+        if (!product.capabilities.patterns && !product.capabilities.logos) {
+            return (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+                    This GLB supports solid colors only. Its source file needs compatible UVs and print-area bindings before patterns or logos can be placed accurately.
+                </div>
+            );
+        }
+
         return (
             <div className="space-y-5">
-                <PatternGallery />
-                <div className="border-t border-slate-100 pt-5">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                        Add logo
-                    </p>
-                    <ImageUploadTool />
-                </div>
+                {product.capabilities.patterns && <PatternGallery />}
+                {product.capabilities.logos && (
+                    <div className="border-t border-slate-100 pt-5">
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                            Add logo
+                        </p>
+                        <ImageUploadTool />
+                    </div>
+                )}
             </div>
         );
     }
-    if (tool === 'layers') return <LayersPanel />;
+    if (tool === 'layers') {
+        return product.capabilities.logos ? (
+            <LayersPanel />
+        ) : (
+            <p className="rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+                Logo layers are unavailable for this model.
+            </p>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -35,9 +56,9 @@ export function ToolPanelContent({ tool }) {
                 </div>
             </div>
             <div>
-                <p className="text-base font-bold text-slate-950">Basic T-Shirt</p>
+                <p className="text-base font-bold text-slate-950">{product.name}</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Real configurable T-shirt with separate front, back, left-sleeve, and right-sleeve design areas.
+                    {product.description}
                 </p>
             </div>
             <dl className="grid grid-cols-2 gap-2 text-xs">
@@ -47,7 +68,9 @@ export function ToolPanelContent({ tool }) {
                 </div>
                 <div className="rounded-xl bg-slate-50 p-3">
                     <dt className="text-slate-400">Print areas</dt>
-                    <dd className="mt-1 font-semibold text-slate-800">4 areas</dd>
+                    <dd className="mt-1 font-semibold text-slate-800">
+                        {Object.keys(product.model.printAreas ?? {}).length || 'Solid only'}
+                    </dd>
                 </div>
             </dl>
         </div>
@@ -55,12 +78,19 @@ export function ToolPanelContent({ tool }) {
 }
 
 export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
+    const product = useConfiguratorStore((state) => state.product);
     const activeToolConfig = CONFIGURATOR_TOOLS.find((tool) => tool.id === activeTool);
+    const visibleTools = CONFIGURATOR_TOOLS.filter((tool) => {
+        if (tool.id === 'colors') return product.capabilities.solidColors;
+        if (tool.id === 'image') return product.capabilities.patterns || product.capabilities.logos;
+        if (tool.id === 'layers') return product.capabilities.logos;
+        return true;
+    });
 
     return (
-        <aside className="hidden min-h-0 w-[280px] shrink-0 border-r border-slate-200 bg-white lg:flex">
+        <aside className="hidden min-h-0 w-[340px] shrink-0 border-r border-slate-200 bg-white lg:flex">
             <nav className="flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-slate-100 bg-slate-50 p-2" aria-label="Configurator tools">
-                {CONFIGURATOR_TOOLS.map((tool) => (
+                {visibleTools.map((tool) => (
                     <button
                         key={tool.id}
                         type="button"

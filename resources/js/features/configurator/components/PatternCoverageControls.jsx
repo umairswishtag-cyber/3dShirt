@@ -2,6 +2,7 @@ import { PATTERN_ZONE_OPTIONS } from '../config/patterns';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function PatternCoverageControls() {
+    const zoneIds = useConfiguratorStore((state) => state.product.patternZones ?? []);
     const patternZones = useConfiguratorStore((state) => state.patternZones);
     const setPatternZoneEnabled = useConfiguratorStore(
         (state) => state.setPatternZoneEnabled,
@@ -9,7 +10,8 @@ export default function PatternCoverageControls() {
     const applyPatternToFullShirt = useConfiguratorStore(
         (state) => state.applyPatternToFullShirt,
     );
-    const fullShirtEnabled = PATTERN_ZONE_OPTIONS.every(
+    const zones = PATTERN_ZONE_OPTIONS.filter((zone) => zoneIds.includes(zone.id));
+    const fullShirtEnabled = zones.every(
         (zone) => patternZones[zone.id],
     );
 
@@ -35,7 +37,7 @@ export default function PatternCoverageControls() {
             </div>
 
             <div className="space-y-1.5">
-                {PATTERN_ZONE_OPTIONS.map((zone) => {
+                {zones.map((zone) => {
                     const enabled = patternZones[zone.id];
 
                     return (

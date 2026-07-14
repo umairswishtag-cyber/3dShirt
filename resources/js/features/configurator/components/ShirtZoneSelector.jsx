@@ -2,13 +2,14 @@ import { SHIRT_ZONES } from '../config/shirtZones';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function ShirtZoneSelector() {
+    const product = useConfiguratorStore((state) => state.product);
     const activeShirtZoneId = useConfiguratorStore((state) => state.activeShirtZoneId);
     const shirtColors = useConfiguratorStore((state) => state.shirtColors);
     const setActiveShirtZone = useConfiguratorStore((state) => state.setActiveShirtZone);
 
     return (
         <div className="grid grid-cols-2 gap-2">
-            {SHIRT_ZONES.map((zone) => (
+            {(product.colorZoneOptions ?? SHIRT_ZONES.filter((zone) => product.colorZones.includes(zone.id))).map((zone) => (
                 <button
                     key={zone.id}
                     type="button"
@@ -30,4 +31,3 @@ export default function ShirtZoneSelector() {
         </div>
     );
 }
-

@@ -54,6 +54,7 @@ function SliderField({ label, value, min, max, step, displayValue, onPreview }) 
 }
 
 export default function ConfigurationPanel({ embedded = false }) {
+    const product = useConfiguratorStore((state) => state.product);
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
     const object = useConfiguratorStore((state) =>
@@ -79,7 +80,7 @@ export default function ConfigurationPanel({ embedded = false }) {
             <div className="space-y-3 text-xs text-slate-600">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <span>Product</span>
-                    <strong className="text-slate-900">Basic T-Shirt</strong>
+                    <strong className="text-right text-slate-900">{product.name}</strong>
                 </div>
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <span>Print area</span>
@@ -228,4 +229,3 @@ export default function ConfigurationPanel({ embedded = false }) {
         </aside>
     );
 }
-

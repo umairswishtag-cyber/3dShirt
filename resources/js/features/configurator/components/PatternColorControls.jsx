@@ -1,4 +1,3 @@
-import { SHIRT_PATTERNS_BY_ID } from '../config/patterns';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function PatternColorControls() {
@@ -9,7 +8,9 @@ export default function PatternColorControls() {
             : null,
     );
     const setPatternColor = useConfiguratorStore((state) => state.setPatternColor);
-    const pattern = SHIRT_PATTERNS_BY_ID[selectedPatternId];
+    const pattern = useConfiguratorStore((state) =>
+        state.product.patterns?.find((item) => item.id === state.selectedPatternId),
+    );
 
     if (!pattern) return null;
 

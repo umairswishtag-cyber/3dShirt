@@ -1,13 +1,24 @@
 import { CONFIGURATOR_TOOLS } from './ConfiguratorSidebar';
+import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function MobileConfiguratorToolbar({ activeTool, onToolChange, hasSelection }) {
+    const capabilities = useConfiguratorStore((state) => state.product.capabilities);
     const tools = [
-        ...CONFIGURATOR_TOOLS,
+        ...CONFIGURATOR_TOOLS.filter((tool) => {
+            if (tool.id === 'colors') return capabilities.solidColors;
+            if (tool.id === 'image') return capabilities.patterns || capabilities.logos;
+            if (tool.id === 'layers') return capabilities.logos;
+            return true;
+        }),
         { id: 'adjust', label: 'Adjust', shortLabel: 'Adjust', disabled: !hasSelection },
     ];
 
     return (
-        <nav className="relative z-40 grid h-[68px] shrink-0 grid-cols-5 border-t border-slate-200 bg-white px-1 pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Mobile configurator tools">
+        <nav
+            className="relative z-40 grid h-[68px] shrink-0 border-t border-slate-200 bg-white px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
+            style={{ gridTemplateColumns: `repeat(${tools.length}, minmax(0, 1fr))` }}
+            aria-label="Mobile configurator tools"
+        >
             {tools.map((tool) => (
                 <button
                     key={tool.id}
@@ -28,4 +39,3 @@ export default function MobileConfiguratorToolbar({ activeTool, onToolChange, ha
         </nav>
     );
 }
-

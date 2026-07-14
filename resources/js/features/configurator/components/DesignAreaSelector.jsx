@@ -2,8 +2,12 @@ import { DESIGN_AREAS } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function DesignAreaSelector({ compact = false }) {
+    const supportsLogos = useConfiguratorStore((state) => state.product.capabilities.logos);
+    const printAreaIds = useConfiguratorStore((state) => Object.keys(state.product.model.printAreas ?? {}));
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
     const setActiveDesignArea = useConfiguratorStore((state) => state.setActiveDesignArea);
+
+    if (!supportsLogos) return null;
 
     return (
         <div
@@ -12,7 +16,7 @@ export default function DesignAreaSelector({ compact = false }) {
             }`}
             aria-label="Print area"
         >
-            {DESIGN_AREAS.map((area) => (
+            {DESIGN_AREAS.filter((area) => printAreaIds.includes(area.id)).map((area) => (
                 <button
                     key={area.id}
                     type="button"

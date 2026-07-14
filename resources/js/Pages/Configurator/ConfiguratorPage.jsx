@@ -9,9 +9,11 @@ import ConfiguratorSidebar, {
 import DesignAreaSelector from '@/features/configurator/components/DesignAreaSelector';
 import MobileConfiguratorToolbar from '@/features/configurator/components/MobileConfiguratorToolbar';
 import ResetDesignDialog from '@/features/configurator/components/ResetDesignDialog';
+import ProductSelectionScreen from '@/features/configurator/components/ProductSelectionScreen';
 import { useConfiguratorKeyboardShortcuts } from '@/features/configurator/hooks/useConfiguratorKeyboardShortcuts';
 import { useLocalDesignPersistence } from '@/features/configurator/hooks/useLocalDesignPersistence';
 import { useConfiguratorStore } from '@/features/configurator/stores/useConfiguratorStore';
+import { replaceProductCatalog } from '@/features/configurator/config/productCatalog';
 
 const DesignCanvas = lazy(() => import('@/features/configurator/canvas/DesignCanvas'));
 const ShirtViewer = lazy(() => import('@/features/configurator/three/ShirtViewer'));
@@ -30,14 +32,18 @@ function CanvasLoadingState() {
     return <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />;
 }
 
-export default function ConfiguratorPage() {
+export default function ConfiguratorPage({ catalog }) {
+    useState(() => replaceProductCatalog(catalog));
     const [activeTool, setActiveTool] = useState('colors');
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
+    const [catalogOpen, setCatalogOpen] = useState(true);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
+    const product = useConfiguratorStore((state) => state.product);
     const restoreError = useConfiguratorStore((state) => state.restoreError);
     const clearRestoreError = useConfiguratorStore((state) => state.clearRestoreError);
     const resetDesign = useConfiguratorStore((state) => state.resetDesign);
+    const selectProduct = useConfiguratorStore((state) => state.selectProduct);
 
     useLocalDesignPersistence();
     useConfiguratorKeyboardShortcuts();
@@ -52,11 +58,37 @@ export default function ConfiguratorPage() {
             ? 'Image settings'
             : CONFIGURATOR_TOOLS.find((tool) => tool.id === activeTool)?.label;
 
+    if (catalogOpen) {
+        return (
+            <>
+                <Head title="Choose a 3D garment" />
+                <ProductSelectionScreen
+                    onSelect={(productId) => {
+                        const selectedProduct = selectProduct(productId);
+                        if (!selectedProduct) return;
+                        setActiveTool(
+                            selectedProduct.capabilities.solidColors
+                                ? 'colors'
+                                : selectedProduct.capabilities.patterns || selectedProduct.capabilities.logos
+                                  ? 'image'
+                                  : 'product',
+                        );
+                        setMobilePanelOpen(false);
+                        setCatalogOpen(false);
+                    }}
+                />
+            </>
+        );
+    }
+
     return (
         <>
-            <Head title="Basic T-Shirt Configurator" />
+            <Head title={`${product.name} Configurator`} />
             <div className="flex h-dvh min-h-[520px] flex-col overflow-hidden bg-slate-100 text-slate-950">
-                <ConfiguratorHeader onReset={() => setResetDialogOpen(true)} />
+                <ConfiguratorHeader
+                    onReset={() => setResetDialogOpen(true)}
+                    onChangeProduct={() => setCatalogOpen(true)}
+                />
 
                 {restoreError && (
                     <div className="relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800" role="alert">
@@ -79,7 +111,7 @@ export default function ConfiguratorPage() {
                             <DesignAreaSelector compact />
                         </div>
 
-                        <div className="absolute bottom-5 left-5 z-10 hidden w-[260px] rounded-2xl border border-white/80 bg-white/95 p-3 shadow-2xl backdrop-blur lg:block xl:w-[290px]">
+                        {product.capabilities.logos && <div className="absolute bottom-5 left-5 z-10 hidden w-[260px] rounded-2xl border border-white/80 bg-white/95 p-3 shadow-2xl backdrop-blur lg:block xl:w-[290px]">
                             <div className="mb-2 flex items-center justify-between">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                                     2D print editor
@@ -91,14 +123,14 @@ export default function ConfiguratorPage() {
                             <Suspense fallback={<CanvasLoadingState />}>
                                 <DesignCanvas compact />
                             </Suspense>
-                        </div>
+                        </div>}
 
                         <div className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 lg:block">
                             <DesignAreaSelector />
                         </div>
                     </section>
 
-                    <ConfigurationPanel />
+                    {product.capabilities.logos && <ConfigurationPanel />}
                 </main>
 
                 {mobilePanelOpen && (
@@ -124,7 +156,7 @@ export default function ConfiguratorPage() {
                             <ToolPanelContent tool={activeTool} />
                         )}
 
-                        {(activeTool === 'image' || activeTool === 'layers') && (
+                        {product.capabilities.logos && (activeTool === 'image' || activeTool === 'layers') && (
                             <div className="mt-5 border-t border-slate-100 pt-5">
                                 <Suspense fallback={<CanvasLoadingState />}>
                                     <DesignCanvas />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createPatternSvgSource, SHIRT_PATTERNS } from '../config/patterns';
+import { createPatternSvgSource } from '../config/patterns';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import PatternColorControls from './PatternColorControls';
 import PatternCoverageControls from './PatternCoverageControls';
@@ -55,6 +55,7 @@ function PatternThumbnail({ pattern }) {
 }
 
 export default function PatternGallery() {
+    const patterns = useConfiguratorStore((state) => state.product.patterns ?? []);
     const selectedPatternId = useConfiguratorStore((state) => state.selectedPatternId);
     const setPattern = useConfiguratorStore((state) => state.setPattern);
 
@@ -76,7 +77,7 @@ export default function PatternGallery() {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-                {SHIRT_PATTERNS.map((pattern) => (
+                {patterns.map((pattern) => (
                     <button
                         key={pattern.id}
                         type="button"
@@ -97,6 +98,12 @@ export default function PatternGallery() {
                     </button>
                 ))}
             </div>
+
+            {patterns.length === 0 && (
+                <p className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-xs text-slate-500">
+                    No active patterns are assigned to this product.
+                </p>
+            )}
 
             <p className="mt-3 text-xs leading-5 text-slate-500">
                 A selected pattern is applied across the front, back, and both sleeves.

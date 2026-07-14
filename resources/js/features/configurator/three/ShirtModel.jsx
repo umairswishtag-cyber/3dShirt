@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
-import { FrontSide } from 'three';
-import { SHIRT_MODEL } from '../config/shirtModel';
+import { Box3, FrontSide, Vector3 } from 'three';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
@@ -111,12 +110,14 @@ function PrintSurface({ geometry, texture, uvBounds, name }) {
 
 export default function ShirtModel() {
     const invalidate = useThree((state) => state.invalidate);
+    const product = useConfiguratorStore((state) => state.product);
+    const modelConfig = product.model;
     const colors = useConfiguratorStore((state) => state.shirtColors);
     const frontTexture = useDesignTexture('front');
     const backTexture = useDesignTexture('back');
     const leftSleeveTexture = useDesignTexture('leftSleeve');
     const rightSleeveTexture = useDesignTexture('rightSleeve');
-    const { scene, nodes } = useGLTF(SHIRT_MODEL.url);
+    const { scene, nodes } = useGLTF(modelConfig.url);
     const modelScene = useMemo(() => cloneModelScene(scene), [scene]);
     const printTextures = {
         front: frontTexture,
@@ -128,7 +129,7 @@ export default function ShirtModel() {
     const printMeshes = useMemo(() => {
         scene.updateMatrixWorld(true);
 
-        const entries = Object.entries(SHIRT_MODEL.printAreas).map(([areaId, binding]) => {
+        const entries = Object.entries(modelConfig.printAreas).map(([areaId, binding]) => {
             const node = nodes[binding.meshName];
 
             if (!node?.geometry) {
@@ -148,7 +149,20 @@ export default function ShirtModel() {
         });
 
         return Object.fromEntries(entries);
-    }, [nodes, scene]);
+    }, [modelConfig, nodes, scene]);
+
+    const modelTransform = useMemo(() => {
+        modelScene.updateMatrixWorld(true);
+        const bounds = new Box3().setFromObject(modelScene);
+        const center = bounds.getCenter(new Vector3());
+        const size = bounds.getSize(new Vector3());
+        const safeHeight = Math.max(size.y, 0.0001);
+
+        return {
+            center: center.toArray(),
+            scale: (modelConfig.fitHeight ?? 2.45) / safeHeight,
+        };
+    }, [modelConfig.fitHeight, modelScene]);
 
     useEffect(
         () => () => {
@@ -161,12 +175,12 @@ export default function ShirtModel() {
         modelScene.traverse((node) => {
             if (!node.isMesh) return;
 
-            const zoneId = SHIRT_MODEL.meshZones[node.name];
+            const zoneId = modelConfig.meshZones[node.name];
             if (zoneId) setMaterialColor(node.material, colors[zoneId]);
         });
 
         invalidate();
-    }, [colors, invalidate, modelScene]);
+    }, [colors, invalidate, modelConfig, modelScene]);
 
     useEffect(
         () => () => {
@@ -181,10 +195,10 @@ export default function ShirtModel() {
     );
 
     return (
-        <group name="configurable_t_shirt" scale={SHIRT_MODEL.scale}>
-            <group position={SHIRT_MODEL.center.map((value) => -value)}>
+        <group name="configurable_garment" scale={modelTransform.scale}>
+            <group position={modelTransform.center.map((value) => -value)}>
                 <primitive object={modelScene} />
-                {Object.entries(SHIRT_MODEL.printAreas).map(([areaId, binding]) => (
+                {Object.entries(modelConfig.printAreas).map(([areaId, binding]) => (
                     <PrintSurface
                         key={areaId}
                         name={`print_${areaId}`}
@@ -197,5 +211,3 @@ export default function ShirtModel() {
         </group>
     );
 }
-
-useGLTF.preload(SHIRT_MODEL.url);

@@ -13,6 +13,7 @@ class ConfiguratorPageTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Configurator/ConfiguratorPage')
+            ->has('catalog')
         );
     }
 }

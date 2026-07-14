@@ -3,18 +3,17 @@ import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import {
     createDefaultPatternColors,
     createDefaultPatternZones,
-    SHIRT_PATTERNS,
-    SHIRT_PATTERNS_BY_ID,
 } from '../config/patterns';
+import { DEFAULT_PRODUCT_ID, PRODUCTS_BY_ID } from '../config/productCatalog';
 
 export const LOCAL_DESIGN_STORAGE_KEY = 'promoplus-configurator-design-v1';
 export const LOCAL_DESIGN_SCHEMA_VERSION = 1;
-export const PRODUCT_ID = 'basic-tshirt';
+export const PRODUCT_ID = DEFAULT_PRODUCT_ID;
 
 export function createLocalDesignPayload(state) {
     return {
         schemaVersion: LOCAL_DESIGN_SCHEMA_VERSION,
-        productId: PRODUCT_ID,
+        productId: state.product.id,
         shirtColors: state.shirtColors,
         selectedPatternId: state.selectedPatternId,
         patternColors: state.patternColors,
@@ -30,7 +29,7 @@ export function parseLocalDesign(rawValue) {
 
     if (
         value?.schemaVersion !== LOCAL_DESIGN_SCHEMA_VERSION ||
-        value?.productId !== PRODUCT_ID ||
+        !PRODUCTS_BY_ID[value?.productId] ||
         !Array.isArray(value?.designObjects) ||
         !value?.shirtColors
     ) {
@@ -45,9 +44,11 @@ export function parseLocalDesign(rawValue) {
             Boolean(DESIGN_AREAS_BY_ID[object.areaId]) &&
             typeof object.source === 'string',
     );
-    const defaultPatternColors = createDefaultPatternColors();
+    const product = PRODUCTS_BY_ID[value.productId];
+    const patterns = product.patterns ?? [];
+    const defaultPatternColors = createDefaultPatternColors(patterns);
     const patternColors = Object.fromEntries(
-        SHIRT_PATTERNS.map((pattern) => [
+        patterns.map((pattern) => [
             pattern.id,
             Object.fromEntries(
                 pattern.colors.map((slot) => {
@@ -62,21 +63,25 @@ export function parseLocalDesign(rawValue) {
             ),
         ]),
     );
-    const selectedPatternId = SHIRT_PATTERNS_BY_ID[value.selectedPatternId]
+    const selectedPatternId = patterns.some((pattern) => pattern.id === value.selectedPatternId)
         ? value.selectedPatternId
         : null;
-    const defaultPatternZones = createDefaultPatternZones();
+    const defaultPatternZones = createDefaultPatternZones(product.patternZones);
     const patternZones = Object.fromEntries(
         Object.keys(defaultPatternZones).map((zoneId) => [
             zoneId,
             typeof value.patternZones?.[zoneId] === 'boolean'
                 ? value.patternZones[zoneId]
+                : (zoneId === 'front' || zoneId === 'back') &&
+                    typeof value.patternZones?.body === 'boolean'
+                    ? value.patternZones.body
                 : defaultPatternZones[zoneId],
         ]),
     );
 
     return {
-        shirtColors: { ...DEFAULT_SHIRT_COLORS, ...value.shirtColors },
+        productId: value.productId,
+        shirtColors: { ...DEFAULT_SHIRT_COLORS, ...product.defaultColors, ...value.shirtColors },
         selectedPatternId,
         patternColors,
         patternZones,

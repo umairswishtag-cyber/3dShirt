@@ -1,7 +1,6 @@
 import { DESIGN_AREAS_BY_ID, DESIGN_TEXTURE_SIZE } from '../config/designAreas';
 import {
     createPatternSvgSource,
-    SHIRT_PATTERNS_BY_ID,
 } from '../config/patterns';
 
 const canvases = new Map();
@@ -44,11 +43,10 @@ function getPatternSource(pattern) {
     return patternSourcePromises.get(pattern.id);
 }
 
-function getPatternImage(patternId, colors) {
-    const pattern = SHIRT_PATTERNS_BY_ID[patternId];
+function getPatternImage(pattern, colors) {
     if (!pattern) return Promise.resolve(null);
 
-    const cacheKey = `${patternId}:${pattern.colors
+    const cacheKey = `${pattern.id}:${pattern.colors
         .map((slot) => colors?.[slot.id] ?? slot.source)
         .join(':')}`;
 
@@ -105,7 +103,7 @@ export async function renderDesignArea(areaId, objects, patternSelection = null)
 
     const [patternImage, images] = await Promise.all([
         patternSelection?.id
-            ? getPatternImage(patternSelection.id, patternSelection.colors).catch(() => null)
+            ? getPatternImage(patternSelection.pattern, patternSelection.colors).catch(() => null)
             : null,
         Promise.all(imageObjects.map(async (object) => {
             try {

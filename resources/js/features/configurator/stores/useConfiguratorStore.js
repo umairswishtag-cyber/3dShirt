@@ -3,17 +3,28 @@ import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import {
     createDefaultPatternColors,
     createDefaultPatternZones,
-    SHIRT_PATTERNS_BY_ID,
 } from '../config/patterns';
 import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
+import {
+    DEFAULT_PRODUCT_ID,
+    PRODUCTS_BY_ID,
+} from '../config/productCatalog';
 import {
     createLocalDesignPayload,
     LOCAL_DESIGN_STORAGE_KEY,
     parseLocalDesign,
-    PRODUCT_ID,
 } from '../utils/designSerialization';
 
 const MAX_HISTORY_LENGTH = 40;
+const productColors = (product) => ({
+    ...DEFAULT_SHIRT_COLORS,
+    ...(product?.defaultColors ?? {}),
+});
+const SHIRT_ZONE_PATTERN_AREAS = {
+    body: ['front', 'back'],
+    leftSleeve: ['leftSleeve'],
+    rightSleeve: ['rightSleeve'],
+};
 
 const clone = (value) => {
     if (typeof structuredClone === 'function') {
@@ -47,15 +58,15 @@ const makeObjectId = () =>
     `design-object-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export const useConfiguratorStore = create((set, get) => ({
-    product: { id: PRODUCT_ID, name: 'Basic T-Shirt' },
+    product: PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID],
     activeDesignAreaId: 'front',
     activeShirtZoneId: 'body',
     cameraView: 'front',
     cameraRequestId: 0,
     shirtColors: { ...DEFAULT_SHIRT_COLORS },
     selectedPatternId: null,
-    patternColors: createDefaultPatternColors(),
-    patternZones: createDefaultPatternZones(),
+    patternColors: createDefaultPatternColors(PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID]?.patterns),
+    patternZones: createDefaultPatternZones(PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID]?.patternZones),
     designObjects: [],
     selectedObjectId: null,
     isDirty: false,
@@ -64,6 +75,39 @@ export const useConfiguratorStore = create((set, get) => ({
     past: [],
     future: [],
     interactionSnapshot: null,
+
+    selectProduct: (productId) => {
+        const product = PRODUCTS_BY_ID[productId];
+        if (!product) return false;
+
+        try {
+            localStorage.removeItem(LOCAL_DESIGN_STORAGE_KEY);
+        } catch {
+            // Product selection must still work when storage is restricted.
+        }
+
+        set((state) => ({
+            product,
+            activeDesignAreaId: Object.keys(product.model.printAreas ?? {})[0] ?? 'front',
+            activeShirtZoneId: product.colorZones[0] ?? 'body',
+            cameraView: 'front',
+            cameraRequestId: state.cameraRequestId + 1,
+            shirtColors: productColors(product),
+            selectedPatternId: null,
+            patternColors: createDefaultPatternColors(product.patterns),
+            patternZones: createDefaultPatternZones(product.patternZones),
+            designObjects: [],
+            selectedObjectId: null,
+            past: [],
+            future: [],
+            interactionSnapshot: null,
+            isDirty: false,
+            lastSavedAt: null,
+            restoreError: null,
+        }));
+
+        return product;
+    },
 
     setActiveDesignArea: (areaId) => {
         const area = DESIGN_AREAS_BY_ID[areaId];
@@ -77,7 +121,10 @@ export const useConfiguratorStore = create((set, get) => ({
         }));
     },
 
-    setActiveShirtZone: (zoneId) => set({ activeShirtZoneId: zoneId }),
+    setActiveShirtZone: (zoneId) => {
+        if (!get().product.colorZones.includes(zoneId)) return;
+        set({ activeShirtZoneId: zoneId });
+    },
 
     setCameraView: (cameraView) =>
         set((state) => ({
@@ -87,14 +134,22 @@ export const useConfiguratorStore = create((set, get) => ({
 
     setShirtZoneColor: (zoneId, color) => {
         const state = get();
-        const patternIsEnabled = state.patternZones[zoneId] === true;
+        const patternAreaIds = SHIRT_ZONE_PATTERN_AREAS[zoneId] ?? [];
+        const patternIsEnabled = patternAreaIds.some(
+            (areaId) => state.patternZones[areaId] === true,
+        );
         if (state.shirtColors[zoneId] === color && !patternIsEnabled) return;
+
+        const patternZones = patternIsEnabled
+            ? patternAreaIds.reduce(
+                (zones, areaId) => ({ ...zones, [areaId]: false }),
+                state.patternZones,
+            )
+            : state.patternZones;
 
         set({
             shirtColors: { ...state.shirtColors, [zoneId]: color },
-            patternZones: patternIsEnabled
-                ? { ...state.patternZones, [zoneId]: false }
-                : state.patternZones,
+            patternZones,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -103,7 +158,7 @@ export const useConfiguratorStore = create((set, get) => ({
 
     setPattern: (patternId) => {
         const state = get();
-        const nextPatternId = patternId && SHIRT_PATTERNS_BY_ID[patternId]
+        const nextPatternId = patternId && state.product.patterns?.some((pattern) => pattern.id === patternId)
             ? patternId
             : null;
         if (state.selectedPatternId === nextPatternId) return;
@@ -111,7 +166,7 @@ export const useConfiguratorStore = create((set, get) => ({
         set({
             selectedPatternId: nextPatternId,
             patternZones: nextPatternId
-                ? createDefaultPatternZones()
+                ? createDefaultPatternZones(state.product.patternZones)
                 : state.patternZones,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
@@ -122,7 +177,7 @@ export const useConfiguratorStore = create((set, get) => ({
     setPatternColor: (colorId, color) => {
         const state = get();
         const patternId = state.selectedPatternId;
-        const pattern = SHIRT_PATTERNS_BY_ID[patternId];
+        const pattern = state.product.patterns?.find((item) => item.id === patternId);
         if (!pattern?.colors.some((slot) => slot.id === colorId)) return;
         if (state.patternColors[patternId]?.[colorId] === color) return;
 
@@ -159,7 +214,7 @@ export const useConfiguratorStore = create((set, get) => ({
         if (Object.values(state.patternZones).every(Boolean)) return;
 
         set({
-            patternZones: createDefaultPatternZones(),
+            patternZones: createDefaultPatternZones(state.product.patternZones),
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -297,13 +352,13 @@ export const useConfiguratorStore = create((set, get) => ({
 
         set({
             activeDesignAreaId: 'front',
-            activeShirtZoneId: 'body',
+            activeShirtZoneId: state.product.colorZones[0] ?? 'body',
             cameraView: 'front',
             cameraRequestId: state.cameraRequestId + 1,
-            shirtColors: { ...DEFAULT_SHIRT_COLORS },
+            shirtColors: productColors(state.product),
             selectedPatternId: null,
-            patternColors: createDefaultPatternColors(),
-            patternZones: createDefaultPatternZones(),
+            patternColors: createDefaultPatternColors(state.product.patterns),
+            patternZones: createDefaultPatternZones(state.product.patternZones),
             designObjects: [],
             selectedObjectId: null,
             past: pushHistory(state.past, createSnapshot(state)),
@@ -341,6 +396,7 @@ export const useConfiguratorStore = create((set, get) => ({
             const area = DESIGN_AREAS_BY_ID[draft.activeDesignAreaId];
 
             set((state) => ({
+                product: PRODUCTS_BY_ID[draft.productId],
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
                 patternColors: draft.patternColors,
