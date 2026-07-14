@@ -1,4 +1,5 @@
 import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
+import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 
 export const LOCAL_DESIGN_STORAGE_KEY = 'promoplus-configurator-design-v1';
 export const LOCAL_DESIGN_SCHEMA_VERSION = 1;
@@ -32,17 +33,16 @@ export function parseLocalDesign(rawValue) {
             object &&
             object.type === 'image' &&
             typeof object.id === 'string' &&
-            ['front', 'back'].includes(object.areaId) &&
+            Boolean(DESIGN_AREAS_BY_ID[object.areaId]) &&
             typeof object.source === 'string',
     );
 
     return {
         shirtColors: { ...DEFAULT_SHIRT_COLORS, ...value.shirtColors },
         designObjects: validObjects,
-        activeDesignAreaId: ['front', 'back'].includes(value.activeDesignAreaId)
+        activeDesignAreaId: DESIGN_AREAS_BY_ID[value.activeDesignAreaId]
             ? value.activeDesignAreaId
             : 'front',
         updatedAt: value.updatedAt ?? null,
     };
 }
-

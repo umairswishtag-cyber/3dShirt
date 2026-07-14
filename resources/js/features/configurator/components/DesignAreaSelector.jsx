@@ -26,10 +26,9 @@ export default function DesignAreaSelector({ compact = false }) {
                     }`}
                     aria-pressed={activeDesignAreaId === area.id}
                 >
-                    {area.label}
+                    {compact ? area.shortLabel : area.label}
                 </button>
             ))}
         </div>
     );
 }
-

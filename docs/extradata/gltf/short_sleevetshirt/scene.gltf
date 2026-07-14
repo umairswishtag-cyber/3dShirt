@@ -1,0 +1,1007 @@
+{
+  "accessors": [
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        28.50758171081543,
+        165.2572479248047,
+        19.83760643005371
+      ],
+      "min": [
+        -29.079648971557617,
+        96.64778137207031,
+        -14.836944580078125
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 786384,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999935030937195,
+        0.9996245503425598,
+        0.9999927282333374
+      ],
+      "min": [
+        -0.999993622303009,
+        -0.9999492764472961,
+        -0.9999978542327881
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999784827232361,
+        0.999423086643219,
+        0.999966561794281,
+        1.0
+      ],
+      "min": [
+        -0.9999973177909851,
+        -0.9996883869171143,
+        -0.9999851584434509,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        2.356489658355713,
+        1.967698335647583
+      ],
+      "min": [
+        -1.6119954586029053,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 524256,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        2.356489658355713,
+        1.967698335647583
+      ],
+      "min": [
+        -1.6119954586029053,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1048512,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        2.356489658355713,
+        1.967698335647583
+      ],
+      "min": [
+        -1.6119954586029053,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 368301,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1572768,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        18.622587203979492,
+        163.8914337158203,
+        20.2061824798584
+      ],
+      "min": [
+        -28.377439498901367,
+        94.50363159179688,
+        -14.581949234008789
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 1841244,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        0.9999675154685974,
+        0.9998316764831543,
+        0.9999979138374329
+      ],
+      "min": [
+        -0.9999562501907349,
+        -0.999422013759613,
+        -0.9995705485343933
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 1048512,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        0.9999862909317017,
+        0.9381999373435974,
+        0.9991492629051208,
+        1.0
+      ],
+      "min": [
+        -0.9999961853027344,
+        -0.9923933148384094,
+        -0.9999511241912842,
+        -1.0
+      ],
+      "type": "VEC4"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1572768,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        2.3711953163146973,
+        1.9816582202911377
+      ],
+      "min": [
+        -2.326578378677368,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1751752,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        2.3711953163146973,
+        1.9816582202911377
+      ],
+      "min": [
+        -2.326578378677368,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 1930736,
+      "componentType": 5126,
+      "count": 22373,
+      "max": [
+        2.3711953163146973,
+        1.9816582202911377
+      ],
+      "min": [
+        -2.326578378677368,
+        -2.040073871612549
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1473204,
+      "componentType": 5125,
+      "count": 115107,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2109720,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        27.9865665435791,
+        163.99363708496094,
+        4.502787113189697
+      ],
+      "min": [
+        -7.842601776123047,
+        134.41378784179688,
+        -12.625304222106934
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 2896104,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999510645866394,
+        0.9999897480010986,
+        0.9999452233314514
+      ],
+      "min": [
+        -0.9999889731407166,
+        -0.9999808669090271,
+        -0.9999957084655762
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 2109720,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 2633976,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 1933632,
+      "componentType": 5125,
+      "count": 337497,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 3682488,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        18.58943748474121,
+        163.7944793701172,
+        4.661990642547607
+      ],
+      "min": [
+        -17.859743118286133,
+        98.19442749023438,
+        -11.862032890319824
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 4468872,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999964237213135,
+        1.0,
+        0.9999907612800598
+      ],
+      "min": [
+        -0.9999994039535522,
+        -0.9999371767044067,
+        -0.999932050704956
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 3158232,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 3682488,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 3283620,
+      "componentType": 5125,
+      "count": 337437,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 5255256,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        18.581212997436523,
+        163.69088745117188,
+        19.021888732910156
+      ],
+      "min": [
+        -17.297348022460938,
+        99.59464263916016,
+        -5.255405902862549
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 6041640,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999921917915344,
+        0.9998517632484436,
+        0.9998818039894104
+      ],
+      "min": [
+        -0.9999538660049438,
+        -0.9999914765357971,
+        -0.999754011631012
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 4206744,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 4731000,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 4633368,
+      "componentType": 5125,
+      "count": 337452,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 6828024,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        18.461759567260742,
+        158.57058715820313,
+        19.838531494140625
+      ],
+      "min": [
+        -17.840497970581055,
+        98.33258819580078,
+        -12.786348342895508
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 7614408,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9998874664306641,
+        0.999988853931427,
+        0.9999410510063171
+      ],
+      "min": [
+        -0.9999911785125732,
+        -0.9999948143959045,
+        -0.9998398423194885
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 5255256,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 5779512,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 5983176,
+      "componentType": 5125,
+      "count": 337440,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 8400792,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        17.75624656677246,
+        159.2168426513672,
+        19.9025821685791
+      ],
+      "min": [
+        -17.83123207092285,
+        98.01513671875,
+        -11.050968170166016
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 9187176,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9999909400939941,
+        0.9998754262924194,
+        0.9999430179595947
+      ],
+      "min": [
+        -0.9998800754547119,
+        -1.0,
+        -0.9999926090240479
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 6303768,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 6828024,
+      "componentType": 5126,
+      "count": 65532,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 7332936,
+      "componentType": 5125,
+      "count": 337458,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 9973560,
+      "componentType": 5126,
+      "count": 42383,
+      "max": [
+        16.83156394958496,
+        152.8964385986328,
+        5.880387306213379
+      ],
+      "min": [
+        -28.366979598999023,
+        135.4556121826172,
+        -12.572721481323242
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 10482156,
+      "componentType": 5126,
+      "count": 42383,
+      "max": [
+        0.9999194741249084,
+        0.9999867677688599,
+        0.9999900460243225
+      ],
+      "min": [
+        -0.9999317526817322,
+        -0.9999693632125854,
+        -0.9998888969421387
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 7352280,
+      "componentType": 5126,
+      "count": 42383,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 7691344,
+      "componentType": 5126,
+      "count": 42383,
+      "max": [
+        0.9129999876022339,
+        0.5843999981880188
+      ],
+      "min": [
+        0.08699999749660492,
+        0.4196999967098236
+      ],
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 8682768,
+      "componentType": 5125,
+      "count": 218256,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "extras": {
+      "author": "chokybali (https://sketchfab.com/chokybali)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/short-sleeve-t-shirt-0b1df31312444436b390a687875bdbfe",
+      "title": "Short Sleeve T- Shirt"
+    },
+    "generator": "Sketchfab-15.22.0",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 9555792,
+      "name": "floatBufferViews",
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8030408,
+      "byteOffset": 9555792,
+      "byteStride": 8,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 10990752,
+      "byteOffset": 17586200,
+      "byteStride": 12,
+      "name": "floatBufferViews",
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 1406480,
+      "byteOffset": 28576952,
+      "byteStride": 16,
+      "name": "floatBufferViews",
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 29983432,
+      "uri": "scene.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "textures/Cotton_Heavy_Canvas_FRONT_109162_baseColor.jpeg"
+    },
+    {
+      "uri": "textures/Cotton_Heavy_Canvas_FRONT_109162_normal.png"
+    },
+    {
+      "uri": "textures/Material109373_baseColor.jpeg"
+    }
+  ],
+  "materials": [
+    {
+      "doubleSided": true,
+      "name": "Cotton_Heavy_Canvas_FRONT_109162",
+      "normalTexture": {
+        "index": 1,
+        "texCoord": 1
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.9826311700321614
+      }
+    },
+    {
+      "doubleSided": true,
+      "name": "Material109373",
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 2
+        },
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.9826311700321614
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Short Sleeve T-Shirt_Cotton_Heavy_Canvas_FRONT_109162_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3,
+            "TEXCOORD_1": 4,
+            "TEXCOORD_2": 5
+          },
+          "indices": 6,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Cotton_Heavy_Canvas_FRONT_109162_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 8,
+            "POSITION": 7,
+            "TANGENT": 9,
+            "TEXCOORD_0": 10,
+            "TEXCOORD_1": 11,
+            "TEXCOORD_2": 12
+          },
+          "indices": 13,
+          "material": 0,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 15,
+            "POSITION": 14,
+            "TEXCOORD_0": 16,
+            "TEXCOORD_1": 17
+          },
+          "indices": 18,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 20,
+            "POSITION": 19,
+            "TEXCOORD_0": 21,
+            "TEXCOORD_1": 22
+          },
+          "indices": 23,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 25,
+            "POSITION": 24,
+            "TEXCOORD_0": 26,
+            "TEXCOORD_1": 27
+          },
+          "indices": 28,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 30,
+            "POSITION": 29,
+            "TEXCOORD_0": 31,
+            "TEXCOORD_1": 32
+          },
+          "indices": 33,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 35,
+            "POSITION": 34,
+            "TEXCOORD_0": 36,
+            "TEXCOORD_1": 37
+          },
+          "indices": 38,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "Short Sleeve T-Shirt_Material109373_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 40,
+            "POSITION": 39,
+            "TEXCOORD_0": 41,
+            "TEXCOORD_1": 42
+          },
+          "indices": 43,
+          "material": 1,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "children": [
+        1
+      ],
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.220446049250313e-16,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        2.220446049250313e-16,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Sketchfab_model"
+    },
+    {
+      "children": [
+        2
+      ],
+      "matrix": [
+        0.0010000000474974513,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0010000000474974513,
+        0.0,
+        0.0,
+        -0.0010000000474974513,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "5828ffb6f5614fdfa9cb5bf72605c8ee.fbx"
+    },
+    {
+      "children": [
+        3
+      ],
+      "name": "RootNode"
+    },
+    {
+      "children": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "matrix": [
+        10.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        10.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        10.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "name": "Short Sleeve T-Shirt"
+    },
+    {
+      "mesh": 0,
+      "name": "Short Sleeve T-Shirt_Cotton_Heavy_Canvas_FRONT_109162_0"
+    },
+    {
+      "mesh": 1,
+      "name": "Short Sleeve T-Shirt_Cotton_Heavy_Canvas_FRONT_109162_0"
+    },
+    {
+      "mesh": 2,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    },
+    {
+      "mesh": 3,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    },
+    {
+      "mesh": 4,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    },
+    {
+      "mesh": 5,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    },
+    {
+      "mesh": 6,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    },
+    {
+      "mesh": 7,
+      "name": "Short Sleeve T-Shirt_Material109373_0"
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 0,
+      "source": 1
+    },
+    {
+      "sampler": 0,
+      "source": 2
+    }
+  ]
+}

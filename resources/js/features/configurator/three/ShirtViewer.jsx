@@ -50,7 +50,7 @@ function Scene() {
                 <ShirtModel />
             </Suspense>
             <ContactShadows
-                position={[0, -1.48, 0]}
+                position={[0, -1.24, 0]}
                 opacity={0.24}
                 scale={5}
                 blur={2.5}

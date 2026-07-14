@@ -1,154 +1,201 @@
-import { RoundedBox, useGLTF } from '@react-three/drei';
-import { DoubleSide } from 'three';
+import { useEffect, useMemo } from 'react';
+import { useGLTF } from '@react-three/drei';
+import { useThree } from '@react-three/fiber';
+import { FrontSide } from 'three';
+import { SHIRT_MODEL } from '../config/shirtModel';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
-function PrintSurface({ texture, side }) {
-    const isBack = side === 'back';
+function cloneModelScene(scene) {
+    const clone = scene.clone(true);
+
+    clone.traverse((node) => {
+        if (!node.isMesh) return;
+
+        node.material = Array.isArray(node.material)
+            ? node.material.map((material) => material.clone())
+            : node.material.clone();
+        node.castShadow = true;
+        node.receiveShadow = true;
+    });
+
+    return clone;
+}
+
+function setMaterialColor(material, color) {
+    const materials = Array.isArray(material) ? material : [material];
+
+    materials.forEach((item) => {
+        item.color?.set(color);
+        item.metalness = 0;
+        item.roughness = 0.86;
+        item.needsUpdate = true;
+    });
+}
+
+function configurePrintTexture(texture, uvBounds) {
+    const width = uvBounds.max[0] - uvBounds.min[0];
+    const height = uvBounds.max[1] - uvBounds.min[1];
+
+    texture.repeat.set(1 / width, 1 / height);
+    texture.offset.set(-uvBounds.min[0] / width, -uvBounds.min[1] / height);
+    texture.needsUpdate = true;
+}
+
+function createOutwardPrintGeometry(sourceGeometry, outwardNormalZ, matrixWorld) {
+    const geometry = sourceGeometry.clone();
+    const position = geometry.getAttribute('position');
+    const normal = geometry.getAttribute('normal');
+    const sourceIndex = geometry.getIndex();
+    const indices = sourceIndex
+        ? Array.from(sourceIndex.array)
+        : Array.from({ length: position.count }, (_, index) => index);
+    const filteredIndices = [];
+    const minimumFacing = 0.25;
+
+    for (let index = 0; index < indices.length; index += 3) {
+        const a = indices[index];
+        const b = indices[index + 1];
+        const c = indices[index + 2];
+        const averageNormalZ =
+            (normal.getZ(a) + normal.getZ(b) + normal.getZ(c)) / 3;
+
+        if (
+            outwardNormalZ === null ||
+            averageNormalZ * outwardNormalZ > minimumFacing
+        ) {
+            filteredIndices.push(a, b, c);
+        }
+    }
+
+    geometry.setIndex(filteredIndices);
+    geometry.clearGroups();
+
+    // Lift the print less than a millimetre in model space so it follows the
+    // cloth without z-fighting or being depth-shifted through the other side.
+    const surfaceOffset = 0.0006;
+    for (let index = 0; index < position.count; index += 1) {
+        position.setXYZ(
+            index,
+            position.getX(index) + normal.getX(index) * surfaceOffset,
+            position.getY(index) + normal.getY(index) * surfaceOffset,
+            position.getZ(index) + normal.getZ(index) * surfaceOffset,
+        );
+    }
+    position.needsUpdate = true;
+    geometry.applyMatrix4(matrixWorld);
+    geometry.computeBoundingSphere();
+
+    return geometry;
+}
+
+function PrintSurface({ geometry, texture, uvBounds, name }) {
+    useEffect(() => {
+        configurePrintTexture(texture, uvBounds);
+    }, [texture, uvBounds]);
 
     return (
-        <mesh
-            name={`print_${side}`}
-            position={[0, -0.2, isBack ? -0.172 : 0.172]}
-            rotation={[0, isBack ? Math.PI : 0, 0]}
-            renderOrder={2}
-        >
-            <planeGeometry args={[1.24, 1.55]} />
+        <mesh name={name} geometry={geometry} renderOrder={2}>
             <meshBasicMaterial
                 map={texture}
                 transparent
                 alphaTest={0.01}
                 depthWrite={false}
-                side={DoubleSide}
+                depthTest
+                side={FrontSide}
                 toneMapped={false}
-                polygonOffset
-                polygonOffsetFactor={-2}
             />
         </mesh>
     );
 }
 
-export function ProceduralShirtPlaceholder({ colors, frontTexture, backTexture }) {
-    return (
-        <group name="procedural_basic_tshirt" position={[0, 0.04, 0]}>
-            <RoundedBox
-                name="shirt_body"
-                args={[1.72, 2.2, 0.34]}
-                radius={0.12}
-                smoothness={5}
-                position={[0, -0.2, 0]}
-                castShadow
-                receiveShadow
-            >
-                <meshStandardMaterial color={colors.body} roughness={0.88} metalness={0} />
-            </RoundedBox>
-
-            <RoundedBox
-                name="left_sleeve"
-                args={[0.76, 0.74, 0.32]}
-                radius={0.11}
-                smoothness={4}
-                position={[-1.03, 0.46, 0]}
-                rotation={[0, 0, -0.5]}
-                castShadow
-            >
-                <meshStandardMaterial
-                    color={colors.leftSleeve}
-                    roughness={0.88}
-                    metalness={0}
-                />
-            </RoundedBox>
-
-            <RoundedBox
-                name="right_sleeve"
-                args={[0.76, 0.74, 0.32]}
-                radius={0.11}
-                smoothness={4}
-                position={[1.03, 0.46, 0]}
-                rotation={[0, 0, 0.5]}
-                castShadow
-            >
-                <meshStandardMaterial
-                    color={colors.rightSleeve}
-                    roughness={0.88}
-                    metalness={0}
-                />
-            </RoundedBox>
-
-            <mesh name="collar" position={[0, 0.86, 0.17]} rotation={[Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.27, 0.07, 18, 64]} />
-                <meshStandardMaterial color={colors.collar} roughness={0.78} metalness={0} />
-            </mesh>
-
-            <PrintSurface texture={frontTexture} side="front" />
-            <PrintSurface texture={backTexture} side="back" />
-        </group>
-    );
-}
-
-function requireNamedMesh(nodes, name) {
-    const node = nodes[name];
-    if (!node?.geometry) {
-        throw new Error(`The shirt GLB is missing the required named mesh: ${name}`);
-    }
-    return node;
-}
-
-export function GlbShirtModel({ modelUrl, colors, frontTexture, backTexture }) {
-    const { nodes } = useGLTF(modelUrl);
-    const body = requireNamedMesh(nodes, 'shirt_body');
-    const leftSleeve = requireNamedMesh(nodes, 'left_sleeve');
-    const rightSleeve = requireNamedMesh(nodes, 'right_sleeve');
-    const collar = requireNamedMesh(nodes, 'collar');
-    const front = requireNamedMesh(nodes, 'print_front');
-    const back = requireNamedMesh(nodes, 'print_back');
-
-    return (
-        <group name="basic_tshirt_glb">
-            <mesh geometry={body.geometry} castShadow receiveShadow>
-                <meshStandardMaterial color={colors.body} roughness={0.88} />
-            </mesh>
-            <mesh geometry={leftSleeve.geometry} castShadow receiveShadow>
-                <meshStandardMaterial color={colors.leftSleeve} roughness={0.88} />
-            </mesh>
-            <mesh geometry={rightSleeve.geometry} castShadow receiveShadow>
-                <meshStandardMaterial color={colors.rightSleeve} roughness={0.88} />
-            </mesh>
-            <mesh geometry={collar.geometry} castShadow receiveShadow>
-                <meshStandardMaterial color={colors.collar} roughness={0.8} />
-            </mesh>
-            <mesh geometry={front.geometry} renderOrder={2}>
-                <meshBasicMaterial map={frontTexture} transparent depthWrite={false} toneMapped={false} />
-            </mesh>
-            <mesh geometry={back.geometry} renderOrder={2}>
-                <meshBasicMaterial map={backTexture} transparent depthWrite={false} toneMapped={false} />
-            </mesh>
-        </group>
-    );
-}
-
-export default function ShirtModel({ modelUrl = null }) {
+export default function ShirtModel() {
+    const invalidate = useThree((state) => state.invalidate);
     const colors = useConfiguratorStore((state) => state.shirtColors);
     const frontTexture = useDesignTexture('front');
     const backTexture = useDesignTexture('back');
+    const leftSleeveTexture = useDesignTexture('leftSleeve');
+    const rightSleeveTexture = useDesignTexture('rightSleeve');
+    const { scene, nodes } = useGLTF(SHIRT_MODEL.url);
+    const modelScene = useMemo(() => cloneModelScene(scene), [scene]);
+    const printTextures = {
+        front: frontTexture,
+        back: backTexture,
+        leftSleeve: leftSleeveTexture,
+        rightSleeve: rightSleeveTexture,
+    };
 
-    if (modelUrl) {
-        return (
-            <GlbShirtModel
-                modelUrl={modelUrl}
-                colors={colors}
-                frontTexture={frontTexture}
-                backTexture={backTexture}
-            />
-        );
-    }
+    const printMeshes = useMemo(() => {
+        scene.updateMatrixWorld(true);
+
+        const entries = Object.entries(SHIRT_MODEL.printAreas).map(([areaId, binding]) => {
+            const node = nodes[binding.meshName];
+
+            if (!node?.geometry) {
+                throw new Error(
+                    `The T-shirt GLB is missing the ${binding.meshName} mesh required for the ${areaId} print area.`,
+                );
+            }
+
+            return [
+                areaId,
+                createOutwardPrintGeometry(
+                    node.geometry,
+                    binding.outwardNormalZ,
+                    node.matrixWorld,
+                ),
+            ];
+        });
+
+        return Object.fromEntries(entries);
+    }, [nodes, scene]);
+
+    useEffect(
+        () => () => {
+            Object.values(printMeshes).forEach((geometry) => geometry.dispose());
+        },
+        [printMeshes],
+    );
+
+    useEffect(() => {
+        modelScene.traverse((node) => {
+            if (!node.isMesh) return;
+
+            const zoneId = SHIRT_MODEL.meshZones[node.name];
+            if (zoneId) setMaterialColor(node.material, colors[zoneId]);
+        });
+
+        invalidate();
+    }, [colors, invalidate, modelScene]);
+
+    useEffect(
+        () => () => {
+            modelScene.traverse((node) => {
+                if (!node.isMesh) return;
+
+                const materials = Array.isArray(node.material) ? node.material : [node.material];
+                materials.forEach((material) => material.dispose());
+            });
+        },
+        [modelScene],
+    );
 
     return (
-        <ProceduralShirtPlaceholder
-            colors={colors}
-            frontTexture={frontTexture}
-            backTexture={backTexture}
-        />
+        <group name="configurable_t_shirt" scale={SHIRT_MODEL.scale}>
+            <group position={SHIRT_MODEL.center.map((value) => -value)}>
+                <primitive object={modelScene} />
+                {Object.entries(SHIRT_MODEL.printAreas).map(([areaId, binding]) => (
+                    <PrintSurface
+                        key={areaId}
+                        name={`print_${areaId}`}
+                        geometry={printMeshes[areaId]}
+                        texture={printTextures[areaId]}
+                        uvBounds={binding.uvBounds}
+                    />
+                ))}
+            </group>
+        </group>
     );
 }
 
+useGLTF.preload(SHIRT_MODEL.url);

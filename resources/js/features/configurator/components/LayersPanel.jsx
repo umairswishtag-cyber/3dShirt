@@ -15,7 +15,7 @@ export default function LayersPanel() {
         return (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
                 <p className="text-sm font-semibold text-slate-700">No layers on this side</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Use Add image to place your first design.</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Use Design to place your first texture.</p>
             </div>
         );
     }

@@ -5,7 +5,7 @@ import LayersPanel from './LayersPanel';
 export const CONFIGURATOR_TOOLS = [
     { id: 'product', label: 'Product', shortLabel: 'Product' },
     { id: 'colors', label: 'Colors', shortLabel: 'Colors' },
-    { id: 'image', label: 'Add image', shortLabel: 'Image' },
+    { id: 'image', label: 'Design texture', shortLabel: 'Design' },
     { id: 'layers', label: 'Layers', shortLabel: 'Layers' },
 ];
 
@@ -24,17 +24,17 @@ export function ToolPanelContent({ tool }) {
             <div>
                 <p className="text-base font-bold text-slate-950">Basic T-Shirt</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Four independent color zones with front and back printable areas.
+                    Real configurable T-shirt with separate front, back, left-sleeve, and right-sleeve design areas.
                 </p>
             </div>
             <dl className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-xl bg-slate-50 p-3">
-                    <dt className="text-slate-400">Material</dt>
-                    <dd className="mt-1 font-semibold text-slate-800">Cotton</dd>
+                    <dt className="text-slate-400">3D model</dt>
+                    <dd className="mt-1 font-semibold text-slate-800">GLB</dd>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-3">
                     <dt className="text-slate-400">Print areas</dt>
-                    <dd className="mt-1 font-semibold text-slate-800">Front / Back</dd>
+                    <dd className="mt-1 font-semibold text-slate-800">4 areas</dd>
                 </div>
             </dl>
         </div>
@@ -75,4 +75,3 @@ export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
         </aside>
     );
 }
-
