@@ -10,7 +10,7 @@ export default function GuestLayout({ children }) {
     return (
         <div className="min-h-screen  items-center bg-white  sm:justify-center sm:pt-0">
             <Grid container spacing={3} height={'100dvh'} alignItems="center">
-                <Grid size={{ xs: 12, md: 6 }} height={'100%'}  sx={{background:'#023F80', display: 'flex', justifyContent: 'center', alignItems: 'center', display:{ xs: 'none', md: 'flex' }}}>
+                <Grid size={{ xs: 12, md: 6 }} height={'100%'}  sx={{background:'#023F80', justifyContent: 'center', alignItems: 'center', display:{ xs: 'none', md: 'flex' }}}>
 
                     <Link href="/">
                     {/* <img src={MainLogo} className='w-60' alt="Frago Logo" /> */}

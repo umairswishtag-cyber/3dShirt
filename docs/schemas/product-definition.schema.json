@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.test/schemas/product-definition.schema.json",
+  "title": "Product Definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "productId",
+    "version",
+    "model",
+    "printAreas",
+    "colorZones",
+    "materialPresets",
+    "cameraPresets",
+    "capabilities",
+    "restrictions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "id": { "$ref": "#/$defs/id" },
+    "productId": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "model": { "$ref": "#/$defs/model" },
+    "printAreas": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/printArea" }
+    },
+    "colorZones": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/colorZone" }
+    },
+    "materialPresets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/materialPreset" }
+    },
+    "cameraPresets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cameraPreset" }
+    },
+    "variants": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "sku", "options"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "sku": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "options": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "capabilities": { "$ref": "#/$defs/capabilities" },
+    "restrictions": { "$ref": "#/$defs/restrictions" },
+    "metadata": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{1,127}$"
+    },
+    "assetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId"],
+      "properties": {
+        "assetId": { "$ref": "#/$defs/id" },
+        "variant": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset", "units", "upAxis", "lods"],
+      "properties": {
+        "asset": { "$ref": "#/$defs/assetRef" },
+        "units": { "enum": ["millimeter", "centimeter", "meter"] },
+        "upAxis": { "enum": ["Y", "Z"] },
+        "scale": { "type": "number", "exclusiveMinimum": 0, "default": 1 },
+        "position": { "$ref": "#/$defs/vector3" },
+        "rotationDeg": { "$ref": "#/$defs/vector3" },
+        "compression": { "enum": ["none", "draco", "meshopt"] },
+        "lods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["asset", "maxScreenError"],
+            "properties": {
+              "asset": { "$ref": "#/$defs/assetRef" },
+              "maxScreenError": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meshNames", "materialSlot", "uvSet"],
+      "properties": {
+        "meshNames": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "materialSlot": { "type": "string", "minLength": 1 },
+        "uvSet": { "type": "integer", "minimum": 0 },
+        "atlasRect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 },
+            "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+          }
+        },
+        "uvTransform": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": { "type": "number" }
+        }
+      }
+    },
+    "printArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "labelKey",
+        "widthMm",
+        "heightMm",
+        "boundaryPath",
+        "safePath",
+        "bleedMm",
+        "previewDpi",
+        "exportDpi",
+        "binding",
+        "cameraPresetId"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "labelKey": { "type": "string", "minLength": 1 },
+        "widthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "boundaryPath": { "type": "string", "minLength": 1 },
+        "safePath": { "type": "string", "minLength": 1 },
+        "bleedMm": { "type": "number", "minimum": 0 },
+        "previewDpi": { "type": "integer", "minimum": 36, "maximum": 300 },
+        "exportDpi": { "type": "integer", "minimum": 72, "maximum": 1200 },
+        "binding": { "$ref": "#/$defs/binding" },
+        "cameraPresetId": { "$ref": "#/$defs/id" },
+        "capabilityOverrides": { "$ref": "#/$defs/capabilities" },
+        "restrictionOverrides": { "$ref": "#/$defs/restrictions" }
+      }
+    },
+    "colorZone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "labelKey", "materialSlots", "defaultColor", "allowedColors"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "labelKey": { "type": "string", "minLength": 1 },
+        "materialSlots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "defaultColor": { "$ref": "#/$defs/color" },
+        "allowedColors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/color" }
+        },
+        "materialPresetIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+    },
+    "textureSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseColor": { "$ref": "#/$defs/assetRef" },
+        "normal": { "$ref": "#/$defs/assetRef" },
+        "roughness": { "$ref": "#/$defs/assetRef" },
+        "metalness": { "$ref": "#/$defs/assetRef" },
+        "ambientOcclusion": { "$ref": "#/$defs/assetRef" }
+      }
+    },
+    "materialPreset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "labelKey", "roughness", "metalness"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "labelKey": { "type": "string", "minLength": 1 },
+        "roughness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "metalness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "normalScale": { "type": "number", "minimum": 0, "maximum": 4 },
+        "clearcoat": { "type": "number", "minimum": 0, "maximum": 1 },
+        "textures": { "$ref": "#/$defs/textureSet" }
+      }
+    },
+    "cameraPreset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "labelKey", "position", "target", "fov"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "labelKey": { "type": "string", "minLength": 1 },
+        "position": { "$ref": "#/$defs/vector3" },
+        "target": { "$ref": "#/$defs/vector3" },
+        "fov": { "type": "number", "minimum": 10, "maximum": 120 },
+        "minDistance": { "type": "number", "exclusiveMinimum": 0 },
+        "maxDistance": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "images": { "type": "boolean" },
+        "svg": { "type": "boolean" },
+        "text": { "type": "boolean" },
+        "qrCode": { "type": "boolean" },
+        "barcode": { "type": "boolean" },
+        "shapes": { "type": "boolean" },
+        "grouping": { "type": "boolean" },
+        "curvedText": { "type": "boolean" },
+        "warpText": { "type": "boolean" },
+        "imageFilters": { "type": "boolean" },
+        "masks": { "type": "boolean" }
+      }
+    },
+    "restrictions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxObjectsPerArea": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "maxUploadBytes": { "type": "integer", "minimum": 1 },
+        "allowedMimeTypes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 3 }
+        },
+        "minScale": { "type": "number", "exclusiveMinimum": 0 },
+        "maxScale": { "type": "number", "exclusiveMinimum": 0 },
+        "enforceSafeArea": { "type": "boolean" },
+        "clipToBoundary": { "type": "boolean" }
+      }
+    }
+  }
+}

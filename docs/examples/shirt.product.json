@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "def_shirt_classic_v1",
+  "productId": "prod_shirt_classic",
+  "version": 1,
+  "model": {
+    "asset": {
+      "assetId": "asset_shirt_classic_glb",
+      "variant": "desktop"
+    },
+    "units": "meter",
+    "upAxis": "Y",
+    "scale": 1,
+    "position": [0, 0, 0],
+    "rotationDeg": [0, 0, 0],
+    "compression": "draco",
+    "lods": [
+      {
+        "asset": {
+          "assetId": "asset_shirt_classic_glb",
+          "variant": "mobile-lod"
+        },
+        "maxScreenError": 2
+      }
+    ]
+  },
+  "printAreas": [
+    {
+      "id": "front",
+      "labelKey": "printArea.front",
+      "widthMm": 320,
+      "heightMm": 400,
+      "boundaryPath": "M 0 0 H 320 V 400 H 0 Z",
+      "safePath": "M 10 10 H 310 V 390 H 10 Z",
+      "bleedMm": 3,
+      "previewDpi": 96,
+      "exportDpi": 300,
+      "binding": {
+        "meshNames": ["ShirtBody"],
+        "materialSlot": "BodyMaterial",
+        "uvSet": 0,
+        "atlasRect": { "x": 0, "y": 0, "width": 0.5, "height": 1 },
+        "uvTransform": [0.5, 0, 0, 1, 0, 0]
+      },
+      "cameraPresetId": "camera_front"
+    },
+    {
+      "id": "back",
+      "labelKey": "printArea.back",
+      "widthMm": 320,
+      "heightMm": 400,
+      "boundaryPath": "M 0 0 H 320 V 400 H 0 Z",
+      "safePath": "M 10 10 H 310 V 390 H 10 Z",
+      "bleedMm": 3,
+      "previewDpi": 96,
+      "exportDpi": 300,
+      "binding": {
+        "meshNames": ["ShirtBody"],
+        "materialSlot": "BodyMaterial",
+        "uvSet": 0,
+        "atlasRect": { "x": 0.5, "y": 0, "width": 0.5, "height": 1 },
+        "uvTransform": [0.5, 0, 0, 1, 0.5, 0]
+      },
+      "cameraPresetId": "camera_back"
+    }
+  ],
+  "colorZones": [
+    {
+      "id": "fabric",
+      "labelKey": "colorZone.fabric",
+      "materialSlots": ["BodyMaterial"],
+      "defaultColor": "#FFFFFF",
+      "allowedColors": ["#FFFFFF", "#111827", "#DC2626", "#2563EB"],
+      "materialPresetIds": ["cotton_matte"]
+    },
+    {
+      "id": "collar",
+      "labelKey": "colorZone.collar",
+      "materialSlots": ["CollarMaterial"],
+      "defaultColor": "#FFFFFF",
+      "allowedColors": ["#FFFFFF", "#111827", "#DC2626", "#2563EB"],
+      "materialPresetIds": ["cotton_matte"]
+    }
+  ],
+  "materialPresets": [
+    {
+      "id": "cotton_matte",
+      "labelKey": "material.cottonMatte",
+      "roughness": 0.82,
+      "metalness": 0,
+      "normalScale": 0.35,
+      "clearcoat": 0,
+      "textures": {
+        "normal": {
+          "assetId": "asset_cotton_normal",
+          "variant": "ktx2-1k"
+        },
+        "roughness": {
+          "assetId": "asset_cotton_roughness",
+          "variant": "ktx2-1k"
+        }
+      }
+    }
+  ],
+  "cameraPresets": [
+    {
+      "id": "camera_front",
+      "labelKey": "camera.front",
+      "position": [0, 0.1, 2.1],
+      "target": [0, 0.05, 0],
+      "fov": 35,
+      "minDistance": 1.2,
+      "maxDistance": 4
+    },
+    {
+      "id": "camera_back",
+      "labelKey": "camera.back",
+      "position": [0, 0.1, -2.1],
+      "target": [0, 0.05, 0],
+      "fov": 35,
+      "minDistance": 1.2,
+      "maxDistance": 4
+    }
+  ],
+  "variants": [
+    {
+      "id": "variant_shirt_m",
+      "sku": "SHIRT-CLASSIC-M",
+      "options": { "size": "M" }
+    }
+  ],
+  "capabilities": {
+    "images": true,
+    "svg": true,
+    "text": true,
+    "qrCode": true,
+    "barcode": true,
+    "shapes": true,
+    "grouping": true,
+    "curvedText": true,
+    "warpText": false,
+    "imageFilters": true,
+    "masks": true
+  },
+  "restrictions": {
+    "maxObjectsPerArea": 200,
+    "maxUploadBytes": 26214400,
+    "allowedMimeTypes": ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+    "minScale": 0.01,
+    "maxScale": 100,
+    "enforceSafeArea": false,
+    "clipToBoundary": true
+  },
+  "metadata": {
+    "category": "apparel",
+    "pricingReference": "price_book_standard"
+  }
+}
+

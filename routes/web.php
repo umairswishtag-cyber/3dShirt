@@ -4,6 +4,10 @@ use Osiset\ShopifyApp\Util;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Inertia\Inertia;
+
+Route::get('/configurator', fn () => Inertia::render('Configurator/ConfiguratorPage'))
+    ->name('configurator');
 
 if (!config('shopify-app.appbridge_enabled')) {
     Route::match(

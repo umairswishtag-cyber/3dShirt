@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "design_demo_shirt",
+  "productId": "prod_shirt_classic",
+  "productDefinitionId": "def_shirt_classic_v1",
+  "productDefinitionVersion": 1,
+  "revision": 1,
+  "title": "Demo team shirt",
+  "selection": {
+    "variantId": "variant_shirt_m",
+    "size": "M",
+    "quantity": 1,
+    "options": { "fit": "regular" }
+  },
+  "zonesById": {
+    "fabric": {
+      "color": "#2563EB",
+      "materialPresetId": "cotton_matte"
+    },
+    "collar": {
+      "color": "#111827",
+      "materialPresetId": "cotton_matte"
+    }
+  },
+  "areasById": {
+    "front": {
+      "objectIds": ["object_team_name", "object_team_logo"]
+    },
+    "back": {
+      "objectIds": []
+    }
+  },
+  "objectsById": {
+    "object_team_name": {
+      "id": "object_team_name",
+      "kind": "text",
+      "areaId": "front",
+      "name": "Team name",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "transform": {
+        "xMm": 160,
+        "yMm": 80,
+        "rotationDeg": 0,
+        "scaleX": 1,
+        "scaleY": 1
+      },
+      "widthMm": 180,
+      "heightMm": 35,
+      "text": "NORTH STARS",
+      "fontId": "font_inter",
+      "fontSizePt": 30,
+      "fontWeight": 700,
+      "fontStyle": "normal",
+      "letterSpacingEm": 0.04,
+      "lineHeight": 1.1,
+      "align": "center",
+      "fill": "#FFFFFF",
+      "outlineColor": "#111827",
+      "outlineWidthMm": 0.8
+    },
+    "object_team_logo": {
+      "id": "object_team_logo",
+      "kind": "image",
+      "areaId": "front",
+      "name": "Team logo",
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "transform": {
+        "xMm": 160,
+        "yMm": 165,
+        "rotationDeg": 0,
+        "scaleX": 1,
+        "scaleY": 1
+      },
+      "widthMm": 90,
+      "heightMm": 90,
+      "assetId": "asset_team_logo",
+      "assetVariantId": "asset_variant_team_logo_preview",
+      "crop": { "x": 0, "y": 0, "width": 1, "height": 1 },
+      "filters": { "brightness": 0, "contrast": 0, "saturation": 0 }
+    }
+  },
+  "groupsById": {},
+  "variables": {},
+  "metadata": {
+    "createdWith": "configurator-web"
+  }
+}
