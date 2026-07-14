@@ -82,6 +82,16 @@ export const SHIRT_PATTERNS_BY_ID = Object.fromEntries(
     SHIRT_PATTERNS.map((pattern) => [pattern.id, pattern]),
 );
 
+export const PATTERN_ZONE_OPTIONS = [
+    { id: 'body', label: 'Body' },
+    { id: 'leftSleeve', label: 'Left sleeve' },
+    { id: 'rightSleeve', label: 'Right sleeve' },
+];
+
+export function createDefaultPatternZones() {
+    return Object.fromEntries(PATTERN_ZONE_OPTIONS.map((zone) => [zone.id, true]));
+}
+
 export function createDefaultPatternColors() {
     return Object.fromEntries(
         SHIRT_PATTERNS.map((pattern) => [

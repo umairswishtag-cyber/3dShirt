@@ -2,6 +2,7 @@ import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
 import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import {
     createDefaultPatternColors,
+    createDefaultPatternZones,
     SHIRT_PATTERNS,
     SHIRT_PATTERNS_BY_ID,
 } from '../config/patterns';
@@ -17,6 +18,7 @@ export function createLocalDesignPayload(state) {
         shirtColors: state.shirtColors,
         selectedPatternId: state.selectedPatternId,
         patternColors: state.patternColors,
+        patternZones: state.patternZones,
         designObjects: state.designObjects,
         activeDesignAreaId: state.activeDesignAreaId,
         updatedAt: new Date().toISOString(),
@@ -63,11 +65,21 @@ export function parseLocalDesign(rawValue) {
     const selectedPatternId = SHIRT_PATTERNS_BY_ID[value.selectedPatternId]
         ? value.selectedPatternId
         : null;
+    const defaultPatternZones = createDefaultPatternZones();
+    const patternZones = Object.fromEntries(
+        Object.keys(defaultPatternZones).map((zoneId) => [
+            zoneId,
+            typeof value.patternZones?.[zoneId] === 'boolean'
+                ? value.patternZones[zoneId]
+                : defaultPatternZones[zoneId],
+        ]),
+    );
 
     return {
         shirtColors: { ...DEFAULT_SHIRT_COLORS, ...value.shirtColors },
         selectedPatternId,
         patternColors,
+        patternZones,
         designObjects: validObjects,
         activeDesignAreaId: DESIGN_AREAS_BY_ID[value.activeDesignAreaId]
             ? value.activeDesignAreaId

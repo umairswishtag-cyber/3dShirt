@@ -21,6 +21,9 @@ export function useDesignTexture(areaId) {
             ? state.patternColors[state.selectedPatternId]
             : null,
     );
+    const patternEnabled = useConfiguratorStore(
+        (state) => state.patternZones[DESIGN_AREAS_BY_ID[areaId].shirtZoneId],
+    );
     const canvas = useMemo(() => getDesignTextureCanvas(areaId), [areaId]);
     const texture = useMemo(() => {
         const nextTexture = new CanvasTexture(canvas);
@@ -34,7 +37,7 @@ export function useDesignTexture(areaId) {
         let active = true;
 
         renderDesignArea(areaId, objects, {
-            id: selectedPatternId,
+            id: patternEnabled ? selectedPatternId : null,
             colors: patternColors,
         }).then(() => {
             if (!active) return;
@@ -45,7 +48,7 @@ export function useDesignTexture(areaId) {
         return () => {
             active = false;
         };
-    }, [areaId, invalidate, objects, patternColors, selectedPatternId, texture]);
+    }, [areaId, invalidate, objects, patternColors, patternEnabled, selectedPatternId, texture]);
 
     useEffect(() => () => texture.dispose(), [texture]);
 

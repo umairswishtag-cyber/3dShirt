@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import {
     createDefaultPatternColors,
+    createDefaultPatternZones,
     SHIRT_PATTERNS_BY_ID,
 } from '../config/patterns';
 import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
@@ -26,6 +27,7 @@ const createSnapshot = (state) => ({
     shirtColors: { ...state.shirtColors },
     selectedPatternId: state.selectedPatternId,
     patternColors: clone(state.patternColors),
+    patternZones: { ...state.patternZones },
     designObjects: state.designObjects.map((object) => ({ ...object })),
 });
 
@@ -33,6 +35,7 @@ const restoreSnapshot = (snapshot) => ({
     shirtColors: { ...snapshot.shirtColors },
     selectedPatternId: snapshot.selectedPatternId ?? null,
     patternColors: clone(snapshot.patternColors ?? createDefaultPatternColors()),
+    patternZones: { ...(snapshot.patternZones ?? createDefaultPatternZones()) },
     designObjects: snapshot.designObjects.map((object) => ({ ...object })),
 });
 
@@ -52,6 +55,7 @@ export const useConfiguratorStore = create((set, get) => ({
     shirtColors: { ...DEFAULT_SHIRT_COLORS },
     selectedPatternId: null,
     patternColors: createDefaultPatternColors(),
+    patternZones: createDefaultPatternZones(),
     designObjects: [],
     selectedObjectId: null,
     isDirty: false,
@@ -83,10 +87,14 @@ export const useConfiguratorStore = create((set, get) => ({
 
     setShirtZoneColor: (zoneId, color) => {
         const state = get();
-        if (state.shirtColors[zoneId] === color) return;
+        const patternIsEnabled = state.patternZones[zoneId] === true;
+        if (state.shirtColors[zoneId] === color && !patternIsEnabled) return;
 
         set({
             shirtColors: { ...state.shirtColors, [zoneId]: color },
+            patternZones: patternIsEnabled
+                ? { ...state.patternZones, [zoneId]: false }
+                : state.patternZones,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -102,6 +110,9 @@ export const useConfiguratorStore = create((set, get) => ({
 
         set({
             selectedPatternId: nextPatternId,
+            patternZones: nextPatternId
+                ? createDefaultPatternZones()
+                : state.patternZones,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -123,6 +134,32 @@ export const useConfiguratorStore = create((set, get) => ({
                     [colorId]: color,
                 },
             },
+            past: pushHistory(state.past, createSnapshot(state)),
+            future: [],
+            isDirty: true,
+        });
+    },
+
+    setPatternZoneEnabled: (zoneId, enabled) => {
+        const state = get();
+        if (!(zoneId in state.patternZones)) return;
+        if (state.patternZones[zoneId] === enabled) return;
+
+        set({
+            patternZones: { ...state.patternZones, [zoneId]: enabled },
+            past: pushHistory(state.past, createSnapshot(state)),
+            future: [],
+            isDirty: true,
+        });
+    },
+
+    applyPatternToFullShirt: () => {
+        const state = get();
+        if (!state.selectedPatternId) return;
+        if (Object.values(state.patternZones).every(Boolean)) return;
+
+        set({
+            patternZones: createDefaultPatternZones(),
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -266,6 +303,7 @@ export const useConfiguratorStore = create((set, get) => ({
             shirtColors: { ...DEFAULT_SHIRT_COLORS },
             selectedPatternId: null,
             patternColors: createDefaultPatternColors(),
+            patternZones: createDefaultPatternZones(),
             designObjects: [],
             selectedObjectId: null,
             past: pushHistory(state.past, createSnapshot(state)),
@@ -306,6 +344,7 @@ export const useConfiguratorStore = create((set, get) => ({
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
                 patternColors: draft.patternColors,
+                patternZones: draft.patternZones,
                 designObjects: draft.designObjects,
                 activeDesignAreaId: draft.activeDesignAreaId,
                 cameraView: area.cameraView,

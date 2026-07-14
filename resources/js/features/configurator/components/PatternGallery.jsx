@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPatternSvgSource, SHIRT_PATTERNS } from '../config/patterns';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import PatternColorControls from './PatternColorControls';
+import PatternCoverageControls from './PatternCoverageControls';
 
 function PatternThumbnail({ pattern }) {
     const [source, setSource] = useState(null);
@@ -104,6 +105,7 @@ export default function PatternGallery() {
             {selectedPatternId && (
                 <div className="mt-4">
                     <PatternColorControls />
+                    <PatternCoverageControls />
                 </div>
             )}
         </div>
