@@ -1,11 +1,32 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function AdminShell({ title, children, actions = null }) {
     const { flash = {}, auth = {} } = usePage().props;
 
+    useEffect(() => {
+        if (flash.success) toast.success(flash.success, { icon: '✨' });
+    }, [flash.success]);
+
     return (
         <>
             <Head title={title} />
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 4200,
+                    style: {
+                        borderRadius: '16px',
+                        background: '#0f172a',
+                        color: '#fff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        padding: '14px 16px',
+                        boxShadow: '0 18px 50px rgba(15, 23, 42, 0.25)',
+                    },
+                }}
+            />
             <div className="min-h-dvh bg-slate-100 text-slate-950">
                 <header className="border-b border-slate-200 bg-white">
                     <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -29,11 +50,6 @@ export default function AdminShell({ title, children, actions = null }) {
                         <h1 className="text-2xl font-black tracking-tight">{title}</h1>
                         {actions}
                     </div>
-                    {flash.success && (
-                        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                            {flash.success}
-                        </div>
-                    )}
                     {children}
                 </main>
             </div>

@@ -18,9 +18,16 @@ class ConfiguratorPatternController extends Controller
 
     public function store(StoreConfiguratorPatternRequest $request, ConfiguratorProduct $product): RedirectResponse
     {
-        $this->products->addPattern($product, $request->validated());
+        $pattern = $this->products->addPattern($product, $request->validated());
 
-        return back()->with('success', 'Pattern uploaded and its SVG color slots were detected.');
+        $message = match (true) {
+            ! $pattern->is_active => 'Pattern uploaded as hidden. Activate it when it is ready.',
+            ! $product->is_published => 'Pattern uploaded. It will appear after this draft is published.',
+            ! $product->supports_patterns => 'Pattern uploaded, but SVG patterns must be enabled before customers can see it.',
+            default => 'Pattern uploaded and is now visible on the storefront.',
+        };
+
+        return back()->with('success', $message);
     }
 
     public function update(Request $request, ConfiguratorProduct $product, ConfiguratorPattern $pattern): RedirectResponse

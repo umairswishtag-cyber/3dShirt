@@ -22,7 +22,10 @@ class ConfiguratorProductController extends Controller
     {
         return Inertia::render('Admin/Configurator/ProductsIndex', [
             'products' => ConfiguratorProduct::query()
-                ->withCount('patterns')
+                ->withCount([
+                    'patterns',
+                    'patterns as active_patterns_count' => fn ($query) => $query->where('is_active', true),
+                ])
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get()
@@ -42,7 +45,9 @@ class ConfiguratorProductController extends Controller
         $product = $this->products->create($request->validated(), $request->user()?->id);
 
         return redirect()->route('admin.configurator.products.edit', $product)
-            ->with('success', 'Garment created. You can now add product-specific patterns.');
+            ->with('success', $product->is_published
+                ? 'Product created and published to the storefront.'
+                : 'Draft created. It remains hidden until you publish it.');
     }
 
     public function edit(ConfiguratorProduct $product): Response
@@ -56,9 +61,17 @@ class ConfiguratorProductController extends Controller
 
     public function update(StoreConfiguratorProductRequest $request, ConfiguratorProduct $product): RedirectResponse
     {
-        $this->products->update($product, $request->validated());
+        $wasPublished = $product->is_published;
+        $updated = $this->products->update($product, $request->validated());
 
-        return back()->with('success', 'Garment configuration saved.');
+        $message = match (true) {
+            ! $wasPublished && $updated->is_published => 'Product published. It is now available on the storefront.',
+            $wasPublished && ! $updated->is_published => 'Product unpublished. It is now hidden from the storefront.',
+            $updated->is_published => 'Live product changes saved to the storefront.',
+            default => 'Draft saved. It remains hidden from the storefront.',
+        };
+
+        return back()->with('success', $message);
     }
 
     public function destroy(ConfiguratorProduct $product): RedirectResponse
@@ -81,6 +94,8 @@ class ConfiguratorProductController extends Controller
             'modelUrl' => $this->storage->publicUrl($product->model_path, $product->model_url),
             'thumbnailUrl' => $this->storage->publicUrl($product->thumbnail_path, $product->thumbnail_url),
             'patternsCount' => $product->patterns_count ?? $product->patterns->count(),
+            'activePatternsCount' => $product->active_patterns_count
+                ?? ($product->relationLoaded('patterns') ? $product->patterns->where('is_active', true)->count() : 0),
             'patterns' => $product->relationLoaded('patterns')
                 ? $product->patterns->map(fn ($pattern) => [
                     ...$pattern->only(['id', 'name', 'slug', 'color_slots', 'is_active', 'sort_order']),

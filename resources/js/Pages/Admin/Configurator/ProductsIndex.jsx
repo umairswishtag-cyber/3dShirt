@@ -39,7 +39,9 @@ export default function ProductsIndex({ products }) {
                                     </div>
                                     <p className="mt-1 text-xs capitalize text-slate-500">{product.gender} / {product.category}</p>
                                 </div>
-                                <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold">{product.patternsCount} patterns</span>
+                                <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold">
+                                    {product.activePatternsCount}/{product.patternsCount} active patterns
+                                </span>
                             </div>
                             <p className="mt-4 text-sm text-slate-600">{product.description || 'No description'}</p>
                             <div className="mt-4 flex flex-wrap gap-1.5 text-[10px] font-bold uppercase">
@@ -49,7 +51,8 @@ export default function ProductsIndex({ products }) {
                                 {!product.supports_colors && !product.supports_patterns && !product.supports_logos && <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">Static model</span>}
                             </div>
                             <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-                                <Link href={route('admin.configurator.products.edit', product.id)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white">Configure</Link>
+                                <Link href={route('admin.configurator.products.edit', product.id)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white">{product.is_published ? 'Edit live product' : 'Continue draft'}</Link>
+                                {product.is_published && <Link href={route('configurator')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">View storefront</Link>}
                                 <button type="button" onClick={() => remove(product)} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50">Delete</button>
                             </div>
                         </article>

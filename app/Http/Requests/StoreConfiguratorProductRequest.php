@@ -21,9 +21,6 @@ class StoreConfiguratorProductRequest extends FormRequest
                 $decoded[$field] = json_decode($value, true);
             }
         }
-        if ($this->routeIs('admin.configurator.products.store')) {
-            $decoded['is_published'] = false;
-        }
         $this->merge($decoded);
     }
 
@@ -88,13 +85,48 @@ class StoreConfiguratorProductRequest extends FormRequest
                 ($this->boolean('supports_patterns') || $this->boolean('supports_logos')) &&
                 empty($this->input('print_areas'))
             ) {
-                $validator->errors()->add('print_areas', 'Add at least one print-area binding before publishing a product with patterns or logos. You can save it as a draft without bindings.');
+                $validator->errors()->add('print_areas', 'Choose at least one model area where customers can add patterns or logos. You can still save without it as a draft.');
+            }
+
+            if (
+                $this->boolean('is_published') &&
+                $this->boolean('supports_colors') &&
+                empty($this->input('mesh_zones'))
+            ) {
+                $validator->errors()->add('mesh_zones', 'Connect at least one part of the 3D model to a solid color option before publishing.');
+            }
+
+            if (
+                $this->boolean('is_published') &&
+                $this->boolean('supports_patterns') &&
+                (
+                    ($this->route('product') && ! $this->route('product')->patterns()->where('is_active', true)->exists()) ||
+                    (! $this->route('product') && (! $this->hasFile('pattern_svg') || ! $this->boolean('pattern_is_active')))
+                )
+            ) {
+                $validator->errors()->add('is_published', 'Upload or activate at least one SVG pattern before publishing with patterns enabled.');
+            }
+
+            if ($this->boolean('is_published') && $this->boolean('supports_patterns')) {
+                $printAreas = $this->input('print_areas', []) ?? [];
+                foreach ($this->input('pattern_zones', []) ?? [] as $patternZone) {
+                    if (! array_key_exists($patternZone, $printAreas)) {
+                        $validator->errors()->add('pattern_zones', "Review the {$patternZone} artwork area before publishing.");
+                    }
+                }
             }
 
             $zoneIds = collect($this->input('color_zones', []))->pluck('id')->filter();
             foreach ($this->input('mesh_zones', []) ?? [] as $mesh => $zoneId) {
                 if (! $zoneIds->contains($zoneId)) {
-                    $validator->errors()->add('mesh_zones', "Mesh {$mesh} references unknown color zone {$zoneId}.");
+                    $validator->errors()->add('mesh_zones', "The model part {$mesh} is connected to a color option that no longer exists.");
+                }
+            }
+
+            if ($this->boolean('is_published') && $this->boolean('supports_colors')) {
+                $connectedZoneIds = collect($this->input('mesh_zones', []) ?? [])->values()->unique();
+                foreach ($zoneIds->diff($connectedZoneIds) as $unusedZoneId) {
+                    $validator->errors()->add('color_zones', "The color option {$unusedZoneId} is not connected to the 3D model. Connect it or remove it before publishing.");
                 }
             }
 
@@ -102,5 +134,16 @@ class StoreConfiguratorProductRequest extends FormRequest
                 $validator->errors()->add('is_published', 'A GLB model is required before publishing.');
             }
         }];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'mesh_zones.array' => 'Mesh mappings must be valid JSON object data.',
+            'print_areas.array' => 'Print-area bindings must be valid JSON object data.',
+            'color_zones.array' => 'Color zones must be valid JSON array data.',
+            'allowed_colors.array' => 'Allowed colors must be valid JSON array data.',
+            'pattern_zones.array' => 'Pattern areas must be valid JSON array data.',
+        ];
     }
 }

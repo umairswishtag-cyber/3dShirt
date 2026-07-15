@@ -33,12 +33,21 @@ Successful login and registration redirect to `/admin`. All authenticated users 
    - SVG patterns
    - Logo placement
 4. Optionally upload the first SVG in the always-visible “Initial SVG pattern” section. Selecting a file automatically enables SVG patterns.
-5. Create the product. New products always start as drafts and open directly in the edit screen.
-6. Use the full pattern manager at the top of the edit screen to preview, add, reorder, activate, or remove SVG patterns.
-7. Configure mesh/color and print-area bindings and test the model.
-8. Enable “Published on storefront” from the edit screen when the product is ready.
+5. Choose “Publish product” when the storefront checklist is complete, or “Save draft” to keep unfinished work hidden. Both actions open the normal edit screen afterward.
+6. Use the SVG patterns section to preview, add, reorder, activate, or remove patterns.
+7. In Customer customization, choose customer color options and where patterns or logos may appear. Single-color products connect to the detected model parts automatically.
+8. Use the storefront-status checklist to resolve any remaining blockers, then choose “Publish to storefront”. “Save draft” never publishes a product.
 
-Draft products never appear in the storefront. A draft may contain an uploaded GLB and SVG patterns before its print-area bindings are complete. After creation, the administrator is redirected to the normal edit screen and full multi-pattern manager. Print-area bindings are enforced only when a product with patterns or logos is published. Hidden patterns never appear in their product’s pattern gallery. Deleting a product also deletes its managed uploads and product-specific patterns.
+Draft products never appear in the storefront. A draft may contain an uploaded GLB and SVG patterns before its print-area bindings are complete. After creation, the administrator is redirected to the normal edit screen and full multi-pattern manager. Print-area bindings are enforced only when a product with patterns or logos is published. Publishing with patterns also requires an active pattern and a binding for every enabled pattern coverage area. Hidden patterns never appear in their product’s pattern gallery. Deleting a product also deletes its managed uploads and product-specific patterns.
+
+The editor keeps publication separate from ordinary saving:
+
+- “Save draft” persists incomplete work without storefront validation.
+- “Publish to storefront” is available when the readiness checklist is complete.
+- “Save live changes” updates an already-published product.
+- “Unpublish” immediately removes the product from the catalog without deleting it.
+
+An active pattern added to a published product with SVG patterns enabled appears in the storefront catalog immediately. A pattern added to a draft waits for publication; an inactive pattern or a pattern on a product with SVG patterns disabled remains hidden. These states are shown on every pattern card in the admin editor.
 
 ## Capability examples
 
@@ -56,7 +65,7 @@ The SVG upload and print-area binding serve different purposes: the SVG is the a
 
 ## GLB mesh contract
 
-The renderer uses the node/mesh names authored inside the GLB. Names are case-sensitive. The admin does not guess garment semantics because a GLB does not reliably identify “body,” “collar,” or “left sleeve.”
+The renderer uses the node/mesh names authored inside the GLB. Names are case-sensitive. The normal admin flow hides these details: single-color products are connected automatically, while multi-color products offer an optional model-part review. Exact mesh data remains in the collapsed developer settings because a GLB does not reliably identify “body,” “collar,” or “left sleeve.”
 
 Mesh-to-color-zone example:
 
@@ -82,7 +91,7 @@ Every mesh mapping must reference one of the configured color-zone IDs.
 
 ## Logo and pattern print areas
 
-After a GLB is selected on the create or edit screen, the admin form inspects it and shows one mesh dropdown for each print area. Choosing a mesh copies its detected UV bounds into the binding automatically. Meshes without UV coordinates are shown as unavailable because patterns and logos cannot be mapped onto them. The advanced JSON editor is retained only as a fallback for unusual models or manual UV-bound overrides.
+After a GLB is selected, the admin form checks where artwork can be placed and shows a simple model-part choice for the front, back, and sleeves. Choosing a part fills its technical placement data automatically. Parts that cannot display artwork are unavailable. If the model has no artwork-ready parts, it can still use solid colors, but patterns and logos must be disabled or the model must be re-exported with UV maps. Technical UV and JSON data is retained only in the collapsed developer settings.
 
 The current storefront supports `front`, `back`, `leftSleeve`, and `rightSleeve`. Each enabled area needs a mesh name and the UV bounds used to map the 1024 × 1024 design canvas onto that mesh.
 

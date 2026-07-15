@@ -40,6 +40,7 @@ class ConfiguratorAdminTest extends TestCase
         $response = $this->actingAs($user)->post('/admin/configurator/products', [
             ...$this->validProductData(),
             'model' => UploadedFile::fake()->create('jacket.glb', 256, 'model/gltf-binary'),
+            'is_published' => false,
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -63,6 +64,9 @@ class ConfiguratorAdminTest extends TestCase
             'user_id' => $user->id,
             'slug' => 'service-jacket',
             'model_url' => '/models/test.glb',
+            'supports_patterns' => true,
+            'print_areas' => ['front' => $this->frontPrintArea()],
+            'pattern_zones' => ['front'],
         ]);
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script><rect width="20" height="20" fill="#123456"/><path stroke="#ABCDEF" d="M0 0L20 20"/></svg>';
 
@@ -112,6 +116,34 @@ class ConfiguratorAdminTest extends TestCase
         $this->assertSame(['#112233', '#AABBCC'], collect($product->patterns->first()->color_slots)->pluck('source')->all());
     }
 
+    public function test_admin_can_publish_a_complete_product_directly_during_creation(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="#112233"/></svg>';
+
+        $response = $this->actingAs($user)->post('/admin/configurator/products', [
+            ...$this->validProductData(),
+            'model' => UploadedFile::fake()->create('ready-shirt.glb', 256, 'model/gltf-binary'),
+            'supports_patterns' => true,
+            'is_published' => true,
+            'print_areas' => ['front' => $this->frontPrintArea()],
+            'pattern_zones' => ['front'],
+            'pattern_name' => 'Ready pattern',
+            'pattern_svg' => UploadedFile::fake()->createWithContent('ready.svg', $svg),
+            'pattern_is_active' => true,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $product = ConfiguratorProduct::with('patterns')->firstOrFail();
+        $this->assertTrue($product->is_published);
+        $this->assertCount(1, $product->patterns);
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $product->slug)
+            ->assertJsonPath('data.0.patterns.0.id', 'ready-pattern');
+    }
+
     public function test_pattern_product_requires_a_print_binding_only_when_it_is_published(): void
     {
         $user = User::factory()->create();
@@ -125,6 +157,19 @@ class ConfiguratorAdminTest extends TestCase
             'print_areas' => [],
         ]);
 
+        $draftResponse = $this->actingAs($user)->put(
+            route('admin.configurator.products.update', $product),
+            [
+                ...$this->validProductData(),
+                'supports_patterns' => true,
+                'is_published' => false,
+                'print_areas' => [],
+            ],
+        );
+
+        $draftResponse->assertSessionHasNoErrors();
+        $this->assertFalse($product->fresh()->is_published);
+
         $response = $this->actingAs($user)->put(
             route('admin.configurator.products.update', $product),
             [
@@ -136,6 +181,75 @@ class ConfiguratorAdminTest extends TestCase
         );
 
         $response->assertSessionHasErrors('print_areas');
+        $this->assertFalse($product->fresh()->is_published);
+    }
+
+    public function test_product_with_an_active_pattern_can_be_published_and_reaches_the_storefront(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'publishable-pattern-shirt',
+            'model_url' => '/models/publishable.glb',
+            'supports_patterns' => true,
+            'is_published' => false,
+            'print_areas' => ['front' => $this->frontPrintArea()],
+            'pattern_zones' => ['front'],
+        ]);
+        $product->patterns()->create([
+            'name' => 'Ready pattern',
+            'slug' => 'ready-pattern',
+            'svg_url' => '/patterns/ready.svg',
+            'color_slots' => [],
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->put(
+            route('admin.configurator.products.update', $product),
+            [
+                ...$this->validProductData(),
+                'supports_patterns' => true,
+                'is_published' => true,
+                'print_areas' => ['front' => $this->frontPrintArea()],
+                'pattern_zones' => ['front'],
+            ],
+        );
+
+        $response->assertSessionHasNoErrors();
+        $this->assertTrue($product->fresh()->is_published);
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', 'publishable-pattern-shirt')
+            ->assertJsonPath('data.0.patterns.0.id', 'ready-pattern');
+    }
+
+    public function test_patterns_capability_requires_an_active_pattern_before_publishing(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'patternless-shirt',
+            'model_url' => '/models/patternless.glb',
+            'supports_patterns' => true,
+            'is_published' => false,
+            'print_areas' => ['front' => $this->frontPrintArea()],
+            'pattern_zones' => ['front'],
+        ]);
+
+        $response = $this->actingAs($user)->put(
+            route('admin.configurator.products.update', $product),
+            [
+                ...$this->validProductData(),
+                'supports_patterns' => true,
+                'is_published' => true,
+                'print_areas' => ['front' => $this->frontPrintArea()],
+                'pattern_zones' => ['front'],
+            ],
+        );
+
+        $response->assertSessionHasErrors('is_published');
         $this->assertFalse($product->fresh()->is_published);
     }
 
@@ -182,6 +296,15 @@ class ConfiguratorAdminTest extends TestCase
             'supports_logos' => false,
             'is_published' => true,
             'sort_order' => 0,
+        ];
+    }
+
+    private function frontPrintArea(): array
+    {
+        return [
+            'meshName' => 'BodyMesh',
+            'outwardNormalZ' => null,
+            'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
         ];
     }
 }
