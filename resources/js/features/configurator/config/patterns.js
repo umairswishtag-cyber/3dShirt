@@ -87,7 +87,17 @@ export const PATTERN_ZONE_OPTIONS = [
     { id: 'back', label: 'Back' },
     { id: 'leftSleeve', label: 'Left sleeve' },
     { id: 'rightSleeve', label: 'Right sleeve' },
-    { id: 'fullBody', label: 'Full body' },
+    { id: 'leftShoe', label: 'Left shoe' },
+    { id: 'rightShoe', label: 'Right shoe' },
+    { id: 'toe', label: 'Toe area' },
+    { id: 'heel', label: 'Heel area' },
+    { id: 'tongue', label: 'Tongue / top' },
+    { id: 'frontPanel', label: 'Front panel' },
+    { id: 'backPanel', label: 'Back panel' },
+    { id: 'leftPanel', label: 'Left side' },
+    { id: 'rightPanel', label: 'Right side' },
+    { id: 'brim', label: 'Brim / visor' },
+    { id: 'fullBody', label: 'Full product' },
 ];
 
 export function createDefaultPatternZones(zoneIds = PATTERN_ZONE_OPTIONS.map((zone) => zone.id)) {

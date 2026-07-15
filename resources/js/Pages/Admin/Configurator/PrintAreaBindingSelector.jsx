@@ -1,21 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-const PRINT_AREAS = [
-    { id: 'front', label: 'Front body' },
-    { id: 'back', label: 'Back body' },
-    { id: 'leftSleeve', label: 'Left sleeve' },
-    { id: 'rightSleeve', label: 'Right sleeve' },
-    { id: 'fullBody', label: 'Full body' },
-];
-
-const GENERATED_PROJECTIONS = {
-    front: { type: 'planar', axis: 'z', direction: 1 },
-    back: { type: 'planar', axis: 'z', direction: -1 },
-    leftSleeve: { type: 'planar', axis: 'x', direction: 1 },
-    rightSleeve: { type: 'planar', axis: 'x', direction: -1 },
-    fullBody: { type: 'box', axis: null, direction: null },
+const boxProjection = { type: 'box', axis: null, direction: null };
+const PRINT_AREA_PRESETS = {
+    garment: [
+        { id: 'front', label: 'Front body', projection: { type: 'planar', axis: 'z', direction: 1 } },
+        { id: 'back', label: 'Back body', projection: { type: 'planar', axis: 'z', direction: -1 } },
+        { id: 'leftSleeve', label: 'Left sleeve', projection: { type: 'planar', axis: 'x', direction: 1 } },
+        { id: 'rightSleeve', label: 'Right sleeve', projection: { type: 'planar', axis: 'x', direction: -1 } },
+        { id: 'fullBody', label: 'Full body', projection: boxProjection },
+    ],
+    footwear: [
+        { id: 'leftShoe', label: 'Left shoe / outer side', projection: { type: 'planar', axis: 'x', direction: 1 } },
+        { id: 'rightShoe', label: 'Right shoe / outer side', projection: { type: 'planar', axis: 'x', direction: -1 } },
+        { id: 'toe', label: 'Toe area', projection: { type: 'planar', axis: 'z', direction: 1 } },
+        { id: 'heel', label: 'Heel area', projection: { type: 'planar', axis: 'z', direction: -1 } },
+        { id: 'tongue', label: 'Tongue / top', projection: { type: 'planar', axis: 'y', direction: 1 } },
+        { id: 'fullBody', label: 'Full shoe', projection: boxProjection },
+    ],
+    headwear: [
+        { id: 'frontPanel', label: 'Front panel', projection: { type: 'planar', axis: 'z', direction: 1 } },
+        { id: 'backPanel', label: 'Back panel', projection: { type: 'planar', axis: 'z', direction: -1 } },
+        { id: 'leftPanel', label: 'Left side', projection: { type: 'planar', axis: 'x', direction: 1 } },
+        { id: 'rightPanel', label: 'Right side', projection: { type: 'planar', axis: 'x', direction: -1 } },
+        { id: 'brim', label: 'Brim / visor', projection: { type: 'planar', axis: 'y', direction: 1 } },
+        { id: 'fullBody', label: 'Full cap or hat', projection: boxProjection },
+    ],
 };
+
+const categoryFamily = (category) => ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(category)
+    ? 'footwear'
+    : ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category)
+      ? 'headwear'
+      : 'garment';
 
 function parseBindings(value) {
     try {
@@ -70,11 +87,12 @@ function disposeScene(scene) {
     });
 }
 
-export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, onChange, error, onInspection, onDisableArtwork, enabled = true }) {
+export default function PrintAreaBindingSelector({ modelFile, modelUrl, category, value, onChange, error, onInspection, onDisableArtwork, enabled = true }) {
     const [meshes, setMeshes] = useState([]);
     const [status, setStatus] = useState(modelFile || modelUrl ? 'loading' : 'empty');
     const [inspectionError, setInspectionError] = useState(null);
     const bindings = useMemo(() => parseBindings(value), [value]);
+    const printAreas = PRINT_AREA_PRESETS[categoryFamily(category)];
 
     useEffect(() => {
         let active = true;
@@ -144,11 +162,12 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
         } else {
             const mesh = meshes.find((item) => item.name === meshName);
             if (!mesh) return;
+            const area = printAreas.find((item) => item.id === areaId);
             next[areaId] = {
                 meshName: mesh.name,
                 outwardNormalZ: null,
                 uvBounds: mesh.uvBounds ?? { min: [0, 0], max: [1, 1] },
-                ...(mesh.uvBounds ? {} : { projection: GENERATED_PROJECTIONS[areaId] }),
+                ...(mesh.uvBounds ? {} : { projection: area.projection }),
             };
         }
         onChange(JSON.stringify(next, null, 2));
@@ -161,7 +180,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <p className="text-sm font-black text-slate-800">Where can customers add patterns or logos?</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">For each side you offer, choose the matching part of the 3D model. We handle the placement settings automatically.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">For each artwork area you offer, choose the matching part of the 3D model. Placement settings are prepared automatically.</p>
                 </div>
                 {status === 'ready' && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">{meshes.length} artwork-ready part{meshes.length === 1 ? '' : 's'}</span>}
             </div>
@@ -171,7 +190,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             {inspectionError && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">{inspectionError}</p>}
             {status === 'ready' && meshes.length > 0 && uvMeshCount === 0 && (
                 <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold leading-5 text-blue-900">
-                    This model has no UV map, so the configurator will generate artwork projection automatically. For a single-piece garment, choose <strong>Full body</strong>, or choose individual views when you only want artwork on one side.
+                    This model has no UV map, so the configurator will generate artwork projection automatically. Choose the complete-product option for one-piece models, or choose individual areas when artwork should appear on one side only.
                     {onDisableArtwork && (
                         <button type="button" onClick={onDisableArtwork} className="mt-3 block rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-black text-blue-800 hover:bg-blue-100">
                             Use this as a solid-color product
@@ -182,7 +201,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
 
             {status === 'ready' && meshes.length > 0 && (
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    {PRINT_AREAS.map((area) => (
+                    {printAreas.map((area) => (
                         <label key={area.id} className="rounded-xl border border-slate-200 bg-white p-3">
                             <span className="mb-1.5 block text-xs font-black text-slate-800">{area.label}</span>
                             <select

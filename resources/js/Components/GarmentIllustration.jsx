@@ -1,6 +1,6 @@
 export default function GarmentIllustration({ type = 'shirt', className = '' }) {
     const dress = type === 'dress' || type === 'dresses';
-    const footwear = type === 'footwear';
+    const footwear = ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(type);
     const headwear = ['caps', 'hats', 'cap', 'hat'].includes(type);
     const label = dress ? 'Dress' : footwear ? 'Footwear' : headwear ? 'Headwear' : 'Shirt';
 

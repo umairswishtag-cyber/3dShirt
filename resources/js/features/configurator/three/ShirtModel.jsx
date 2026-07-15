@@ -153,25 +153,26 @@ function PrintSurface({ geometry, texture, uvBounds, name }) {
     );
 }
 
+function BoundPrintSurface({ areaId, binding, geometry }) {
+    const texture = useDesignTexture(areaId);
+
+    return (
+        <PrintSurface
+            name={`print_${areaId}`}
+            geometry={geometry}
+            texture={texture}
+            uvBounds={binding.uvBounds}
+        />
+    );
+}
+
 export default function ShirtModel() {
     const invalidate = useThree((state) => state.invalidate);
     const product = useConfiguratorStore((state) => state.product);
     const modelConfig = product.model;
     const colors = useConfiguratorStore((state) => state.shirtColors);
-    const frontTexture = useDesignTexture('front');
-    const backTexture = useDesignTexture('back');
-    const leftSleeveTexture = useDesignTexture('leftSleeve');
-    const rightSleeveTexture = useDesignTexture('rightSleeve');
-    const fullBodyTexture = useDesignTexture('fullBody');
     const { scene, nodes } = useGLTF(modelConfig.url);
     const modelScene = useMemo(() => cloneModelScene(scene), [scene]);
-    const printTextures = {
-        front: frontTexture,
-        back: backTexture,
-        leftSleeve: leftSleeveTexture,
-        rightSleeve: rightSleeveTexture,
-        fullBody: fullBodyTexture,
-    };
 
     const printMeshes = useMemo(() => {
         scene.updateMatrixWorld(true);
@@ -181,7 +182,7 @@ export default function ShirtModel() {
 
             if (!node?.geometry) {
                 throw new Error(
-                    `The T-shirt GLB is missing the ${binding.meshName} mesh required for the ${areaId} print area.`,
+                    `The product GLB is missing the ${binding.meshName} mesh required for the ${areaId} artwork area.`,
                 );
             }
 
@@ -246,12 +247,11 @@ export default function ShirtModel() {
             <group position={modelTransform.center.map((value) => -value)}>
                 <primitive object={modelScene} />
                 {Object.entries(modelConfig.printAreas).map(([areaId, binding]) => (
-                    <PrintSurface
+                    <BoundPrintSurface
                         key={areaId}
-                        name={`print_${areaId}`}
+                        areaId={areaId}
+                        binding={binding}
                         geometry={printMeshes[areaId]}
-                        texture={printTextures[areaId]}
-                        uvBounds={binding.uvBounds}
                     />
                 ))}
             </group>

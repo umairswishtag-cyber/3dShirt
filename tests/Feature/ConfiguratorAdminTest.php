@@ -306,6 +306,43 @@ class ConfiguratorAdminTest extends TestCase
             ->assertJsonPath('data.0.model.printAreas.fullBody.projection.type', 'box');
     }
 
+    public function test_footwear_and_headwear_artwork_areas_are_valid_product_configuration(): void
+    {
+        $user = User::factory()->create();
+        $cases = [
+            ['category' => 'footwear', 'area' => 'toe'],
+            ['category' => 'caps', 'area' => 'brim'],
+        ];
+
+        foreach ($cases as $index => $case) {
+            $product = ConfiguratorProduct::create([
+                ...$this->validProductData(),
+                'user_id' => $user->id,
+                'slug' => $case['category'].'-'.$index,
+                'model_url' => '/models/'.$case['category'].'.glb',
+                'category' => $case['category'],
+                'supports_logos' => false,
+                'is_published' => false,
+            ]);
+            $binding = [
+                'meshName' => 'BodyMesh',
+                'outwardNormalZ' => null,
+                'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+                'projection' => ['type' => 'planar', 'axis' => $case['area'] === 'brim' ? 'y' : 'z', 'direction' => 1],
+            ];
+
+            $this->actingAs($user)->put(route('admin.configurator.products.update', $product), [
+                ...$this->validProductData(),
+                'category' => $case['category'],
+                'supports_logos' => true,
+                'is_published' => true,
+                'print_areas' => [$case['area'] => $binding],
+            ])->assertSessionHasNoErrors();
+
+            $this->assertArrayHasKey($case['area'], $product->fresh()->print_areas);
+        }
+    }
+
     public function test_patterns_capability_requires_an_active_pattern_before_publishing(): void
     {
         $user = User::factory()->create();

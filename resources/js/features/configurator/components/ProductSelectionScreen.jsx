@@ -108,5 +108,5 @@ function EmptyCatalog() {
     return <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-9 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-slate-400 shadow-sm"><UiIcon name="products" /></span><p className="mt-4 text-sm font-bold">No garments are published yet</p><p className="mt-1 text-xs text-slate-500">An administrator must publish a configured 3D product first.</p></div>;
 }
 
-const categoryIcon = (category) => category === 'dresses' ? 'dress' : category === 'shirts' ? 'shirt' : ['caps', 'hats'].includes(category) ? 'cap' : category === 'footwear' ? 'footwear' : 'products';
+const categoryIcon = (category) => category === 'dresses' ? 'dress' : category === 'shirts' ? 'shirt' : ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category) ? 'cap' : ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(category) ? 'footwear' : 'products';
 const titleCase = (value) => value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());

@@ -21,7 +21,7 @@ const productColors = (product) => ({
     ...(product?.defaultColors ?? {}),
 });
 const SHIRT_ZONE_PATTERN_AREAS = {
-    body: ['front', 'back', 'fullBody'],
+    body: ['front', 'back', 'leftShoe', 'rightShoe', 'toe', 'heel', 'tongue', 'frontPanel', 'backPanel', 'leftPanel', 'rightPanel', 'brim', 'fullBody'],
     leftSleeve: ['leftSleeve', 'fullBody'],
     rightSleeve: ['rightSleeve', 'fullBody'],
 };
