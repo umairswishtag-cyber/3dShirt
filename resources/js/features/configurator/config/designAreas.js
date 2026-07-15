@@ -66,3 +66,8 @@ export const DESIGN_AREAS = [
 export const DESIGN_AREAS_BY_ID = Object.fromEntries(
     DESIGN_AREAS.map((area) => [area.id, area]),
 );
+
+export function shouldFlipEditorY(areaId, category) {
+    return ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category)
+        && ['frontPanel', 'backPanel', 'leftPanel', 'rightPanel', 'brim', 'fullBody'].includes(areaId);
+}

@@ -5,6 +5,7 @@ import {
     createDefaultPatternZones,
 } from '../config/patterns';
 import { DEFAULT_PRODUCT_ID, PRODUCTS_BY_ID } from '../config/productCatalog';
+import { constrainDesignObject } from './designObjectConstraints';
 
 export const LOCAL_DESIGN_STORAGE_KEY = 'promoplus-configurator-design-v1';
 export const LOCAL_DESIGN_SCHEMA_VERSION = 1;
@@ -43,7 +44,7 @@ export function parseLocalDesign(rawValue) {
             typeof object.id === 'string' &&
             Boolean(DESIGN_AREAS_BY_ID[object.areaId]) &&
             typeof object.source === 'string',
-    );
+    ).map((object) => constrainDesignObject(object, DESIGN_AREAS_BY_ID[object.areaId]));
     const product = PRODUCTS_BY_ID[value.productId];
     const patterns = product.patterns ?? [];
     const defaultPatternColors = createDefaultPatternColors(patterns);

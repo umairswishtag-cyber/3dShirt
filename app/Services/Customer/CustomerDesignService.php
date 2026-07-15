@@ -34,7 +34,7 @@ class CustomerDesignService
             'status' => ['required', Rule::in(['DRAFT', 'FINAL'])],
             'productId' => ['required', 'string', 'max:160'],
             'productName' => ['required', 'string', 'max:160'],
-            'document' => ['required', 'string', 'max:6291456'],
+            'document' => ['required', 'string', 'max:524288'],
         ])->validate();
 
         json_decode($data['document'], true, 512, JSON_THROW_ON_ERROR);

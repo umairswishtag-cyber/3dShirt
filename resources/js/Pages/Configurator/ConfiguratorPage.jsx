@@ -17,6 +17,7 @@ import { useConfiguratorStore } from '@/features/configurator/stores/useConfigur
 import { replaceProductCatalog } from '@/features/configurator/config/productCatalog';
 import { createLocalDesignPayload } from '@/features/configurator/utils/designSerialization';
 import { graphqlRequest } from '@/services/graphqlClient';
+import { isInlineDesignAsset, storeDesignAsset } from '@/services/designAssetService';
 
 const LOAD_DESIGN = `query LoadDesign($id: ID!) { myDesign(id: $id) { id title status document } }`;
 const SAVE_DESIGN = `
@@ -48,6 +49,7 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
     const [activeTool, setActiveTool] = useState('colors');
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
+    const [printEditorExpanded, setPrintEditorExpanded] = useState(false);
     const [catalogOpen, setCatalogOpen] = useState(!requestedDesignId && !initialProductId);
     const [designId, setDesignId] = useState(requestedDesignId);
     const [designTitle, setDesignTitle] = useState('');
@@ -106,11 +108,16 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
             toast('Preview mode does not create customer designs.', { icon: '👁️' });
             return;
         }
-        const state = useConfiguratorStore.getState();
-        const document = createLocalDesignPayload(state);
         setSaving(true);
 
         try {
+            let state = useConfiguratorStore.getState();
+            for (const object of state.designObjects.filter((item) => isInlineDesignAsset(item.source))) {
+                const source = await storeDesignAsset(object.source, object.name);
+                useConfiguratorStore.getState().updateDesignObject(object.id, { source }, false);
+            }
+            state = useConfiguratorStore.getState();
+            const document = createLocalDesignPayload(state);
             const data = await graphqlRequest(SAVE_DESIGN, {
                 input: {
                     id: designId,
@@ -215,18 +222,32 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
                         </div>
 
                         {product.capabilities.logos && <div className="absolute bottom-5 left-5 z-10 hidden w-[260px] rounded-2xl border border-white/80 bg-white/95 p-3 shadow-2xl backdrop-blur lg:block xl:w-[290px]">
-                            <div className="mb-2 flex items-center justify-between">
+                            <div className="mb-2 flex items-center justify-between gap-2">
                                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                                     2D print editor
                                 </p>
-                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                                    Live
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Live</span>
+                                    <button type="button" onClick={() => setPrintEditorExpanded(true)} className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-200">Expand</button>
+                                </div>
                             </div>
                             <Suspense fallback={<CanvasLoadingState />}>
                                 <DesignCanvas compact />
                             </Suspense>
                         </div>}
+
+                        {printEditorExpanded && product.capabilities.logos && (
+                            <div className="pointer-events-none fixed inset-0 z-[80] flex items-center justify-start p-4 lg:pl-[360px]" role="dialog" aria-modal="false" aria-label="Expanded 2D print editor">
+                                <div className="pointer-events-auto w-full max-w-[30rem] rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+                                    <div className="mb-5 flex items-start justify-between gap-4">
+                                        <div><p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">Live placement</p><h2 className="mt-1 text-xl font-black text-slate-950">2D print editor</h2><p className="mt-1 text-xs text-slate-500">Drag, resize, and rotate while watching the 3D product update beside it.</p></div>
+                                        <button type="button" onClick={() => setPrintEditorExpanded(false)} className="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xl text-slate-600 hover:bg-slate-200" aria-label="Close expanded editor">&times;</button>
+                                    </div>
+                                    <Suspense fallback={<CanvasLoadingState />}><DesignCanvas /></Suspense>
+                                    <button type="button" onClick={() => setPrintEditorExpanded(false)} className="mt-5 min-h-11 w-full rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800">Done positioning</button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 lg:block">
                             <DesignAreaSelector />

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    Group,
     Image as KonvaImage,
     Layer,
     Rect,
@@ -8,7 +7,7 @@ import {
     Transformer,
 } from 'react-konva';
 import { shallow } from 'zustand/shallow';
-import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
+import { DESIGN_AREAS_BY_ID, shouldFlipEditorY } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import {
     designObjectToKonvaProps,
@@ -34,7 +33,7 @@ function useCanvasImage(source) {
     return image;
 }
 
-function DesignImage({ object, canvasSize, isSelected }) {
+function DesignImage({ object, canvasSize, isSelected, flipEditorY }) {
     const image = useCanvasImage(object.source);
     const imageRef = useRef(null);
     const transformerRef = useRef(null);
@@ -43,8 +42,8 @@ function DesignImage({ object, canvasSize, isSelected }) {
     const beginObjectTransform = useConfiguratorStore((state) => state.beginObjectTransform);
     const commitObjectTransform = useConfiguratorStore((state) => state.commitObjectTransform);
     const props = useMemo(
-        () => designObjectToKonvaProps(object, canvasSize),
-        [canvasSize, object],
+        () => designObjectToKonvaProps(object, canvasSize, flipEditorY),
+        [canvasSize, flipEditorY, object],
     );
 
     useEffect(() => {
@@ -56,7 +55,7 @@ function DesignImage({ object, canvasSize, isSelected }) {
     const previewTransform = (event) => {
         updateDesignObject(
             object.id,
-            konvaNodeToDesignPatch(event.target, canvasSize),
+            konvaNodeToDesignPatch(event.target, canvasSize, flipEditorY),
             false,
         );
     };
@@ -111,6 +110,7 @@ export default function DesignCanvas({ compact = false }) {
     const [canvasSize, setCanvasSize] = useState(compact ? 230 : 300);
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
+    const productCategory = useConfiguratorStore((state) => state.product.category);
     const selectDesignObject = useConfiguratorStore((state) => state.selectDesignObject);
     const objects = useConfiguratorStore(
         (state) =>
@@ -120,6 +120,7 @@ export default function DesignCanvas({ compact = false }) {
         shallow,
     );
     const area = DESIGN_AREAS_BY_ID[activeDesignAreaId];
+    const flipEditorY = shouldFlipEditorY(activeDesignAreaId, productCategory);
 
     useEffect(() => {
         if (!containerRef.current) return undefined;
@@ -177,21 +178,15 @@ export default function DesignCanvas({ compact = false }) {
                         />
                     </Layer>
                     <Layer>
-                        <Group
-                            clipX={bounds.x}
-                            clipY={bounds.y}
-                            clipWidth={bounds.width}
-                            clipHeight={bounds.height}
-                        >
-                            {objects.map((object) => (
-                                <DesignImage
-                                    key={object.id}
-                                    object={object}
-                                    canvasSize={canvasSize}
-                                    isSelected={object.id === selectedObjectId}
-                                />
-                            ))}
-                        </Group>
+                        {objects.map((object) => (
+                            <DesignImage
+                                key={object.id}
+                                object={object}
+                                canvasSize={canvasSize}
+                                isSelected={object.id === selectedObjectId}
+                                flipEditorY={flipEditorY}
+                            />
+                        ))}
                     </Layer>
                 </Stage>
             </div>
@@ -201,4 +196,3 @@ export default function DesignCanvas({ compact = false }) {
         </div>
     );
 }
-

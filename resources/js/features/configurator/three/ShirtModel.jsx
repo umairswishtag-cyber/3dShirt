@@ -146,6 +146,9 @@ function PrintSurface({ geometry, texture, uvBounds, name }) {
                 alphaTest={0.01}
                 depthWrite={false}
                 depthTest
+                polygonOffset
+                polygonOffsetFactor={-4}
+                polygonOffsetUnits={-4}
                 side={FrontSide}
                 toneMapped={false}
             />

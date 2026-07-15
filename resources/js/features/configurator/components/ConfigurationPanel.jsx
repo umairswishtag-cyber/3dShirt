@@ -1,4 +1,5 @@
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
+import { shouldFlipEditorY } from '../config/designAreas';
 
 function NumberField({ label, value, min, max, step = 1, onChange, suffix }) {
     return (
@@ -65,7 +66,9 @@ export default function ConfigurationPanel({ embedded = false }) {
     );
     const updateDesignObject = useConfiguratorStore((state) => state.updateDesignObject);
     const duplicateDesignObject = useConfiguratorStore((state) => state.duplicateDesignObject);
+    const fitDesignObject = useConfiguratorStore((state) => state.fitDesignObject);
     const removeDesignObject = useConfiguratorStore((state) => state.removeDesignObject);
+    const flipEditorY = shouldFlipEditorY(activeDesignAreaId, product.category);
 
     const content = !object ? (
         <div className="space-y-5">
@@ -118,13 +121,13 @@ export default function ConfigurationPanel({ embedded = false }) {
                 />
                 <NumberField
                     label="Position Y"
-                    value={Math.round(object.y * 100)}
+                    value={Math.round((flipEditorY ? 1 - object.y : object.y) * 100)}
                     min={0}
                     max={100}
                     suffix="%"
                     onChange={(value) =>
                         Number.isFinite(value) &&
-                        updateDesignObject(selectedObjectId, { y: Math.max(0, Math.min(1, value / 100)) })
+                        updateDesignObject(selectedObjectId, { y: flipEditorY ? 1 - Math.max(0, Math.min(1, value / 100)) : Math.max(0, Math.min(1, value / 100)) })
                     }
                 />
             </div>
@@ -146,13 +149,13 @@ export default function ConfigurationPanel({ embedded = false }) {
             />
             <SliderField
                 label="Rotation"
-                value={object.rotation}
+                value={flipEditorY ? -object.rotation : object.rotation}
                 min={-180}
                 max={180}
                 step={1}
-                displayValue={`${Math.round(object.rotation)}°`}
+                displayValue={`${Math.round(flipEditorY ? -object.rotation : object.rotation)}°`}
                 onPreview={(value) =>
-                    updateDesignObject(selectedObjectId, { rotation: value }, false)
+                    updateDesignObject(selectedObjectId, { rotation: flipEditorY ? -value : value }, false)
                 }
             />
             <SliderField
@@ -191,6 +194,14 @@ export default function ConfigurationPanel({ embedded = false }) {
                     Flip vertical
                 </button>
             </div>
+
+            <button
+                type="button"
+                onClick={() => fitDesignObject(selectedObjectId)}
+                className="min-h-10 w-full rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+            >
+                Fit safely inside print area
+            </button>
 
             <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
                 <button

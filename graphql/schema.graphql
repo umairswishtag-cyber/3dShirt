@@ -61,6 +61,15 @@ input SaveCustomerDesignInput {
     document: String!
 }
 
+input StoreCustomerDesignAssetInput {
+    name: String!
+    dataUrl: String!
+}
+
+type CustomerDesignAssetPayload {
+    url: String!
+}
+
 type Query {
     catalogTaxonomies: [CatalogTaxonomy!]! @field(resolver: "App\\GraphQL\\Queries\\CatalogTaxonomies")
     customerMe: Customer! @field(resolver: "App\\GraphQL\\Queries\\CustomerMe")
@@ -77,6 +86,8 @@ type Mutation {
         @field(resolver: "App\\GraphQL\\Mutations\\CustomerLogout")
     saveMyDesign(input: SaveCustomerDesignInput!): CustomerDesign!
         @field(resolver: "App\\GraphQL\\Mutations\\SaveMyDesign")
+    storeMyDesignAsset(input: StoreCustomerDesignAssetInput!): CustomerDesignAssetPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\StoreMyDesignAsset")
     deleteMyDesign(id: ID!): Boolean!
         @field(resolver: "App\\GraphQL\\Mutations\\DeleteMyDesign")
 }

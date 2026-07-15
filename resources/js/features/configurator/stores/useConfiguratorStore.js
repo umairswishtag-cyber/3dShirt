@@ -14,6 +14,7 @@ import {
     LOCAL_DESIGN_STORAGE_KEY,
     parseLocalDesign,
 } from '../utils/designSerialization';
+import { constrainDesignObject, fitDesignObjectInsideArea } from '../utils/designObjectConstraints';
 
 const MAX_HISTORY_LENGTH = 40;
 const productColors = (product) => ({
@@ -47,7 +48,10 @@ const restoreSnapshot = (snapshot) => ({
     selectedPatternId: snapshot.selectedPatternId ?? null,
     patternColors: clone(snapshot.patternColors ?? createDefaultPatternColors()),
     patternZones: { ...(snapshot.patternZones ?? createDefaultPatternZones()) },
-    designObjects: snapshot.designObjects.map((object) => ({ ...object })),
+    designObjects: snapshot.designObjects.map((object) => constrainDesignObject(
+        { ...object },
+        DESIGN_AREAS_BY_ID[object.areaId],
+    )),
 });
 
 const pushHistory = (history, snapshot) =>
@@ -223,7 +227,10 @@ export const useConfiguratorStore = create((set, get) => ({
 
     addDesignObject: (object) => {
         const state = get();
-        const nextObject = { ...object, id: object.id ?? makeObjectId() };
+        const nextObject = constrainDesignObject(
+            { ...object, id: object.id ?? makeObjectId() },
+            DESIGN_AREAS_BY_ID[object.areaId],
+        );
 
         set({
             designObjects: [...state.designObjects, nextObject],
@@ -241,9 +248,11 @@ export const useConfiguratorStore = create((set, get) => ({
         const object = state.designObjects.find((item) => item.id === objectId);
         if (!object) return;
 
-        const designObjects = state.designObjects.map((item) =>
-            item.id === objectId ? { ...item, ...changes } : item,
+        const nextObject = constrainDesignObject(
+            { ...object, ...changes },
+            DESIGN_AREAS_BY_ID[object.areaId],
         );
+        const designObjects = state.designObjects.map((item) => item.id === objectId ? nextObject : item);
 
         set({
             designObjects,
@@ -251,6 +260,20 @@ export const useConfiguratorStore = create((set, get) => ({
                 ? pushHistory(state.past, createSnapshot(state))
                 : state.past,
             future: recordHistory ? [] : state.future,
+            isDirty: true,
+        });
+    },
+
+    fitDesignObject: (objectId) => {
+        const state = get();
+        const object = state.designObjects.find((item) => item.id === objectId);
+        if (!object) return;
+        const nextObject = fitDesignObjectInsideArea(object, DESIGN_AREAS_BY_ID[object.areaId]);
+
+        set({
+            designObjects: state.designObjects.map((item) => item.id === objectId ? nextObject : item),
+            past: pushHistory(state.past, createSnapshot(state)),
+            future: [],
             isDirty: true,
         });
     },
@@ -292,14 +315,14 @@ export const useConfiguratorStore = create((set, get) => ({
         const source = state.designObjects.find((object) => object.id === objectId);
         if (!source) return;
 
-        const duplicate = {
+        const duplicate = constrainDesignObject({
             ...clone(source),
             id: makeObjectId(),
             name: `${source.name} copy`,
             x: Math.min(0.94, source.x + 0.04),
             y: Math.min(0.94, source.y + 0.04),
             zIndex: Math.max(0, ...state.designObjects.map((object) => object.zIndex ?? 0)) + 1,
-        };
+        }, DESIGN_AREAS_BY_ID[source.areaId]);
 
         set({
             designObjects: [...state.designObjects, duplicate],

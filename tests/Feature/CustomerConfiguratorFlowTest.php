@@ -6,6 +6,7 @@ use App\Models\ConfiguratorProduct;
 use App\Models\Customer;
 use App\Models\CustomerDesign;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CustomerConfiguratorFlowTest extends TestCase
@@ -117,6 +118,43 @@ class CustomerConfiguratorFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.deleteMyDesign', true);
         $this->assertDatabaseCount('customer_designs', 0);
+    }
+
+    public function test_customer_logo_is_stored_as_an_asset_before_the_design_document_is_saved(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->customer('logo-owner@example.com'), 'customer');
+        $png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+        $response = $this->graphQL(<<<'GRAPHQL'
+            mutation StoreLogo($input: StoreCustomerDesignAssetInput!) {
+                storeMyDesignAsset(input: $input) { url }
+            }
+        GRAPHQL, ['input' => ['name' => 'logo.png', 'dataUrl' => $png]])
+            ->assertOk()
+            ->assertJsonMissingPath('errors');
+
+        $url = $response->json('data.storeMyDesignAsset.url');
+        $this->assertStringStartsWith('/storage/customer-designs/', $url);
+        Storage::disk('public')->assertExists(str_replace('/storage/', '', $url));
+
+        $document = json_encode([
+            'schemaVersion' => 1,
+            'productId' => 'cap',
+            'shirtColors' => ['body' => '#FFFFFF'],
+            'designObjects' => [['id' => 'logo-1', 'type' => 'image', 'source' => $url]],
+        ], JSON_THROW_ON_ERROR);
+        $this->graphQL(<<<'GRAPHQL'
+            mutation Save($input: SaveCustomerDesignInput!) {
+                saveMyDesign(input: $input) { id document }
+            }
+        GRAPHQL, ['input' => [
+            'title' => 'Logo cap',
+            'status' => 'DRAFT',
+            'productId' => 'cap',
+            'productName' => 'Cap',
+            'document' => $document,
+        ]])->assertOk()->assertJsonPath('data.saveMyDesign.document', $document);
     }
 
     public function test_customer_cannot_load_or_update_another_customers_design(): void

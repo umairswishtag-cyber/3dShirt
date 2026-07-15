@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
+import { storeDesignAsset } from '@/services/designAssetService';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -20,6 +22,7 @@ function readImage(file) {
 }
 
 export default function ImageUploadTool() {
+    const customer = usePage().props.customer;
     const inputRef = useRef(null);
     const [error, setError] = useState(null);
     const [isReading, setIsReading] = useState(false);
@@ -44,7 +47,8 @@ export default function ImageUploadTool() {
 
         setIsReading(true);
         try {
-            const { source, image } = await readImage(file);
+            const { source: inlineSource, image } = await readImage(file);
+            const source = customer ? await storeDesignAsset(inlineSource, file.name) : inlineSource;
             const aspectRatio = image.naturalWidth / image.naturalHeight || 1;
             const width = Math.min(0.3, area.bounds.width * 0.48);
             const height = Math.min(width / aspectRatio, area.bounds.height * 0.48);
@@ -109,7 +113,7 @@ export default function ImageUploadTool() {
                 </p>
             )}
             <p className="text-xs leading-5 text-slate-500">
-                Your logo is applied above the selected shirt pattern. Drag, resize, and rotate it in the print-area editor.
+                Your logo is applied above the selected product pattern. Drag, resize, and rotate it inside the dashed safe area.
             </p>
         </div>
     );
