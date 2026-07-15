@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Services\Customer;
+
+use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
+
+class CustomerAccountService
+{
+    /** @param array<string, mixed> $input */
+    public function register(array $input): Customer
+    {
+        $data = Validator::make($input, [
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:customers,email'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ])->validate();
+
+        $customer = Customer::query()->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'auth_provider' => 'local',
+        ]);
+
+        Auth::guard('customer')->login($customer);
+        request()->session()->regenerate();
+
+        return $customer;
+    }
+
+    /** @param array<string, mixed> $input */
+    public function login(array $input): Customer
+    {
+        $data = Validator::make($input, [
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+            'remember' => ['sometimes', 'boolean'],
+        ])->validate();
+
+        $customer = Customer::query()->where('email', strtolower($data['email']))->first();
+
+        if (! $customer || ! $customer->password || ! Hash::check($data['password'], $customer->password)) {
+            throw ValidationException::withMessages([
+                'email' => 'The email or password is incorrect.',
+            ]);
+        }
+
+        Auth::guard('customer')->login($customer, (bool) ($data['remember'] ?? false));
+        request()->session()->regenerate();
+
+        return $customer;
+    }
+
+    public function logout(): void
+    {
+        Auth::guard('customer')->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+    }
+}

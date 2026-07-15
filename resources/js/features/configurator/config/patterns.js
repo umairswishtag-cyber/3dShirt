@@ -87,6 +87,7 @@ export const PATTERN_ZONE_OPTIONS = [
     { id: 'back', label: 'Back' },
     { id: 'leftSleeve', label: 'Left sleeve' },
     { id: 'rightSleeve', label: 'Right sleeve' },
+    { id: 'fullBody', label: 'Full body' },
 ];
 
 export function createDefaultPatternZones(zoneIds = PATTERN_ZONE_OPTIONS.map((zone) => zone.id)) {

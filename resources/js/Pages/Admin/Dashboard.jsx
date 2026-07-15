@@ -1,63 +1,114 @@
 import { Link } from '@inertiajs/react';
+import UiIcon from '@/Components/UiIcon';
 import AdminShell from './Configurator/AdminShell';
 
 const summaryCards = [
-    { key: 'products', label: 'Products', tone: 'bg-blue-50 text-blue-800' },
-    { key: 'published', label: 'Published', tone: 'bg-emerald-50 text-emerald-800' },
-    { key: 'drafts', label: 'Drafts', tone: 'bg-amber-50 text-amber-800' },
-    { key: 'patterns', label: 'Active patterns', tone: 'bg-purple-50 text-purple-800' },
+    { key: 'products', label: 'Total products', detail: 'Across your catalog', icon: 'products', tone: 'text-blue-700 bg-blue-50', glow: 'from-blue-500/10' },
+    { key: 'published', label: 'Published', detail: 'Visible to customers', icon: 'published', tone: 'text-emerald-700 bg-emerald-50', glow: 'from-emerald-500/10' },
+    { key: 'drafts', label: 'Needs attention', detail: 'Products in draft', icon: 'draft', tone: 'text-amber-700 bg-amber-50', glow: 'from-amber-500/10' },
+    { key: 'patterns', label: 'Active patterns', detail: 'Ready for artwork', icon: 'patterns', tone: 'text-violet-700 bg-violet-50', glow: 'from-violet-500/10' },
+];
+
+const actions = [
+    {
+        href: () => route('admin.configurator.products.create'),
+        eyebrow: 'Build catalog',
+        title: 'Create a 3D product',
+        description: 'Add a garment model, configure its customization options, and prepare it for publishing.',
+        cta: 'Create product',
+        icon: 'plus',
+        featured: true,
+    },
+    {
+        href: () => route('admin.configurator.products.index'),
+        eyebrow: 'Configuration',
+        title: 'Manage products',
+        description: 'Review model bindings, colors, print areas, SVG patterns, and storefront status.',
+        cta: 'Open catalog',
+        icon: 'settings',
+    },
+    {
+        href: () => route('admin.configurator.preview'),
+        eyebrow: 'Customer experience',
+        title: 'Preview storefront',
+        description: 'Walk through garment selection and customization exactly as your customers will.',
+        cta: 'Open storefront',
+        icon: 'storefront',
+    },
 ];
 
 export default function Dashboard({ summary, recentProducts }) {
     return (
-        <AdminShell title="Admin dashboard">
+        <AdminShell title="Dashboard" subtitle="A clear view of your 3D catalog and what needs attention.">
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {summaryCards.map((card) => (
-                    <article key={card.key} className={`rounded-2xl p-5 ${card.tone}`}>
-                        <p className="text-xs font-black uppercase tracking-[0.14em] opacity-70">{card.label}</p>
-                        <p className="mt-2 text-3xl font-black">{summary[card.key]}</p>
+                    <article key={card.key} className={`relative overflow-hidden rounded-3xl border border-white/80 bg-gradient-to-br ${card.glow} to-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.055)] ring-1 ring-slate-200/70`}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">{card.label}</p>
+                                <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{summary[card.key]}</p>
+                                <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
+                            </div>
+                            <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${card.tone}`}>
+                                <UiIcon name={card.icon} className="h-5 w-5" />
+                            </span>
+                        </div>
                     </article>
                 ))}
             </section>
 
             <section className="mt-6 grid gap-4 lg:grid-cols-3">
-                <Link href={route('admin.configurator.products.create')} className="group rounded-2xl bg-blue-600 p-6 text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-700">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-blue-100">Storefront catalog</span>
-                    <h2 className="mt-3 text-xl font-black">Create GLB product</h2>
-                    <p className="mt-2 text-sm leading-6 text-blue-100">Upload a garment, select gender and category, configure colors, patterns, logos, and publish it.</p>
-                    <span className="mt-5 inline-block text-sm font-black">Start creating →</span>
-                </Link>
-
-                <Link href={route('admin.configurator.products.index')} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Configuration</span>
-                    <h2 className="mt-3 text-xl font-black">Manage storefront</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">Edit product mappings, upload product-specific SVG patterns, and control publishing.</p>
-                    <span className="mt-5 inline-block text-sm font-black text-blue-700">Manage products →</span>
-                </Link>
-
-                <Link href={route('configurator')} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300">
-                    <span className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">Customer experience</span>
-                    <h2 className="mt-3 text-xl font-black">Preview storefront</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">Open the live gender, category, product, color, pattern, and logo selection flow.</p>
-                    <span className="mt-5 inline-block text-sm font-black text-blue-700">View storefront →</span>
-                </Link>
+                {actions.map((action) => (
+                    <Link
+                        key={action.title}
+                        href={action.href()}
+                        className={`group relative flex min-h-64 flex-col overflow-hidden rounded-3xl border p-6 transition duration-300 hover:-translate-y-1 hover:shadow-xl ${action.featured ? 'border-blue-500/20 bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/15' : 'border-slate-200/80 bg-white text-slate-950 shadow-[0_12px_32px_rgba(15,23,42,0.045)] hover:border-blue-200'}`}
+                    >
+                        {action.featured && <span className="absolute -right-12 -top-12 h-40 w-40 rounded-full border-[28px] border-white/10" />}
+                        <span className={`relative grid h-12 w-12 place-items-center rounded-2xl ${action.featured ? 'bg-white/15 text-white ring-1 ring-white/20' : 'bg-blue-50 text-blue-700'}`}>
+                            <UiIcon name={action.icon} className="h-6 w-6" />
+                        </span>
+                        <p className={`relative mt-6 text-[11px] font-black uppercase tracking-[0.17em] ${action.featured ? 'text-blue-100' : 'text-slate-400'}`}>{action.eyebrow}</p>
+                        <h2 className="relative mt-2 text-xl font-black tracking-tight">{action.title}</h2>
+                        <p className={`relative mt-2 text-sm leading-6 ${action.featured ? 'text-blue-100' : 'text-slate-500'}`}>{action.description}</p>
+                        <span className={`relative mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black ${action.featured ? 'text-white' : 'text-blue-700'}`}>
+                            {action.cta}<UiIcon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />
+                        </span>
+                    </Link>
+                ))}
             </section>
 
-            <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div><h2 className="text-lg font-black">Recently updated products</h2><p className="mt-1 text-xs text-slate-500">Continue configuring the latest storefront items.</p></div>
-                    <Link href={route('dashboard')} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Open orders dashboard</Link>
+            <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
+                    <div className="flex items-center gap-3">
+                        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-slate-600"><UiIcon name="products" className="h-5 w-5" /></span>
+                        <div><h2 className="text-base font-black">Recently updated</h2><p className="mt-0.5 text-xs text-slate-500">Continue working on your latest catalog items.</p></div>
+                    </div>
+                    <Link href={route('dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
+                        <UiIcon name="orders" className="h-4 w-4" /> Orders dashboard
+                    </Link>
                 </div>
-                <div className="mt-4 divide-y divide-slate-100">
-                    {recentProducts.length === 0 && <p className="py-6 text-center text-sm text-slate-500">No products yet. Create your first GLB product above.</p>}
+                <div className="divide-y divide-slate-100 px-3 sm:px-4">
+                    {recentProducts.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><UiIcon name="plus" /></span><p className="mt-4 text-sm font-bold">No products yet</p><p className="mt-1 text-xs text-slate-500">Create your first 3D garment to get started.</p></div>}
                     {recentProducts.map((product) => (
-                        <div key={product.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                            <div><p className="text-sm font-bold">{product.name}</p><p className="mt-0.5 text-xs capitalize text-slate-500">{product.gender} / {product.category}</p></div>
-                            <div className="flex items-center gap-2"><span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${product.is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{product.is_published ? 'Published' : 'Draft'}</span><Link href={route('admin.configurator.products.edit', product.id)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white">Configure</Link></div>
+                        <div key={product.id} className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-2 py-3.5 transition hover:bg-slate-50 sm:px-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-blue-50 text-slate-600 ring-1 ring-slate-200/70"><UiIcon name={product.category === 'dresses' ? 'dress' : 'shirt'} className="h-5 w-5" /></span>
+                                <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{product.name}</p><p className="mt-1 text-xs capitalize text-slate-500">{product.gender} · {product.category}<span className="hidden sm:inline"> · Updated {formatDate(product.updated_at)}</span></p></div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide ${product.is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}><span className={`h-1.5 w-1.5 rounded-full ${product.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />{product.is_published ? 'Published' : 'Draft'}</span>
+                                <Link href={route('admin.configurator.products.edit', product.id)} className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700">Configure</Link>
+                            </div>
                         </div>
                     ))}
                 </div>
             </section>
         </AdminShell>
     );
+}
+
+function formatDate(value) {
+    if (!value) return 'recently';
+    return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' });
 }

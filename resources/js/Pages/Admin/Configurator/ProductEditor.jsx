@@ -215,7 +215,7 @@ function PublishReadiness({ product, blockers }) {
                               : 'The draft is safe. Complete the items below before publishing it.'}
                     </p>
                 </div>
-                {published && <Link href={route('configurator')} className="rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-black text-emerald-800">View storefront</Link>}
+                {published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-black text-emerald-800">View storefront</Link>}
             </div>
             {!published && blockers.length > 0 && (
                 <ul className="mt-3 grid gap-2 text-xs font-semibold text-amber-950 sm:grid-cols-2">
@@ -317,12 +317,12 @@ function PatternManager({ product }) {
     );
 }
 
-export default function ProductEditor({ product }) {
+export default function ProductEditor({ product, audiences = [], categories = [] }) {
     const editing = Boolean(product);
     const [modelInspection, setModelInspection] = useState({ status: 'loading', meshCount: 0, uvMeshCount: 0, meshes: [] });
     const [patternInputKey, setPatternInputKey] = useState(0);
     const form = useForm({
-        name: product?.name ?? '', gender: product?.gender ?? 'men', category: product?.category ?? 'shirts', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
+        name: product?.name ?? '', gender: product?.gender ?? audiences[0]?.slug ?? '', category: product?.category ?? categories[0]?.slug ?? '', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
         model: null, thumbnail: null, mesh_zones: JSON.stringify(product?.mesh_zones ?? {}, null, 2), print_areas: JSON.stringify(product?.print_areas ?? {}, null, 2),
         color_zones: JSON.stringify(product?.color_zones ?? DEFAULT_COLOR_ZONES, null, 2), allowed_colors: JSON.stringify(product?.allowed_colors ?? DEFAULT_ALLOWED_COLORS, null, 2), pattern_zones: JSON.stringify(product?.pattern_zones ?? [], null, 2),
         supports_colors: product?.supports_colors ?? true, supports_patterns: product?.supports_patterns ?? false, supports_logos: product?.supports_logos ?? false, is_published: product?.is_published ?? false, sort_order: product?.sort_order ?? 0,
@@ -332,6 +332,7 @@ export default function ProductEditor({ product }) {
     const handleInspection = useCallback((inspection) => setModelInspection(inspection), []);
     const handleArtworkAreasChange = (value) => {
         const areas = parseJsonField(value, 'object').value;
+        form.clearErrors('print_areas', 'pattern_zones');
         form.setData({
             ...form.data,
             print_areas: value,
@@ -415,9 +416,6 @@ export default function ProductEditor({ product }) {
             if (Object.keys(parsedConfiguration.printAreas.value).length === 0) {
                 blockers.push({ message: 'Choose where customers can add patterns or logos.', href: '#model-bindings' });
             }
-            if (modelInspection.status === 'ready' && modelInspection.meshCount > 0 && modelInspection.uvMeshCount === 0) {
-                blockers.push({ message: 'This model cannot display artwork. Use a compatible model or turn off patterns and logos.', href: '#model-bindings' });
-            }
         }
         if (
             form.data.supports_patterns &&
@@ -475,8 +473,8 @@ export default function ProductEditor({ product }) {
                     <h2 className="text-lg font-black">Catalog information</h2>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <TextField label="Product name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} />
-                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Gender</span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm"><option value="men">Men</option><option value="women">Women</option><option value="unisex">Unisex</option><option value="kids">Kids</option></select><FieldError message={form.errors.gender} /></label>
-                        <TextField label="Category key" value={form.data.category} onChange={(e) => form.setData('category', e.target.value.toLowerCase().replace(/\s+/g, '-'))} help="Examples: shirts, dresses, pants, jackets" error={form.errors.category} />
+                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Customer group</span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><FieldError message={form.errors.gender} /></label>
+                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Garment category</span><select value={form.data.category} onChange={(e) => form.setData('category', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Add or remove choices under <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Catalog options</a>.</span><FieldError message={form.errors.category} /></label>
                         <TextField label="Display order" type="number" min="0" value={form.data.sort_order} onChange={(e) => form.setData('sort_order', Number(e.target.value))} error={form.errors.sort_order} />
                         <TextField label="Viewer fit height" type="number" min="0.1" max="20" step="0.05" value={form.data.fit_height} onChange={(e) => form.setData('fit_height', Number(e.target.value))} error={form.errors.fit_height} />
                         <label className="block md:col-span-2 lg:col-span-3"><span className="mb-1.5 block text-xs font-bold">Description</span><textarea value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} rows="3" className="w-full rounded-xl border-slate-300 text-sm" /><FieldError message={form.errors.description} /></label>

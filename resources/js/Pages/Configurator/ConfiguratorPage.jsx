@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import ConfigurationPanel from '@/features/configurator/components/ConfigurationPanel';
 import ConfiguratorHeader from '@/features/configurator/components/ConfiguratorHeader';
 import ConfiguratorSidebar, {
@@ -14,6 +15,15 @@ import { useConfiguratorKeyboardShortcuts } from '@/features/configurator/hooks/
 import { useLocalDesignPersistence } from '@/features/configurator/hooks/useLocalDesignPersistence';
 import { useConfiguratorStore } from '@/features/configurator/stores/useConfiguratorStore';
 import { replaceProductCatalog } from '@/features/configurator/config/productCatalog';
+import { createLocalDesignPayload } from '@/features/configurator/utils/designSerialization';
+import { graphqlRequest } from '@/services/graphqlClient';
+
+const LOAD_DESIGN = `query LoadDesign($id: ID!) { myDesign(id: $id) { id title status document } }`;
+const SAVE_DESIGN = `
+    mutation SaveDesign($input: SaveCustomerDesignInput!) {
+        saveMyDesign(input: $input) { id title status updatedAt }
+    }
+`;
 
 const DesignCanvas = lazy(() => import('@/features/configurator/canvas/DesignCanvas'));
 const ShirtViewer = lazy(() => import('@/features/configurator/three/ShirtViewer'));
@@ -32,21 +42,101 @@ function CanvasLoadingState() {
     return <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />;
 }
 
-export default function ConfiguratorPage({ catalog }) {
+export default function ConfiguratorPage({ catalog, adminPreview = false, initialProductId = null }) {
     useState(() => replaceProductCatalog(catalog));
+    const requestedDesignId = useMemo(() => new URLSearchParams(window.location.search).get('design'), []);
     const [activeTool, setActiveTool] = useState('colors');
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
-    const [catalogOpen, setCatalogOpen] = useState(true);
+    const [catalogOpen, setCatalogOpen] = useState(!requestedDesignId && !initialProductId);
+    const [designId, setDesignId] = useState(requestedDesignId);
+    const [designTitle, setDesignTitle] = useState('');
+    const [designStatus, setDesignStatus] = useState('DRAFT');
+    const [saving, setSaving] = useState(false);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
     const product = useConfiguratorStore((state) => state.product);
     const restoreError = useConfiguratorStore((state) => state.restoreError);
     const clearRestoreError = useConfiguratorStore((state) => state.clearRestoreError);
     const resetDesign = useConfiguratorStore((state) => state.resetDesign);
     const selectProduct = useConfiguratorStore((state) => state.selectProduct);
+    const loadDesignDocument = useConfiguratorStore((state) => state.loadDesignDocument);
+    const saveLocalDesign = useConfiguratorStore((state) => state.saveLocalDesign);
 
-    useLocalDesignPersistence();
+    useLocalDesignPersistence(!adminPreview);
     useConfiguratorKeyboardShortcuts();
+
+    useEffect(() => {
+        if (!initialProductId || requestedDesignId) return;
+        const selectedProduct = selectProduct(initialProductId);
+        if (!selectedProduct) {
+            setCatalogOpen(true);
+            return;
+        }
+        setActiveTool(
+            selectedProduct.capabilities.solidColors
+                ? 'colors'
+                : selectedProduct.capabilities.patterns || selectedProduct.capabilities.logos
+                  ? 'image'
+                  : 'product',
+        );
+        setCatalogOpen(false);
+    }, [initialProductId, requestedDesignId, selectProduct]);
+
+    useEffect(() => {
+        if (!requestedDesignId) return;
+
+        graphqlRequest(LOAD_DESIGN, { id: requestedDesignId })
+            .then((data) => {
+                const design = data.myDesign;
+                const result = loadDesignDocument(JSON.parse(design.document));
+                if (!result.ok) throw new Error(result.message);
+                setDesignId(design.id);
+                setDesignTitle(design.title);
+                setDesignStatus(design.status);
+                setCatalogOpen(false);
+            })
+            .catch((error) => {
+                toast.error(error.message);
+                setCatalogOpen(true);
+            });
+    }, [loadDesignDocument, requestedDesignId]);
+
+    const saveDesign = async (nextStatus = designStatus) => {
+        if (adminPreview) {
+            toast('Preview mode does not create customer designs.', { icon: '👁️' });
+            return;
+        }
+        const state = useConfiguratorStore.getState();
+        const document = createLocalDesignPayload(state);
+        setSaving(true);
+
+        try {
+            const data = await graphqlRequest(SAVE_DESIGN, {
+                input: {
+                    id: designId,
+                    title: designTitle || `${state.product.name} design`,
+                    status: nextStatus,
+                    productId: state.product.id,
+                    productName: state.product.name,
+                    document: JSON.stringify(document),
+                },
+            });
+            const saved = data.saveMyDesign;
+            setDesignId(saved.id);
+            setDesignTitle(saved.title);
+            setDesignStatus(saved.status);
+            saveLocalDesign();
+            window.history.replaceState({}, '', `/configurator?design=${saved.id}`);
+            toast.success(saved.status === 'FINAL' ? 'Design finished and saved to your account!' : 'Design saved to your account.');
+        } catch (error) {
+            toast.error(error.message);
+            if (/sign in|unauthenticated/i.test(error.message)) {
+                window.setTimeout(() => window.location.assign('/login'), 1200);
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const handleToolChange = (toolId) => {
         setActiveTool(toolId);
@@ -62,7 +152,9 @@ export default function ConfiguratorPage({ catalog }) {
         return (
             <>
                 <Head title="Choose a 3D garment" />
+                <Toaster position="top-center" />
                 <ProductSelectionScreen
+                    adminPreview={adminPreview}
                     onSelect={(productId) => {
                         const selectedProduct = selectProduct(productId);
                         if (!selectedProduct) return;
@@ -84,11 +176,22 @@ export default function ConfiguratorPage({ catalog }) {
     return (
         <>
             <Head title={`${product.name} Configurator`} />
+            <Toaster position="top-center" />
             <div className="flex h-dvh min-h-[520px] flex-col overflow-hidden bg-slate-100 text-slate-950">
                 <ConfiguratorHeader
                     onReset={() => setResetDialogOpen(true)}
                     onChangeProduct={() => setCatalogOpen(true)}
+                    onSave={() => saveDesign()}
+                    onFinalize={() => saveDesign('FINAL')}
+                    saving={saving}
+                    adminPreview={adminPreview}
                 />
+
+                {adminPreview && (
+                    <div className="relative z-20 flex shrink-0 items-center justify-center border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-semibold text-amber-900" role="status">
+                        Administrator preview: explore the customer experience without signing in. Saving and finishing are disabled.
+                    </div>
+                )}
 
                 {restoreError && (
                     <div className="relative z-20 flex shrink-0 items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800" role="alert">

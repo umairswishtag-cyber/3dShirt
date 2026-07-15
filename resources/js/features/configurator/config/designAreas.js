@@ -41,6 +41,16 @@ export const DESIGN_AREAS = [
         bounds: { x: 0.12, y: 0.1, width: 0.76, height: 0.8 },
         texture: { flipY: false },
     },
+    {
+        id: 'fullBody',
+        label: 'Full body',
+        shortLabel: 'Full',
+        shirtZoneId: 'body',
+        cameraView: 'front',
+        textureSize: { width: DESIGN_TEXTURE_SIZE, height: DESIGN_TEXTURE_SIZE },
+        bounds: { x: 0.06, y: 0.06, width: 0.88, height: 0.88 },
+        texture: { flipY: false },
+    },
 ];
 
 export const DESIGN_AREAS_BY_ID = Object.fromEntries(

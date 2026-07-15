@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ConfiguratorProduct;
+use App\Models\ConfiguratorTaxonomy;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -15,7 +16,7 @@ class ConfiguratorAdminTest extends TestCase
 
     public function test_admin_routes_require_authentication(): void
     {
-        $this->get('/admin/configurator/products')->assertRedirect('/login');
+        $this->get('/admin/configurator/products')->assertRedirect('/admin/login');
     }
 
     public function test_authenticated_user_lands_on_the_configurator_admin_dashboard(): void
@@ -30,6 +31,53 @@ class ConfiguratorAdminTest extends TestCase
                 ->where('summary.products', 0)
                 ->has('recentProducts')
             );
+    }
+
+    public function test_admin_can_manage_catalog_options_and_they_reach_products_and_storefront(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('admin.configurator.taxonomies.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Configurator/CatalogOptions')
+                ->has('audiences', 6)
+                ->has('categories', 7)
+            );
+
+        $this->post(route('admin.configurator.taxonomies.store'), [
+            'type' => 'audience',
+            'label' => 'Senior Adults',
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('configurator_taxonomies', ['type' => 'audience', 'slug' => 'senior-adults']);
+
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'senior-footwear',
+            'model_url' => '/models/senior-footwear.glb',
+            'gender' => 'senior-adults',
+            'category' => 'footwear',
+        ]);
+
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.audienceLabel', 'Senior Adults')
+            ->assertJsonPath('data.0.categoryLabel', 'Footwear');
+        $this->postJson('/graphql', ['query' => 'query { catalogTaxonomies { type slug label } }'])
+            ->assertOk()
+            ->assertJsonFragment(['type' => 'audience', 'slug' => 'senior-adults', 'label' => 'Senior Adults']);
+
+        $taxonomy = ConfiguratorTaxonomy::where('slug', 'senior-adults')->firstOrFail();
+        $this->delete(route('admin.configurator.taxonomies.destroy', $taxonomy))
+            ->assertSessionHasErrors('taxonomy');
+        $this->assertDatabaseHas('configurator_taxonomies', ['id' => $taxonomy->id]);
+
+        $product->delete();
+        $this->delete(route('admin.configurator.taxonomies.destroy', $taxonomy))
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('configurator_taxonomies', ['id' => $taxonomy->id]);
     }
 
     public function test_authenticated_admin_can_create_a_glb_product_draft(): void
@@ -222,6 +270,40 @@ class ConfiguratorAdminTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.0.id', 'publishable-pattern-shirt')
             ->assertJsonPath('data.0.patterns.0.id', 'ready-pattern');
+    }
+
+    public function test_single_mesh_product_can_publish_with_generated_full_body_projection(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'single-mesh-dress',
+            'model_url' => '/models/single-mesh-dress.glb',
+            'supports_logos' => false,
+            'is_published' => false,
+        ]);
+        $fullBody = [
+            'meshName' => 'BodyMesh',
+            'outwardNormalZ' => null,
+            'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+            'projection' => ['type' => 'box', 'axis' => null, 'direction' => null],
+        ];
+
+        $this->actingAs($user)->put(
+            route('admin.configurator.products.update', $product),
+            [
+                ...$this->validProductData(),
+                'supports_logos' => true,
+                'is_published' => true,
+                'print_areas' => ['fullBody' => $fullBody],
+            ],
+        )->assertSessionHasNoErrors();
+
+        $this->assertTrue($product->fresh()->is_published);
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.model.printAreas.fullBody.projection.type', 'box');
     }
 
     public function test_patterns_capability_requires_an_active_pattern_before_publishing(): void

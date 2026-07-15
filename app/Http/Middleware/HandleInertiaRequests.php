@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => Auth::user(),
             ],
+            'customer' => Auth::guard('customer')->user(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
             ],

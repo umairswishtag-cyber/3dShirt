@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreConfiguratorProductRequest;
 use App\Models\ConfiguratorProduct;
+use App\Models\ConfiguratorTaxonomy;
 use App\Services\Configurator\ConfiguratorAssetStorageService;
 use App\Services\Configurator\ConfiguratorProductService;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +38,7 @@ class ConfiguratorProductController extends Controller
     {
         return Inertia::render('Admin/Configurator/ProductEditor', [
             'product' => null,
+            ...$this->taxonomyOptions(),
         ]);
     }
 
@@ -56,6 +58,7 @@ class ConfiguratorProductController extends Controller
 
         return Inertia::render('Admin/Configurator/ProductEditor', [
             'product' => $this->adminProduct($product),
+            ...$this->taxonomyOptions(),
         ]);
     }
 
@@ -102,6 +105,16 @@ class ConfiguratorProductController extends Controller
                     'assetUrl' => $this->storage->publicUrl($pattern->svg_path, $pattern->svg_url),
                 ])->values()
                 : [],
+        ];
+    }
+
+    private function taxonomyOptions(): array
+    {
+        $items = ConfiguratorTaxonomy::query()->orderBy('sort_order')->orderBy('label')->get(['type', 'slug', 'label']);
+
+        return [
+            'audiences' => $items->where('type', ConfiguratorTaxonomy::TYPE_AUDIENCE)->values(),
+            'categories' => $items->where('type', ConfiguratorTaxonomy::TYPE_CATEGORY)->values(),
         ];
     }
 }

@@ -4,9 +4,14 @@ namespace App\Services\Configurator;
 
 use App\Models\ConfiguratorPattern;
 use App\Models\ConfiguratorProduct;
+use App\Models\ConfiguratorTaxonomy;
+use Illuminate\Support\Str;
 
 class ConfiguratorCatalogService
 {
+    /** @var array<string, string>|null */
+    private ?array $taxonomyLabels = null;
+
     public function __construct(
         private readonly ConfiguratorAssetStorageService $storage,
     ) {}
@@ -47,7 +52,9 @@ class ConfiguratorCatalogService
             'name' => $product->name,
             'description' => $product->description,
             'gender' => $product->gender,
+            'audienceLabel' => $this->taxonomyLabel(ConfiguratorTaxonomy::TYPE_AUDIENCE, $product->gender),
             'category' => $product->category,
+            'categoryLabel' => $this->taxonomyLabel(ConfiguratorTaxonomy::TYPE_CATEGORY, $product->category),
             'thumbnailUrl' => $this->storage->publicUrl($product->thumbnail_path, $product->thumbnail_url),
             'model' => [
                 'url' => $this->storage->publicUrl($product->model_path, $product->model_url),
@@ -75,5 +82,15 @@ class ConfiguratorCatalogService
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function taxonomyLabel(string $type, string $slug): string
+    {
+        $this->taxonomyLabels ??= ConfiguratorTaxonomy::query()
+            ->get(['type', 'slug', 'label'])
+            ->mapWithKeys(fn (ConfiguratorTaxonomy $item) => ["{$item->type}:{$item->slug}" => $item->label])
+            ->all();
+
+        return $this->taxonomyLabels["{$type}:{$slug}"] ?? Str::headline($slug);
     }
 }

@@ -58,4 +58,9 @@ class ConfiguratorProduct extends Model
     {
         return $this->hasMany(ConfiguratorPattern::class)->orderBy('sort_order')->orderBy('name');
     }
+
+    public function customerDesigns(): HasMany
+    {
+        return $this->hasMany(CustomerDesign::class);
+    }
 }

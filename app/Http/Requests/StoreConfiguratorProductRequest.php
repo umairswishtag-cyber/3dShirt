@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreConfiguratorProductRequest extends FormRequest
@@ -30,8 +31,8 @@ class StoreConfiguratorProductRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:160'],
-            'gender' => ['required', 'in:men,women,unisex,kids'],
-            'category' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/'],
+            'gender' => ['required', Rule::exists('configurator_taxonomies', 'slug')->where('type', 'audience')],
+            'category' => ['required', Rule::exists('configurator_taxonomies', 'slug')->where('type', 'category')],
             'description' => ['nullable', 'string', 'max:1000'],
             'fit_height' => ['required', 'numeric', 'min:0.1', 'max:20'],
             'model' => [$creating ? 'required' : 'nullable', 'file', 'max:102400'],
@@ -41,7 +42,7 @@ class StoreConfiguratorProductRequest extends FormRequest
             'pattern_is_active' => ['nullable', 'boolean'],
             'mesh_zones' => ['required', 'array'],
             'mesh_zones.*' => ['string', 'max:64'],
-            'print_areas' => ['array:front,back,leftSleeve,rightSleeve'],
+            'print_areas' => ['array:front,back,leftSleeve,rightSleeve,fullBody'],
             'print_areas.*.meshName' => ['required', 'string', 'max:160'],
             'print_areas.*.outwardNormalZ' => ['nullable', 'numeric', 'between:-1,1'],
             'print_areas.*.uvBounds' => ['required', 'array'],
@@ -49,6 +50,10 @@ class StoreConfiguratorProductRequest extends FormRequest
             'print_areas.*.uvBounds.min.*' => ['numeric'],
             'print_areas.*.uvBounds.max' => ['required', 'array', 'size:2'],
             'print_areas.*.uvBounds.max.*' => ['numeric'],
+            'print_areas.*.projection' => ['nullable', 'array'],
+            'print_areas.*.projection.type' => ['required_with:print_areas.*.projection', 'in:planar,box'],
+            'print_areas.*.projection.axis' => ['nullable', 'in:x,y,z'],
+            'print_areas.*.projection.direction' => ['nullable', 'integer', 'in:-1,1'],
             'color_zones' => ['required_if:supports_colors,true', 'array'],
             'color_zones.*.id' => ['required_with:color_zones', 'string', 'max:64', 'regex:/^[A-Za-z][A-Za-z0-9_-]*$/'],
             'color_zones.*.label' => ['required_with:color_zones', 'string', 'max:80'],
@@ -56,7 +61,7 @@ class StoreConfiguratorProductRequest extends FormRequest
             'allowed_colors' => ['required', 'array'],
             'allowed_colors.*' => ['regex:/^#[0-9A-Fa-f]{6}$/'],
             'pattern_zones' => ['array'],
-            'pattern_zones.*' => ['in:front,back,leftSleeve,rightSleeve'],
+            'pattern_zones.*' => ['in:front,back,leftSleeve,rightSleeve,fullBody'],
             'supports_colors' => ['required', 'boolean'],
             'supports_patterns' => ['required', 'boolean'],
             'supports_logos' => ['required', 'boolean'],

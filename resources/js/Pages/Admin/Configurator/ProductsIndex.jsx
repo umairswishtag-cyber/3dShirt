@@ -52,7 +52,7 @@ export default function ProductsIndex({ products }) {
                             </div>
                             <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
                                 <Link href={route('admin.configurator.products.edit', product.id)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white">{product.is_published ? 'Edit live product' : 'Continue draft'}</Link>
-                                {product.is_published && <Link href={route('configurator')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">View storefront</Link>}
+                                {product.is_published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">View storefront</Link>}
                                 <button type="button" onClick={() => remove(product)} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50">Delete</button>
                             </div>
                         </article>

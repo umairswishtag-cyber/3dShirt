@@ -21,9 +21,9 @@ const productColors = (product) => ({
     ...(product?.defaultColors ?? {}),
 });
 const SHIRT_ZONE_PATTERN_AREAS = {
-    body: ['front', 'back'],
-    leftSleeve: ['leftSleeve'],
-    rightSleeve: ['rightSleeve'],
+    body: ['front', 'back', 'fullBody'],
+    leftSleeve: ['leftSleeve', 'fullBody'],
+    rightSleeve: ['rightSleeve', 'fullBody'],
 };
 
 const clone = (value) => {
@@ -418,6 +418,38 @@ export const useConfiguratorStore = create((set, get) => ({
             const message = error?.message || 'The saved local design could not be restored.';
             set({ restoreError: message });
             return { ok: false, restored: false, message };
+        }
+    },
+
+    loadDesignDocument: (document) => {
+        try {
+            const draft = parseLocalDesign(JSON.stringify(document));
+            const area = DESIGN_AREAS_BY_ID[draft.activeDesignAreaId];
+
+            set((state) => ({
+                product: PRODUCTS_BY_ID[draft.productId],
+                shirtColors: draft.shirtColors,
+                selectedPatternId: draft.selectedPatternId,
+                patternColors: draft.patternColors,
+                patternZones: draft.patternZones,
+                designObjects: draft.designObjects,
+                activeDesignAreaId: draft.activeDesignAreaId,
+                activeShirtZoneId: PRODUCTS_BY_ID[draft.productId].colorZones[0] ?? 'body',
+                cameraView: area.cameraView,
+                cameraRequestId: state.cameraRequestId + 1,
+                selectedObjectId: null,
+                isDirty: false,
+                lastSavedAt: draft.updatedAt,
+                restoreError: null,
+                past: [],
+                future: [],
+            }));
+
+            return { ok: true };
+        } catch (error) {
+            const message = error?.message || 'This account design could not be restored.';
+            set({ restoreError: message });
+            return { ok: false, message };
         }
     },
 

@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const PRINT_AREAS = [
-    { id: 'front', label: 'Front' },
-    { id: 'back', label: 'Back' },
+    { id: 'front', label: 'Front body' },
+    { id: 'back', label: 'Back body' },
     { id: 'leftSleeve', label: 'Left sleeve' },
     { id: 'rightSleeve', label: 'Right sleeve' },
+    { id: 'fullBody', label: 'Full body' },
 ];
+
+const GENERATED_PROJECTIONS = {
+    front: { type: 'planar', axis: 'z', direction: 1 },
+    back: { type: 'planar', axis: 'z', direction: -1 },
+    leftSleeve: { type: 'planar', axis: 'x', direction: 1 },
+    rightSleeve: { type: 'planar', axis: 'x', direction: -1 },
+    fullBody: { type: 'box', axis: null, direction: null },
+};
 
 function parseBindings(value) {
     try {
@@ -134,11 +143,12 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             delete next[areaId];
         } else {
             const mesh = meshes.find((item) => item.name === meshName);
-            if (!mesh?.uvBounds) return;
+            if (!mesh) return;
             next[areaId] = {
                 meshName: mesh.name,
                 outwardNormalZ: null,
-                uvBounds: mesh.uvBounds,
+                uvBounds: mesh.uvBounds ?? { min: [0, 0], max: [1, 1] },
+                ...(mesh.uvBounds ? {} : { projection: GENERATED_PROJECTIONS[areaId] }),
             };
         }
         onChange(JSON.stringify(next, null, 2));
@@ -153,24 +163,24 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
                     <p className="text-sm font-black text-slate-800">Where can customers add patterns or logos?</p>
                     <p className="mt-1 text-xs leading-5 text-slate-500">For each side you offer, choose the matching part of the 3D model. We handle the placement settings automatically.</p>
                 </div>
-                {status === 'ready' && <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${uvMeshCount > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{uvMeshCount} artwork-ready parts</span>}
+                {status === 'ready' && <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">{meshes.length} artwork-ready part{meshes.length === 1 ? '' : 's'}</span>}
             </div>
 
             {status === 'empty' && <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-500">Upload the 3D model first. Available artwork areas will appear here.</p>}
             {status === 'loading' && <p className="mt-3 animate-pulse rounded-xl bg-blue-50 p-4 text-xs font-semibold text-blue-700">Checking where artwork can be placed…</p>}
             {inspectionError && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">{inspectionError}</p>}
             {status === 'ready' && meshes.length > 0 && uvMeshCount === 0 && (
-                <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-800">
-                    This 3D model cannot display patterns or logos. You can still offer solid colors, or ask your 3D designer to export the model with artwork/texture mapping (UVs).
+                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold leading-5 text-blue-900">
+                    This model has no UV map, so the configurator will generate artwork projection automatically. For a single-piece garment, choose <strong>Full body</strong>, or choose individual views when you only want artwork on one side.
                     {onDisableArtwork && (
-                        <button type="button" onClick={onDisableArtwork} className="mt-3 block rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white hover:bg-red-800">
+                        <button type="button" onClick={onDisableArtwork} className="mt-3 block rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-black text-blue-800 hover:bg-blue-100">
                             Use this as a solid-color product
                         </button>
                     )}
-                </p>
+                </div>
             )}
 
-            {status === 'ready' && uvMeshCount > 0 && (
+            {status === 'ready' && meshes.length > 0 && (
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {PRINT_AREAS.map((area) => (
                         <label key={area.id} className="rounded-xl border border-slate-200 bg-white p-3">
@@ -182,12 +192,12 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
                             >
                                 <option value="">Not offered</option>
                                 {meshes.map((mesh) => (
-                                    <option key={mesh.name} value={mesh.name} disabled={!mesh.uvBounds}>
-                                        {mesh.name} {mesh.uvBounds ? '' : '(cannot display artwork)'}
+                                    <option key={mesh.name} value={mesh.name}>
+                                        {mesh.name} {mesh.uvBounds ? '(UV mapped)' : '(automatic projection)'}
                                     </option>
                                 ))}
                             </select>
-                            {bindings[area.id] && <span className="mt-1.5 block text-[10px] text-emerald-700">Ready for customer artwork</span>}
+                            {bindings[area.id] && <span className="mt-1.5 block text-[10px] text-emerald-700">{bindings[area.id].projection ? 'Automatic projection ready' : 'UV artwork ready'}</span>}
                         </label>
                     ))}
                 </div>

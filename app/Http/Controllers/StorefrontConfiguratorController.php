@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ConfiguratorProduct;
 use App\Services\Configurator\ConfiguratorCatalogService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -17,6 +18,17 @@ class StorefrontConfiguratorController extends Controller
     {
         return Inertia::render('Configurator/ConfiguratorPage', [
             'catalog' => $this->catalog->publishedCatalog(),
+            'adminPreview' => false,
+            'initialProductId' => null,
+        ]);
+    }
+
+    public function preview(?ConfiguratorProduct $product = null): Response
+    {
+        return Inertia::render('Configurator/ConfiguratorPage', [
+            'catalog' => $this->catalog->publishedCatalog(),
+            'adminPreview' => true,
+            'initialProductId' => $product?->is_published ? $product->slug : null,
         ]);
     }
 

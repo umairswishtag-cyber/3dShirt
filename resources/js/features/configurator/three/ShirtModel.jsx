@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
-import { Box3, FrontSide, Vector3 } from 'three';
+import { Box3, Float32BufferAttribute, FrontSide, Vector3 } from 'three';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
@@ -41,8 +41,48 @@ function configurePrintTexture(texture, uvBounds) {
     texture.needsUpdate = true;
 }
 
-function createOutwardPrintGeometry(sourceGeometry, outwardNormalZ, matrixWorld) {
-    const geometry = sourceGeometry.clone();
+function addProjectedUvs(geometry, projection) {
+    geometry.computeBoundingBox();
+    const bounds = geometry.boundingBox;
+    const position = geometry.getAttribute('position');
+    const normal = geometry.getAttribute('normal');
+    const uvs = new Float32Array(position.count * 2);
+    const size = bounds.getSize(new Vector3());
+    const span = (axis) => Math.max(size[axis], 0.000001);
+    const normalized = (axis, value) => (value - bounds.min[axis]) / span(axis);
+    const writeUv = (index, uAxis, vAxis, flipU = false) => {
+        const u = normalized(uAxis, position[`get${uAxis.toUpperCase()}`](index));
+        const v = normalized(vAxis, position[`get${vAxis.toUpperCase()}`](index));
+        uvs[index * 2] = flipU ? 1 - u : u;
+        uvs[index * 2 + 1] = v;
+    };
+
+    for (let index = 0; index < position.count; index += 3) {
+        let axis = projection.axis;
+        let direction = projection.direction ?? 1;
+        if (projection.type === 'box') {
+            const average = {
+                x: (normal.getX(index) + normal.getX(index + 1) + normal.getX(index + 2)) / 3,
+                y: (normal.getY(index) + normal.getY(index + 1) + normal.getY(index + 2)) / 3,
+                z: (normal.getZ(index) + normal.getZ(index + 1) + normal.getZ(index + 2)) / 3,
+            };
+            axis = Object.keys(average).sort((left, right) => Math.abs(average[right]) - Math.abs(average[left]))[0];
+            direction = Math.sign(average[axis]) || 1;
+        }
+        const [uAxis, vAxis] = axis === 'x' ? ['z', 'y'] : axis === 'y' ? ['x', 'z'] : ['x', 'y'];
+        for (let vertex = index; vertex < index + 3; vertex += 1) {
+            writeUv(vertex, uAxis, vAxis, direction < 0);
+        }
+    }
+
+    geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+}
+
+function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
+    const projection = binding.projection;
+    const geometry = projection && sourceGeometry.index
+        ? sourceGeometry.toNonIndexed()
+        : sourceGeometry.clone();
     const position = geometry.getAttribute('position');
     const normal = geometry.getAttribute('normal');
     const sourceIndex = geometry.getIndex();
@@ -56,12 +96,16 @@ function createOutwardPrintGeometry(sourceGeometry, outwardNormalZ, matrixWorld)
         const a = indices[index];
         const b = indices[index + 1];
         const c = indices[index + 2];
-        const averageNormalZ =
-            (normal.getZ(a) + normal.getZ(b) + normal.getZ(c)) / 3;
+        const projectionAxis = projection?.axis;
+        const averageProjectionNormal = projectionAxis
+            ? (normal[`get${projectionAxis.toUpperCase()}`](a) + normal[`get${projectionAxis.toUpperCase()}`](b) + normal[`get${projectionAxis.toUpperCase()}`](c)) / 3
+            : null;
+        const averageNormalZ = (normal.getZ(a) + normal.getZ(b) + normal.getZ(c)) / 3;
 
         if (
-            outwardNormalZ === null ||
-            averageNormalZ * outwardNormalZ > minimumFacing
+            projection?.type === 'box' ||
+            (projection?.type === 'planar' && averageProjectionNormal * projection.direction > minimumFacing) ||
+            (!projection && (binding.outwardNormalZ === null || averageNormalZ * binding.outwardNormalZ > minimumFacing))
         ) {
             filteredIndices.push(a, b, c);
         }
@@ -69,6 +113,7 @@ function createOutwardPrintGeometry(sourceGeometry, outwardNormalZ, matrixWorld)
 
     geometry.setIndex(filteredIndices);
     geometry.clearGroups();
+    if (projection) addProjectedUvs(geometry, projection);
 
     // Lift the print less than a millimetre in model space so it follows the
     // cloth without z-fighting or being depth-shifted through the other side.
@@ -117,6 +162,7 @@ export default function ShirtModel() {
     const backTexture = useDesignTexture('back');
     const leftSleeveTexture = useDesignTexture('leftSleeve');
     const rightSleeveTexture = useDesignTexture('rightSleeve');
+    const fullBodyTexture = useDesignTexture('fullBody');
     const { scene, nodes } = useGLTF(modelConfig.url);
     const modelScene = useMemo(() => cloneModelScene(scene), [scene]);
     const printTextures = {
@@ -124,6 +170,7 @@ export default function ShirtModel() {
         back: backTexture,
         leftSleeve: leftSleeveTexture,
         rightSleeve: rightSleeveTexture,
+        fullBody: fullBodyTexture,
     };
 
     const printMeshes = useMemo(() => {
@@ -142,7 +189,7 @@ export default function ShirtModel() {
                 areaId,
                 createOutwardPrintGeometry(
                     node.geometry,
-                    binding.outwardNormalZ,
+                    binding,
                     node.matrixWorld,
                 ),
             ];

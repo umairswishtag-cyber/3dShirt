@@ -1,0 +1,82 @@
+"A datetime string in `Y-m-d H:i:s` format."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+enum CustomerDesignStatus {
+    DRAFT
+    FINAL
+}
+
+type Customer {
+    id: ID! @rename(attribute: "public_id")
+    name: String!
+    email: String!
+    createdAt: DateTime! @rename(attribute: "created_at")
+}
+
+type CustomerDesign {
+    id: ID! @rename(attribute: "public_id")
+    title: String!
+    status: CustomerDesignStatus!
+    productId: String! @rename(attribute: "product_slug")
+    productName: String! @rename(attribute: "product_name")
+    documentVersion: Int! @rename(attribute: "document_version")
+    document: String!
+    finalizedAt: DateTime @rename(attribute: "finalized_at")
+    updatedAt: DateTime! @rename(attribute: "updated_at")
+    createdAt: DateTime! @rename(attribute: "created_at")
+}
+
+type CustomerAuthPayload {
+    customer: Customer!
+    message: String!
+}
+
+type CatalogTaxonomy {
+    id: ID!
+    type: String!
+    slug: String!
+    label: String!
+    sortOrder: Int! @rename(attribute: "sort_order")
+}
+
+input CustomerRegisterInput {
+    name: String!
+    email: String!
+    password: String!
+    password_confirmation: String!
+}
+
+input CustomerLoginInput {
+    email: String!
+    password: String!
+    remember: Boolean = false
+}
+
+input SaveCustomerDesignInput {
+    id: ID
+    title: String!
+    status: CustomerDesignStatus!
+    productId: String!
+    productName: String!
+    document: String!
+}
+
+type Query {
+    catalogTaxonomies: [CatalogTaxonomy!]! @field(resolver: "App\\GraphQL\\Queries\\CatalogTaxonomies")
+    customerMe: Customer! @field(resolver: "App\\GraphQL\\Queries\\CustomerMe")
+    myDesigns: [CustomerDesign!]! @field(resolver: "App\\GraphQL\\Queries\\MyDesigns")
+    myDesign(id: ID!): CustomerDesign! @field(resolver: "App\\GraphQL\\Queries\\MyDesign")
+}
+
+type Mutation {
+    customerRegister(input: CustomerRegisterInput!): CustomerAuthPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\CustomerRegister")
+    customerLogin(input: CustomerLoginInput!): CustomerAuthPayload!
+        @field(resolver: "App\\GraphQL\\Mutations\\CustomerLogin")
+    customerLogout: Boolean!
+        @field(resolver: "App\\GraphQL\\Mutations\\CustomerLogout")
+    saveMyDesign(input: SaveCustomerDesignInput!): CustomerDesign!
+        @field(resolver: "App\\GraphQL\\Mutations\\SaveMyDesign")
+    deleteMyDesign(id: ID!): Boolean!
+        @field(resolver: "App\\GraphQL\\Mutations\\DeleteMyDesign")
+}
