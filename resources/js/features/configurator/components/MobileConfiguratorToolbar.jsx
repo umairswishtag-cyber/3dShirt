@@ -7,7 +7,6 @@ export default function MobileConfiguratorToolbar({ activeTool, onToolChange, ha
         ...CONFIGURATOR_TOOLS.filter((tool) => {
             if (tool.id === 'colors') return capabilities.solidColors;
             if (tool.id === 'image') return capabilities.patterns || capabilities.logos;
-            if (tool.id === 'layers') return capabilities.logos;
             return true;
         }),
         { id: 'adjust', label: 'Adjust', shortLabel: 'Adjust', disabled: !hasSelection },

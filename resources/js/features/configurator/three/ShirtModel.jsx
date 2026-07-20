@@ -252,7 +252,7 @@ function BoundPrintSurface({ areaId, binding, geometries }) {
         ),
     );
     const isActiveLogoArea = useConfiguratorStore(
-        (state) => state.activeDesignAreaId === areaId,
+        (state) => state.isLogoAreaEditing && state.activeDesignAreaId === areaId,
     );
 
     return (

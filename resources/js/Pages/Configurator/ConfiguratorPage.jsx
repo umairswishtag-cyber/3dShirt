@@ -63,6 +63,7 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
     const selectProduct = useConfiguratorStore((state) => state.selectProduct);
     const loadDesignDocument = useConfiguratorStore((state) => state.loadDesignDocument);
     const saveLocalDesign = useConfiguratorStore((state) => state.saveLocalDesign);
+    const finishLogoEditing = useConfiguratorStore((state) => state.finishLogoEditing);
 
     useLocalDesignPersistence(!adminPreview);
     useConfiguratorKeyboardShortcuts();
@@ -133,6 +134,8 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
             setDesignTitle(saved.title);
             setDesignStatus(saved.status);
             saveLocalDesign();
+            finishLogoEditing();
+            setPrintEditorExpanded(false);
             window.history.replaceState({}, '', `/configurator?design=${saved.id}`);
             toast.success(saved.status === 'FINAL' ? 'Design finished and saved to your account!' : 'Design saved to your account.');
         } catch (error) {
@@ -244,7 +247,7 @@ export default function ConfiguratorPage({ catalog, adminPreview = false, initia
                                         <button type="button" onClick={() => setPrintEditorExpanded(false)} className="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-xl text-slate-600 hover:bg-slate-200" aria-label="Close expanded editor">&times;</button>
                                     </div>
                                     <Suspense fallback={<CanvasLoadingState />}><DesignCanvas /></Suspense>
-                                    <button type="button" onClick={() => setPrintEditorExpanded(false)} className="mt-5 min-h-11 w-full rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800">Done positioning</button>
+                                    <button type="button" onClick={() => { finishLogoEditing(); setPrintEditorExpanded(false); }} className="mt-5 min-h-11 w-full rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800">Done positioning</button>
                                 </div>
                             </div>
                         )}

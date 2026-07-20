@@ -494,6 +494,71 @@ class ConfiguratorAdminTest extends TestCase
             ->assertJsonPath('data.0.model.printAreas.logo2.logoPlacement.width', 0.65);
     }
 
+    public function test_logo_placements_and_pattern_areas_are_configured_independently(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'separate-shirt-artwork',
+            'model_url' => '/models/separate-shirt-artwork.glb',
+            'is_published' => false,
+        ]);
+        $product->patterns()->create([
+            'name' => 'Stripes',
+            'slug' => 'stripes',
+            'svg_url' => '/patterns/stripes.svg',
+            'color_slots' => [],
+            'is_active' => true,
+        ]);
+        $surfacePlacement = [
+            'type' => 'surface',
+            'origin' => [0, 0.5, 0.1],
+            'uAxis' => [1, 0, 0],
+            'vAxis' => [0, 1, 0],
+            'normal' => [0, 0, 1],
+            'width' => 0.4,
+            'height' => 0.5,
+        ];
+        $patternArea = fn (string $label, string $meshName) => [
+            'label' => $label,
+            'meshName' => $meshName,
+            'outwardNormalZ' => null,
+            'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+        ];
+
+        $this->actingAs($user)->put(route('admin.configurator.products.update', $product), [
+            ...$this->validProductData(),
+            'supports_patterns' => true,
+            'supports_logos' => true,
+            'is_published' => true,
+            'pattern_zones' => ['leftSleeve', 'rightSleeve'],
+            'print_areas' => [
+                'frontLogo' => [
+                    ...$patternArea('Front logo', 'BodyMesh'),
+                    'logoBounds' => ['x' => 0.2, 'y' => 0.2, 'width' => 0.6, 'height' => 0.6],
+                    'logoPlacement' => $surfacePlacement,
+                ],
+                'backLogo' => [
+                    ...$patternArea('Back logo', 'BodyMesh'),
+                    'cameraView' => 'back',
+                    'logoBounds' => ['x' => 0.2, 'y' => 0.2, 'width' => 0.6, 'height' => 0.6],
+                    'logoPlacement' => [...$surfacePlacement, 'normal' => [0, 0, -1]],
+                ],
+                'leftSleeve' => $patternArea('Left sleeve', 'LeftSleeveMesh'),
+                'rightSleeve' => $patternArea('Right sleeve', 'RightSleeveMesh'),
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.patternZones', ['leftSleeve', 'rightSleeve'])
+            ->assertJsonPath('data.0.model.printAreas.frontLogo.logoPlacement.type', 'surface')
+            ->assertJsonPath('data.0.model.printAreas.backLogo.logoPlacement.type', 'surface')
+            ->assertJsonMissingPath('data.0.model.printAreas.leftSleeve.logoPlacement')
+            ->assertJsonMissingPath('data.0.model.printAreas.rightSleeve.logoPlacement');
+    }
+
     public function test_patterns_capability_requires_an_active_pattern_before_publishing(): void
     {
         $user = User::factory()->create();

@@ -67,6 +67,7 @@ export const useConfiguratorStore = create((set, get) => ({
     patternZones: createDefaultPatternZones(PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID]?.patternZones),
     designObjects: [],
     selectedObjectId: null,
+    isLogoAreaEditing: true,
     isDirty: false,
     lastSavedAt: null,
     restoreError: null,
@@ -100,6 +101,7 @@ export const useConfiguratorStore = create((set, get) => ({
             patternZones: createDefaultPatternZones(product.patternZones),
             designObjects: [],
             selectedObjectId: null,
+            isLogoAreaEditing: true,
             past: [],
             future: [],
             interactionSnapshot: null,
@@ -120,6 +122,7 @@ export const useConfiguratorStore = create((set, get) => ({
             cameraView: area.cameraView,
             cameraRequestId: state.cameraRequestId + 1,
             selectedObjectId: null,
+            isLogoAreaEditing: true,
         }));
     },
 
@@ -235,6 +238,7 @@ export const useConfiguratorStore = create((set, get) => ({
         set({
             designObjects: [...state.designObjects, nextObject],
             selectedObjectId: nextObject.id,
+            isLogoAreaEditing: true,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
@@ -330,13 +334,23 @@ export const useConfiguratorStore = create((set, get) => ({
         set({
             designObjects: [...state.designObjects, duplicate],
             selectedObjectId: duplicate.id,
+            isLogoAreaEditing: true,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             isDirty: true,
         });
     },
 
-    selectDesignObject: (objectId) => set({ selectedObjectId: objectId }),
+    selectDesignObject: (objectId) => set((state) => ({
+        selectedObjectId: objectId,
+        isLogoAreaEditing: objectId ? true : state.isLogoAreaEditing,
+    })),
+
+    finishLogoEditing: () => set({
+        selectedObjectId: null,
+        interactionSnapshot: null,
+        isLogoAreaEditing: false,
+    }),
 
     undo: () => {
         const state = get();
@@ -391,6 +405,7 @@ export const useConfiguratorStore = create((set, get) => ({
             patternZones: createDefaultPatternZones(state.product.patternZones),
             designObjects: [],
             selectedObjectId: null,
+            isLogoAreaEditing: true,
             past: pushHistory(state.past, createSnapshot(state)),
             future: [],
             interactionSnapshot: null,
@@ -437,6 +452,7 @@ export const useConfiguratorStore = create((set, get) => ({
                 cameraView: area.cameraView,
                 cameraRequestId: state.cameraRequestId + 1,
                 selectedObjectId: null,
+                isLogoAreaEditing: false,
                 isDirty: false,
                 lastSavedAt: draft.updatedAt,
                 restoreError: null,
@@ -470,6 +486,7 @@ export const useConfiguratorStore = create((set, get) => ({
                 cameraView: area.cameraView,
                 cameraRequestId: state.cameraRequestId + 1,
                 selectedObjectId: null,
+                isLogoAreaEditing: false,
                 isDirty: false,
                 lastSavedAt: draft.updatedAt,
                 restoreError: null,

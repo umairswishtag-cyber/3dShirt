@@ -311,7 +311,7 @@ function PatternManager({ product }) {
 
     return (
         <section id="product-patterns" className="mt-6 scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black">Product patterns</h2>
+            <h2 className="text-lg font-semibold">Product patterns</h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">Upload SVGs only for this GLB. Unsafe SVG elements are removed and each detected source color becomes a storefront color picker.</p>
             <div className={`mt-3 rounded-xl border px-4 py-3 text-xs font-semibold leading-5 ${product.is_published && product.supports_patterns ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                 {product.is_published && product.supports_patterns
@@ -380,15 +380,21 @@ export default function ProductEditor({ product, audiences = [], categories = []
     });
 
     const handleInspection = useCallback((inspection) => setModelInspection(inspection), []);
-    const handleArtworkAreasChange = (value) => {
+    const handleArtworkAreasChange = (value, requestedPatternAreaIds = null) => {
         const areas = parseJsonField(value, 'object').value;
+        const currentPatternAreaIds = parseJsonField(form.data.pattern_zones, 'array').value;
+        const patternAreaIds = Array.isArray(requestedPatternAreaIds)
+            ? requestedPatternAreaIds
+            : currentPatternAreaIds;
         form.clearErrors('print_areas', 'pattern_zones');
         form.setData({
             ...form.data,
             print_areas: value,
-            pattern_zones: form.data.supports_patterns
-                ? JSON.stringify(Object.keys(areas), null, 2)
-                : form.data.pattern_zones,
+            pattern_zones: JSON.stringify(
+                patternAreaIds.filter((areaId) => Boolean(areas[areaId])),
+                null,
+                2,
+            ),
         });
     };
     const handleColorZonesChange = (value) => {
@@ -477,7 +483,13 @@ export default function ProductEditor({ product, audiences = [], categories = []
             form.data.supports_patterns &&
             parsedConfiguration.patternZones.value.some((areaId) => !parsedConfiguration.printAreas.value[areaId])
         ) {
-            blockers.push({ message: 'Review the selected pattern and logo areas.', href: '#model-bindings' });
+            blockers.push({ message: 'Review the selected pattern areas.', href: '#model-bindings' });
+        }
+        if (
+            form.data.supports_patterns &&
+            parsedConfiguration.patternZones.value.length === 0
+        ) {
+            blockers.push({ message: 'Choose at least one model area for patterns.', href: '#model-bindings' });
         }
         const hasActivePattern = editing
             ? product.patterns.some((pattern) => pattern.is_active)
@@ -526,7 +538,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
             <form onSubmit={submit} className="space-y-6">
                 <PublishReadiness product={product} blockers={publishBlockers} />
                 <section id="product-details" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-lg font-black">Catalog information</h2>
+                    <h2 className="text-lg font-semibold">Catalog information</h2>
                     <p className="mt-1 text-xs text-slate-500">A category describes the product itself. A customer group only describes its audience or fit.</p>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <TextField label="Product name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} />
@@ -539,13 +551,15 @@ export default function ProductEditor({ product, audiences = [], categories = []
                 </section>
 
                 <section id="product-assets" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-lg font-black">Assets and storefront capabilities</h2>
+                    <h2 className="text-lg font-semibold">Assets and storefront capabilities</h2>
                     <p className="mt-1 text-xs text-slate-500">Upload the 3D model and review the exact storefront thumbnail before saving.</p>
                     <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
                         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                             <TextField label={editing ? 'Replace GLB model (optional)' : 'GLB model'} type="file" accept=".glb,model/gltf-binary" onChange={(e) => form.setData('model', e.target.files?.[0] ?? null)} help={product?.model_original_name ? `Current model: ${product.model_original_name}` : 'GLB format · Maximum 100 MB'} error={form.errors.model} />
+                            <div  style={{ width: '350px', height: '300px' , overflow: 'hidden', position: 'relative', borderRadius: '1rem', backgroundColor: '#f9fafb' }}>
                             {form.data.model && <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-emerald-600 shadow-sm"><UiIcon name="check" className="h-4 w-4" /></span><span className="min-w-0"><strong className="block truncate">{form.data.model.name}</strong><span className="text-[10px] text-emerald-700">Ready to upload · {formatFileSize(form.data.model.size)}</span></span></div>}
                             <GlbModelPreview modelFile={form.data.model} modelUrl={product?.modelUrl} />
+                            </div>
                         </div>
                         <ThumbnailUpload file={form.data.thumbnail} currentUrl={product?.thumbnailUrl} category={form.data.category} onChange={(file) => form.setData('thumbnail', file)} error={form.errors.thumbnail} />
                     </div>
@@ -601,7 +615,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                 </section>
 
                 <section id="model-bindings" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-lg font-black">Customer customization</h2>
+                    <h2 className="text-lg font-semibold">Customer customization</h2>
                     <p className="mt-1 text-xs leading-5 text-slate-500">Choose what customers can change. The 3D model is checked and connected automatically wherever possible.</p>
 
                     {!form.data.supports_colors && !form.data.supports_patterns && !form.data.supports_logos && (
@@ -640,10 +654,13 @@ export default function ProductEditor({ product, audiences = [], categories = []
                             modelFile={form.data.model}
                             modelUrl={product?.modelUrl}
                             value={form.data.print_areas}
+                            patternZonesValue={form.data.pattern_zones}
                             onChange={handleArtworkAreasChange}
                             error={form.errors.print_areas}
+                            patternZonesError={form.errors.pattern_zones}
                             onInspection={handleInspection}
                             onDisableArtwork={disableArtworkFeatures}
+                            supportsPatterns={form.data.supports_patterns}
                             supportsLogos={form.data.supports_logos}
                             enabled={form.data.supports_patterns || form.data.supports_logos}
                         />

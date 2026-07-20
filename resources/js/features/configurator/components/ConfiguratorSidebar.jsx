@@ -8,7 +8,6 @@ export const CONFIGURATOR_TOOLS = [
     { id: 'product', label: 'Product', shortLabel: 'Product' },
     { id: 'colors', label: 'Colors', shortLabel: 'Colors' },
     { id: 'image', label: 'Design texture', shortLabel: 'Design' },
-    { id: 'layers', label: 'Layers', shortLabel: 'Layers' },
 ];
 
 export function ToolPanelContent({ tool }) {
@@ -33,18 +32,12 @@ export function ToolPanelContent({ tool }) {
                             Add logo
                         </p>
                         <ImageUploadTool />
+                        <div className="mt-4 border-t border-slate-100 pt-4">
+                            <LayersPanel />
+                        </div>
                     </div>
                 )}
             </div>
-        );
-    }
-    if (tool === 'layers') {
-        return product.capabilities.logos ? (
-            <LayersPanel />
-        ) : (
-            <p className="rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-                Logo layers are unavailable for this model.
-            </p>
         );
     }
 
@@ -83,7 +76,6 @@ export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
     const visibleTools = CONFIGURATOR_TOOLS.filter((tool) => {
         if (tool.id === 'colors') return product.capabilities.solidColors;
         if (tool.id === 'image') return product.capabilities.patterns || product.capabilities.logos;
-        if (tool.id === 'layers') return product.capabilities.logos;
         return true;
     });
 

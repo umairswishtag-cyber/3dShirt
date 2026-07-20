@@ -153,7 +153,13 @@ class StoreConfiguratorProductRequest extends FormRequest
 
             if ($this->boolean('is_published') && $this->boolean('supports_patterns')) {
                 $printAreas = $this->input('print_areas', []) ?? [];
-                foreach ($this->input('pattern_zones', []) ?? [] as $patternZone) {
+                $patternZones = $this->input('pattern_zones', []) ?? [];
+
+                if (empty($patternZones)) {
+                    $validator->errors()->add('pattern_zones', 'Choose at least one model area where customers can apply patterns.');
+                }
+
+                foreach ($patternZones as $patternZone) {
                     if (! array_key_exists($patternZone, $printAreas)) {
                         $validator->errors()->add('pattern_zones', "Review the {$patternZone} artwork area before publishing.");
                     }

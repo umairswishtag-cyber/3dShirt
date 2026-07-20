@@ -35,7 +35,7 @@ export default function AdminShell({ title, subtitle = null, children, actions =
 
                 <main className="mx-auto max-w-[1480px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
                     <div className={`relative mb-8 flex flex-wrap items-end justify-between gap-5 ${hero ? 'min-h-36 overflow-hidden rounded-[28px] border border-indigo-100/80 bg-[linear-gradient(110deg,#fff_0%,#fafbff_52%,#eef1ff_100%)] px-6 py-7 shadow-[0_12px_34px_rgba(57,69,130,0.05)] sm:px-8' : ''}`}>
-                        <div className="relative z-10"><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-600">Admin workspace</p><h1 className="text-4xl font-bold tracking-[-0.035em] text-slate-950 sm:text-[42px] sm:leading-[1.05]">{title}</h1>{subtitle && <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">{subtitle}</p>}</div>
+                        <div className="relative z-10"><p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-violet-600">Admin workspace</p><h1 className="text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[32px] sm:leading-[1.05]">{title}</h1>{subtitle && <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">{subtitle}</p>}</div>
                         {hero && <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] items-center justify-center overflow-hidden md:flex">{hero}</div>}
                         {actions}
                     </div>

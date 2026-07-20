@@ -278,6 +278,25 @@ export default function LogoPlacementEditor({ scene, area, binding, zones = [], 
         setMessage(drag.mode === 'move' ? 'Logo zone moved. Save the product to publish its new position.' : 'Logo-safe zone updated. Save the product to publish this placement.');
     };
 
+    const updateZoneSize = (dimension, value) => {
+        if (!placement || !Number.isFinite(value) || value < 0.001) return;
+        const nextPlacement = {
+            ...placement,
+            [dimension]: clean(value),
+        };
+        onChange({
+            logoPlacement: nextPlacement,
+            logoBounds: logoBoundsForPlacement(nextPlacement.width, nextPlacement.height),
+            cameraView: binding.cameraView ?? 'front',
+        });
+        setMessage(`${dimension === 'width' ? 'Width' : 'Height'} updated. Save the product to publish the resized zone.`);
+    };
+
+    const scaleZoneDimension = (dimension, factor) => {
+        if (!placement) return;
+        updateZoneSize(dimension, placement[dimension] * factor);
+    };
+
     return (
         <div className="mt-4 overflow-hidden rounded-2xl border border-fuchsia-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-fuchsia-100 px-4 py-3">
@@ -312,6 +331,35 @@ export default function LogoPlacementEditor({ scene, area, binding, zones = [], 
                     <span className="rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold text-fuchsia-700 shadow backdrop-blur">{ratioLabel}</span>
                 </div>
             </div>
+
+            {placement && (
+                <div className="border-t border-fuchsia-100 bg-white px-4 py-3">
+                    <div className="mb-3">
+                        <p className="text-xs font-black text-slate-900">Resize logo zone</p>
+                        <p className="mt-0.5 text-[10px] leading-4 text-slate-500">Width and height change independently while the zone stays centered on the same model surface.</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {['width', 'height'].map((dimension) => (
+                            <div key={dimension} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                                <label className="mb-2 block text-[10px] font-black uppercase tracking-wide text-slate-500" htmlFor={`${area.id}-${dimension}`}>{dimension}</label>
+                                <div className="flex items-center gap-1.5">
+                                    <button type="button" onClick={() => scaleZoneDimension(dimension, 0.9)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-base font-black text-slate-700 hover:border-fuchsia-300 hover:text-fuchsia-700" aria-label={`Reduce zone ${dimension}`}>−</button>
+                                    <input
+                                        id={`${area.id}-${dimension}`}
+                                        type="number"
+                                        min="0.001"
+                                        step="any"
+                                        value={placement[dimension]}
+                                        onChange={(event) => updateZoneSize(dimension, Number(event.target.value))}
+                                        className="h-9 min-w-0 flex-1 rounded-lg border-slate-300 bg-white px-2 text-center font-mono text-xs font-bold text-slate-800 focus:border-fuchsia-500 focus:ring-fuchsia-500"
+                                    />
+                                    <button type="button" onClick={() => scaleZoneDimension(dimension, 1.1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-base font-black text-slate-700 hover:border-fuchsia-300 hover:text-fuchsia-700" aria-label={`Increase zone ${dimension}`}>+</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="border-t border-fuchsia-100 bg-fuchsia-50/60 px-4 py-3 text-xs leading-5 text-slate-600">
                 {message ?? 'Add Logo 1, Logo 2, Logo 3, or more. Each zone keeps its own mesh, shape, position, orientation, and storefront placement.'}

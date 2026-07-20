@@ -1,7 +1,9 @@
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
+import { getDesignArea } from '../config/designAreas';
 
 export default function LayersPanel() {
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
+    const product = useConfiguratorStore((state) => state.product);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
     const designObjects = useConfiguratorStore((state) => state.designObjects);
     const selectDesignObject = useConfiguratorStore((state) => state.selectDesignObject);
@@ -10,19 +12,28 @@ export default function LayersPanel() {
     const layers = designObjects
         .filter((object) => object.areaId === activeDesignAreaId)
         .sort((left, right) => (right.zIndex ?? 0) - (left.zIndex ?? 0));
+    const area = getDesignArea(product, activeDesignAreaId);
 
     if (layers.length === 0) {
         return (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
-                <p className="text-sm font-semibold text-slate-700">No layers on this side</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Use Design to place your first texture.</p>
+            <div>
+                <p className="mb-2 text-xs font-black text-slate-800">Logos on {area?.label ?? activeDesignAreaId}</p>
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
+                    <p className="text-xs font-semibold text-slate-700">No logos in this placement yet</p>
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500">Upload a logo above to add it to {area?.label ?? activeDesignAreaId}.</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-2">
-            {layers.map((layer) => (
+        <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs font-black text-slate-800">Logos on {area?.label ?? activeDesignAreaId}</p>
+                <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-blue-700">{layers.length}</span>
+            </div>
+            <div className="space-y-2">
+                {layers.map((layer) => (
                 <div
                     key={layer.id}
                     className={`group flex items-center gap-2 rounded-xl border p-2 transition ${
@@ -61,7 +72,8 @@ export default function LayersPanel() {
                         Delete
                     </button>
                 </div>
-            ))}
+                ))}
+            </div>
         </div>
     );
 }

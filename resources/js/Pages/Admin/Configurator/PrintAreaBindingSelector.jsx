@@ -18,6 +18,15 @@ function parseBindings(value) {
     }
 }
 
+function parseAreaIds(value) {
+    try {
+        const parsed = typeof value === 'string' ? JSON.parse(value || '[]') : value;
+        return Array.isArray(parsed) ? parsed.filter((areaId) => typeof areaId === 'string') : [];
+    } catch {
+        return [];
+    }
+}
+
 function uvBounds(geometry) {
     const uv = geometry?.getAttribute?.('uv');
     if (!uv?.count) return null;
@@ -62,13 +71,15 @@ function disposeScene(scene) {
     });
 }
 
-export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, onChange, error, onInspection, onDisableArtwork, supportsLogos = false, enabled = true }) {
+export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, patternZonesValue = [], onChange, error, patternZonesError, onInspection, onDisableArtwork, supportsPatterns = false, supportsLogos = false, enabled = true }) {
     const [meshes, setMeshes] = useState([]);
     const [previewScene, setPreviewScene] = useState(null);
     const [activeLogoAreaId, setActiveLogoAreaId] = useState(null);
     const [status, setStatus] = useState(modelFile || modelUrl ? 'loading' : 'empty');
     const [inspectionError, setInspectionError] = useState(null);
     const bindings = useMemo(() => parseBindings(value), [value]);
+    const patternAreaIds = useMemo(() => parseAreaIds(patternZonesValue), [patternZonesValue]);
+    const patternAreaSet = useMemo(() => new Set(patternAreaIds), [patternAreaIds]);
     const printAreas = useMemo(
         () => Object.entries(bindings).map(([id, binding]) => ({
             id,
@@ -152,21 +163,38 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
         ...(mesh.uvBounds ? {} : { projection: boxProjection }),
     });
 
-    const addArea = () => {
+    const commitAreas = (nextBindings, nextPatternAreaIds = patternAreaIds) => {
+        const existingIds = new Set(Object.keys(nextBindings));
+        onChange(
+            JSON.stringify(nextBindings, null, 2),
+            [...new Set(nextPatternAreaIds)].filter((areaId) => existingIds.has(areaId)),
+        );
+    };
+
+    const addArea = (kind) => {
         const mesh = meshes[0];
         if (!mesh) return;
-        let number = Object.keys(bindings).length + 1;
-        let areaId = `artworkArea${number}`;
+        const isLogo = kind === 'logo';
+        const prefix = isLogo ? 'logoArea' : 'patternArea';
+        const existingKindCount = isLogo
+            ? Object.values(bindings).filter((binding) => Boolean(binding.logoPlacement)).length
+            : patternAreaIds.length;
+        let number = existingKindCount + 1;
+        let areaId = `${prefix}${number}`;
         while (bindings[areaId]) {
             number += 1;
-            areaId = `artworkArea${number}`;
+            areaId = `${prefix}${number}`;
         }
-        const label = supportsLogos ? `Logo ${number}` : `Pattern area ${number}`;
-        onChange(JSON.stringify({
+        const label = isLogo ? `Logo ${number}` : `Pattern ${number}`;
+        const nextBindings = {
             ...bindings,
             [areaId]: bindingForMesh(mesh, label),
-        }, null, 2));
-        setActiveLogoAreaId(areaId);
+        };
+        commitAreas(
+            nextBindings,
+            isLogo ? patternAreaIds : [...patternAreaIds, areaId],
+        );
+        setActiveLogoAreaId(isLogo ? areaId : null);
     };
 
     const setAreaMesh = (areaId, meshName) => {
@@ -174,19 +202,26 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
         const mesh = meshes.find((item) => item.name === meshName);
         if (!mesh) return;
         next[areaId] = bindingForMesh(mesh, bindings[areaId]?.label || headline(areaId));
-        onChange(JSON.stringify(next, null, 2));
+        commitAreas(next);
     };
 
-    const setAreaLabel = (areaId, label) => onChange(JSON.stringify({
+    const setAreaLabel = (areaId, label) => commitAreas({
         ...bindings,
         [areaId]: { ...bindings[areaId], label },
-    }, null, 2));
+    });
+
+    const setPatternArea = (areaId, enabledForPatterns) => commitAreas(
+        bindings,
+        enabledForPatterns
+            ? [...patternAreaIds, areaId]
+            : patternAreaIds.filter((id) => id !== areaId),
+    );
 
     const removeArea = (areaId) => {
         const next = { ...bindings };
         delete next[areaId];
         if (activeLogoAreaId === areaId) setActiveLogoAreaId(null);
-        onChange(JSON.stringify(next, null, 2));
+        commitAreas(next, patternAreaIds.filter((id) => id !== areaId));
     };
 
     const setLogoPlacement = (areaId, { logoBounds, logoPlacement, cameraView }) => {
@@ -202,10 +237,10 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             delete nextBinding.cameraView;
         }
 
-        onChange(JSON.stringify({
+        commitAreas({
             ...bindings,
             [areaId]: nextBinding,
-        }, null, 2));
+        });
     };
 
     if (!enabled) return null;
@@ -214,13 +249,14 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
         <div className="xl:col-span-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <p className="text-sm font-black text-slate-800">Where can customers add artwork?</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Create any number of named areas, connect each one to a GLB mesh, then draw its logo zone directly on the model.</p>
+                    <p className="text-sm font-black text-slate-800">Pattern areas and logo zones</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">Configure them independently. For example: patterns on sleeves, with logo placements on the front and back.</p>
                 </div>
                 {status === 'ready' && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">{meshes.length} model part{meshes.length === 1 ? '' : 's'}</span>
-                        <button type="button" onClick={addArea} className="rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-black text-white hover:bg-fuchsia-700">{supportsLogos ? 'Add another logo zone' : 'Add artwork area'}</button>
+                        {supportsPatterns && <button type="button" onClick={() => addArea('pattern')} className="rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs font-black text-purple-700 hover:bg-purple-50">+ Add pattern area</button>}
+                        {supportsLogos && <button type="button" onClick={() => addArea('logo')} className="rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-black text-white hover:bg-fuchsia-700">+ Add logo zone</button>}
                     </div>
                 )}
             </div>
@@ -243,6 +279,11 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {printAreas.map((area) => (
                         <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                            <div className="mb-2 flex flex-wrap gap-1.5">
+                                {patternAreaSet.has(area.id) && <span className="rounded-full bg-purple-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-purple-700">Pattern area</span>}
+                                {bindings[area.id]?.logoPlacement && <span className="rounded-full bg-fuchsia-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-fuchsia-700">Logo zone</span>}
+                                {!patternAreaSet.has(area.id) && !bindings[area.id]?.logoPlacement && <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700">Setup needed</span>}
+                            </div>
                             <div className="mb-2 flex items-center gap-2">
                                 <input
                                     value={area.label}
@@ -265,16 +306,35 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
                                 ))}
                             </select>
                             {bindings[area.id] && (
-                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                                    <span className="text-[10px] text-emerald-700">{bindings[area.id].logoPlacement ? 'Surface zone ready' : bindings[area.id].projection ? 'Automatic pattern projection' : 'UV pattern mapping'}</span>
+                                <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                                    {supportsPatterns && (
+                                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-purple-100 bg-purple-50/60 px-3 py-2">
+                                            <span>
+                                                <span className="block text-[11px] font-black text-slate-800">Allow patterns here</span>
+                                                <span className="block text-[9px] text-slate-500">Customers will see this area in Pattern coverage.</span>
+                                            </span>
+                                            <input
+                                                type="checkbox"
+                                                checked={patternAreaSet.has(area.id)}
+                                                onChange={(event) => setPatternArea(area.id, event.target.checked)}
+                                                className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                                            />
+                                        </label>
+                                    )}
                                     {supportsLogos && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveLogoAreaId(area.id)}
-                                            className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black ${activeLogoAreaId === area.id ? 'bg-fuchsia-600 text-white' : 'border border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'}`}
-                                        >
-                                            {bindings[area.id].logoPlacement ? 'Edit logo zone' : 'Draw logo zone'}
-                                        </button>
+                                        <div className="flex items-center justify-between gap-3 rounded-lg border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2">
+                                            <span>
+                                                <span className="block text-[11px] font-black text-slate-800">Logo placement</span>
+                                                <span className="block text-[9px] text-slate-500">{bindings[area.id].logoPlacement ? 'A logo-safe surface is ready.' : 'No logo placement on this area.'}</span>
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveLogoAreaId(area.id)}
+                                                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-black ${activeLogoAreaId === area.id ? 'bg-fuchsia-600 text-white' : 'border border-fuchsia-200 bg-white text-fuchsia-700 hover:bg-fuchsia-100'}`}
+                                            >
+                                                {bindings[area.id].logoPlacement ? 'Edit zone' : 'Draw zone'}
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -284,9 +344,10 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             )}
 
             {status === 'ready' && meshes.length > 0 && printAreas.length === 0 && (
-                <button type="button" onClick={addArea} className="mt-3 w-full rounded-xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/50 p-5 text-sm font-black text-fuchsia-700 hover:bg-fuchsia-50">
-                    + {supportsLogos ? 'Create Logo 1 placement zone' : 'Create the first artwork area'}
-                </button>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {supportsPatterns && <button type="button" onClick={() => addArea('pattern')} className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-5 text-sm font-black text-purple-700 hover:bg-purple-50">+ Create Pattern 1 area</button>}
+                    {supportsLogos && <button type="button" onClick={() => addArea('logo')} className="rounded-xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/50 p-5 text-sm font-black text-fuchsia-700 hover:bg-fuchsia-50">+ Create Logo 1 placement</button>}
+                </div>
             )}
 
             {supportsLogos && previewScene && activeLogoAreaId && bindings[activeLogoAreaId] && (
@@ -304,6 +365,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, o
             )}
 
             {error && <p className="mt-2 text-xs font-semibold text-red-600">{error}</p>}
+            {patternZonesError && <p className="mt-2 text-xs font-semibold text-red-600">{patternZonesError}</p>}
 
             <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-slate-500">Developer: artwork placement data</summary>
