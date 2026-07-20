@@ -457,7 +457,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
     };
 
     return (
-        <AdminShell title={editing ? `Configure ${product.name}` : 'Add GLB product'} actions={<Link href={route('admin.configurator.products.index')} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold">Back to products</Link>}>
+        <AdminShell title={editing ? `Configure ${product.name}` : 'Add New product'} actions={<Link href={route('admin.configurator.products.index')} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold">Back to products</Link>}>
             <nav className="sticky top-3 z-20 mb-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur" aria-label="Product editor sections">
                 <a href="#product-details" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">Product</a>
                 <a href="#product-assets" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">GLB & capabilities</a>

@@ -1,4 +1,4 @@
-export const DESIGN_TEXTURE_SIZE = 1024;
+export const DESIGN_TEXTURE_SIZE = 2048;
 
 export const DESIGN_AREAS = [
     {

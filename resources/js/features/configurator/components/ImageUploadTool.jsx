@@ -4,8 +4,16 @@ import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import { storeDesignAsset } from '@/services/designAssetService';
 
-const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function normalizeImageFile(file) {
+    if (ALLOWED_IMAGE_TYPES.includes(file.type)) return file;
+
+    return file.name.toLowerCase().endsWith('.svg')
+        ? new File([file], file.name, { type: 'image/svg+xml' })
+        : null;
+}
 
 function readImage(file) {
     return new Promise((resolve, reject) => {
@@ -35,8 +43,9 @@ export default function ImageUploadTool() {
         setError(null);
         if (!file) return;
 
-        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-            setError('Choose a PNG, JPEG, JPG, or WebP image.');
+        const imageFile = normalizeImageFile(file);
+        if (!imageFile) {
+            setError('Choose an SVG, PNG, JPEG, JPG, or WebP image.');
             return;
         }
 
@@ -47,8 +56,8 @@ export default function ImageUploadTool() {
 
         setIsReading(true);
         try {
-            const { source: inlineSource, image } = await readImage(file);
-            const source = customer ? await storeDesignAsset(inlineSource, file.name) : inlineSource;
+            const { source: inlineSource, image } = await readImage(imageFile);
+            const source = customer ? await storeDesignAsset(inlineSource, imageFile.name) : inlineSource;
             const aspectRatio = image.naturalWidth / image.naturalHeight || 1;
             const width = Math.min(0.3, area.bounds.width * 0.48);
             const height = Math.min(width / aspectRatio, area.bounds.height * 0.48);
@@ -98,13 +107,13 @@ export default function ImageUploadTool() {
                 <span className="text-sm font-semibold text-slate-800">
                     {isReading ? 'Preparing image…' : `Add ${area.label} logo`}
                 </span>
-                <span className="mt-1 text-xs text-slate-500">PNG, JPEG or WebP · max 2 MB</span>
+                <span className="mt-1 text-xs text-slate-500">SVG, PNG, JPEG or WebP · max 2 MB</span>
             </button>
             <input
                 ref={inputRef}
                 type="file"
                 className="sr-only"
-                accept="image/png,image/jpeg,image/webp,.jpg,.jpeg"
+                accept="image/svg+xml,image/png,image/jpeg,image/webp,.svg,.jpg,.jpeg"
                 onChange={(event) => handleFile(event.target.files?.[0])}
             />
             {error && (

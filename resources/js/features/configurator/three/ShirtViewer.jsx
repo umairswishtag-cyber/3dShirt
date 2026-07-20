@@ -50,7 +50,7 @@ function Scene() {
                 <ShirtModel />
             </Suspense>
             <ContactShadows
-                position={[0, -1.24, 0]}
+                position={[0, 0, 0]}
                 opacity={0.24}
                 scale={5}
                 blur={2.5}
@@ -65,7 +65,7 @@ function Scene() {
                 enablePan
                 screenSpacePanning
                 minDistance={3.2}
-                maxDistance={12}
+                maxDistance={26}
                 minPolarAngle={Math.PI * 0.2}
                 maxPolarAngle={Math.PI * 0.8}
                 target={[0, -0.05, 0]}

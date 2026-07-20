@@ -11,6 +11,7 @@ import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export function useDesignTexture(areaId) {
     const invalidate = useThree((state) => state.invalidate);
+    const maxAnisotropy = useThree((state) => state.gl.capabilities.getMaxAnisotropy());
     const objects = useConfiguratorStore(
         (state) => state.designObjects.filter((object) => object.areaId === areaId),
         shallow,
@@ -32,9 +33,10 @@ export function useDesignTexture(areaId) {
         const nextTexture = new CanvasTexture(canvas);
         nextTexture.colorSpace = SRGBColorSpace;
         nextTexture.flipY = DESIGN_AREAS_BY_ID[areaId].texture.flipY;
+        nextTexture.anisotropy = maxAnisotropy;
         nextTexture.needsUpdate = true;
         return nextTexture;
-    }, [areaId, canvas]);
+    }, [areaId, canvas, maxAnisotropy]);
 
     useEffect(() => {
         let active = true;

@@ -68,10 +68,10 @@ export default function Dashboard({ summary, recentProducts }) {
                         <span className={`relative grid h-12 w-12 place-items-center rounded-2xl ${action.featured ? 'bg-white/15 text-white ring-1 ring-white/20' : 'bg-blue-50 text-blue-700'}`}>
                             <UiIcon name={action.icon} className="h-6 w-6" />
                         </span>
-                        <p className={`relative mt-6 text-[11px] font-black uppercase tracking-[0.17em] ${action.featured ? 'text-blue-100' : 'text-slate-400'}`}>{action.eyebrow}</p>
-                        <h2 className="relative mt-2 text-xl font-black tracking-tight">{action.title}</h2>
+                        <p className={`relative mt-6 d-block text-[11px] font-black uppercase tracking-[0.17em] ${action.featured ? 'text-blue-100' : 'text-slate-400'}`}>{action.eyebrow}</p>
+                        <h2 className="relative mt-2 text-xxl font-black tracking-tight"><span style={{fontSize:'30px', margin: '10px 0px', display: 'block'}}>{action.title}</span> </h2>
                         <p className={`relative mt-2 text-sm leading-6 ${action.featured ? 'text-blue-100' : 'text-slate-500'}`}>{action.description}</p>
-                        <span className={`relative mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black ${action.featured ? 'text-white' : 'text-blue-700'}`}>
+                        <span className={`relative mt-auto inline-flex items-center gap-2 pt-5 text-sm  ${action.featured ? 'text-white' : 'text-blue-700'}`}>
                             {action.cta}<UiIcon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />
                         </span>
                     </Link>

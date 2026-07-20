@@ -157,6 +157,30 @@ class CustomerConfiguratorFlowTest extends TestCase
         ]])->assertOk()->assertJsonPath('data.saveMyDesign.document', $document);
     }
 
+    public function test_customer_can_store_a_sanitized_svg_logo(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->customer('svg-logo-owner@example.com'), 'customer');
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" onload="alert(1)"><script>alert(1)</script><defs><linearGradient id="logo-gradient"><stop stop-color="#2563eb"/></linearGradient></defs><rect width="100" height="100" fill="url(&quot;#logo-gradient&quot;)"/></svg>';
+
+        $response = $this->graphQL(<<<'GRAPHQL'
+            mutation StoreLogo($input: StoreCustomerDesignAssetInput!) {
+                storeMyDesignAsset(input: $input) { url }
+            }
+        GRAPHQL, ['input' => [
+            'name' => 'sharp-logo.svg',
+            'dataUrl' => 'data:image/svg+xml;base64,'.base64_encode($svg),
+        ]])->assertOk()->assertJsonMissingPath('errors');
+
+        $url = $response->json('data.storeMyDesignAsset.url');
+        $this->assertStringEndsWith('.svg', $url);
+        $stored = Storage::disk('public')->get(str_replace('/storage/', '', $url));
+        $this->assertStringNotContainsString('<script', $stored);
+        $this->assertStringNotContainsString('onload=', $stored);
+        $this->assertStringContainsString('<rect', $stored);
+        $this->assertStringContainsString('url(&quot;#logo-gradient&quot;)', $stored);
+    }
+
     public function test_customer_cannot_load_or_update_another_customers_design(): void
     {
         $owner = $this->customer('owner@example.com');

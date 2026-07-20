@@ -12,7 +12,7 @@ export default function ProductsIndex({ products }) {
             title="Storefront garments"
             actions={(
                 <Link href={route('admin.configurator.products.create')} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700">
-                    Add GLB product
+                    Add New product
                 </Link>
             )}
         >

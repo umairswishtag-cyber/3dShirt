@@ -6,7 +6,8 @@ const STORE_DESIGN_ASSET = `
     }
 `;
 
-export const isInlineDesignAsset = (source) => typeof source === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(source);
+export const isInlineDesignAsset = (source) => typeof source === 'string'
+    && /^data:image\/(?:png|jpeg|webp|svg\+xml);base64,/i.test(source);
 
 export async function storeDesignAsset(source, name = 'logo') {
     if (!isInlineDesignAsset(source)) return source;

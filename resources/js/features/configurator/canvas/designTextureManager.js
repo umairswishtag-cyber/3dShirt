@@ -94,6 +94,8 @@ export async function renderDesignArea(areaId, objects, patternSelection = null)
     const area = DESIGN_AREAS_BY_ID[areaId];
     const canvas = getDesignTextureCanvas(areaId);
     const context = canvas.getContext('2d');
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
     const version = (renderVersions.get(areaId) ?? 0) + 1;
     renderVersions.set(areaId, version);
 
