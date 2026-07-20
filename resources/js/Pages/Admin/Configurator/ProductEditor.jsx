@@ -1,8 +1,12 @@
 import { Link, router, useForm } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import GarmentIllustration from '@/Components/GarmentIllustration';
+import UiIcon from '@/Components/UiIcon';
 import AdminShell from './AdminShell';
+import GlbModelPreview from './GlbModelPreview';
 import PrintAreaBindingSelector from './PrintAreaBindingSelector';
+import { supportsLogoPlacement } from '@/features/configurator/config/designAreas';
 
 const DEFAULT_COLOR_ZONES = [
     { id: 'body', label: 'Body', defaultColor: '#F8FAFC' },
@@ -21,6 +25,46 @@ function TextField({ label, error, help, ...props }) {
             {help && <span className="mt-1 block text-[11px] leading-4 text-slate-500">{help}</span>}
             <FieldError message={error} />
         </label>
+    );
+}
+
+function ThumbnailUpload({ file, currentUrl, category, onChange, error }) {
+    const [previewUrl, setPreviewUrl] = useState(currentUrl ?? null);
+
+    useEffect(() => {
+        if (!file) {
+            setPreviewUrl(currentUrl ?? null);
+            return undefined;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [currentUrl, file]);
+
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            <div className="flex items-center justify-between gap-3">
+                <div><p className="text-xs font-bold text-slate-700">Product thumbnail <span className="font-medium text-slate-400">(optional)</span></p><p className="mt-1 text-[11px] text-slate-500">Shown in the storefront product picker.</p></div>
+                {file && <button type="button" onClick={() => onChange(null)} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">{currentUrl ? 'Use saved image' : 'Clear selection'}</button>}
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_168px] sm:items-center">
+                <div>
+                    <input key={file ? `${file.name}-${file.lastModified}` : 'empty-thumbnail'} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange(event.target.files?.[0] ?? null)} className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm file:mr-3 file:border-0 file:border-r file:border-slate-200 file:bg-transparent file:pr-3 file:text-xs file:font-bold focus:border-indigo-500 focus:ring-indigo-500" />
+                    <p className="mt-1.5 text-[11px] leading-4 text-slate-500">PNG, JPEG, or WebP · Maximum 5 MB</p>
+                    {file && <p className="mt-1 truncate text-[11px] font-semibold text-emerald-700">Ready to upload: {file.name}</p>}
+                    <FieldError message={error} />
+                </div>
+
+                <div className="relative grid aspect-[1.5] place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    {previewUrl
+                        ? <img src={previewUrl} alt="Product thumbnail preview" className="h-full w-full object-contain p-2" />
+                        : <GarmentIllustration type={category} className="h-full w-full" />}
+                    <span className={`absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow-sm backdrop-blur ${previewUrl ? 'bg-white/90 text-indigo-700' : 'bg-slate-900/80 text-white'}`}><UiIcon name={previewUrl ? 'check' : 'sparkles'} className="h-3 w-3" />{file ? 'New preview' : currentUrl ? 'Saved thumbnail' : 'Preview'}</span>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -62,7 +106,7 @@ function ColorOptionsField({ zonesValue, paletteValue, onZonesChange, onPaletteC
             </div>
             <FieldError message={zonesError} />
 
-            <div className="mt-5">
+            <div className="mt-5 hidden">
                 <div className="flex items-center justify-between gap-2">
                     <div>
                         <p className="text-xs font-black">Colors customers can choose</p>
@@ -172,6 +216,12 @@ function parseJsonField(value, expectedType) {
     } catch {
         return { valid: false, value: expectedType === 'array' ? [] : {} };
     }
+}
+
+function formatFileSize(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function ValidationSummary({ errors }) {
@@ -322,7 +372,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
     const [modelInspection, setModelInspection] = useState({ status: 'loading', meshCount: 0, uvMeshCount: 0, meshes: [] });
     const [patternInputKey, setPatternInputKey] = useState(0);
     const form = useForm({
-        name: product?.name ?? '', gender: product?.gender ?? audiences[0]?.slug ?? '', category: product?.category ?? categories[0]?.slug ?? '', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
+        name: product?.name ?? '', category: product?.category ?? categories[0]?.slug ?? '', gender: product?.gender ?? audiences.find((item) => item.slug === 'unisex')?.slug ?? audiences[0]?.slug ?? '', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
         model: null, thumbnail: null, mesh_zones: JSON.stringify(product?.mesh_zones ?? {}, null, 2), print_areas: JSON.stringify(product?.print_areas ?? {}, null, 2),
         color_zones: JSON.stringify(product?.color_zones ?? DEFAULT_COLOR_ZONES, null, 2), allowed_colors: JSON.stringify(product?.allowed_colors ?? DEFAULT_ALLOWED_COLORS, null, 2), pattern_zones: JSON.stringify(product?.pattern_zones ?? [], null, 2),
         supports_colors: product?.supports_colors ?? true, supports_patterns: product?.supports_patterns ?? false, supports_logos: product?.supports_logos ?? false, is_published: product?.is_published ?? false, sort_order: product?.sort_order ?? 0,
@@ -418,6 +468,12 @@ export default function ProductEditor({ product, audiences = [], categories = []
             }
         }
         if (
+            form.data.supports_logos
+            && !Object.values(parsedConfiguration.printAreas.value).some(supportsLogoPlacement)
+        ) {
+            blockers.push({ message: 'Draw at least one logo-safe zone directly on the model.', href: '#model-bindings' });
+        }
+        if (
             form.data.supports_patterns &&
             parsedConfiguration.patternZones.value.some((areaId) => !parsedConfiguration.printAreas.value[areaId])
         ) {
@@ -457,7 +513,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
     };
 
     return (
-        <AdminShell title={editing ? `Configure ${product.name}` : 'Add New product'} actions={<Link href={route('admin.configurator.products.index')} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold">Back to products</Link>}>
+        <AdminShell title={editing ? `Configure ${product.name}` : 'Add new product'} subtitle="Start with what the product is, choose who it is for, then connect its 3D model and customization options." actions={<Link href={route('admin.configurator.products.index')} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold">Back to products</Link>}>
             <nav className="sticky top-3 z-20 mb-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur" aria-label="Product editor sections">
                 <a href="#product-details" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">Product</a>
                 <a href="#product-assets" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">GLB & capabilities</a>
@@ -471,10 +527,11 @@ export default function ProductEditor({ product, audiences = [], categories = []
                 <PublishReadiness product={product} blockers={publishBlockers} />
                 <section id="product-details" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 className="text-lg font-black">Catalog information</h2>
+                    <p className="mt-1 text-xs text-slate-500">A category describes the product itself. A customer group only describes its audience or fit.</p>
                     <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <TextField label="Product name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} />
-                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Customer group</span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><FieldError message={form.errors.gender} /></label>
-                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Garment category</span><select value={form.data.category} onChange={(e) => form.setData({ ...form.data, category: e.target.value, print_areas: '{}', pattern_zones: '[]' })} className="h-11 w-full rounded-xl border-slate-300 text-sm">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Changing category resets artwork areas so they can match the new product type. Manage choices under <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Catalog options</a>.</span><FieldError message={form.errors.category} /></label>
+                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Product category <span className="font-medium text-slate-400">— what it is</span></span><select value={form.data.category} onChange={(e) => form.setData({ ...form.data, category: e.target.value, print_areas: '{}', pattern_zones: '[]' })} className="h-11 w-full rounded-xl border-slate-300 text-sm">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Examples: shirts, hats, caps, footwear, cups. Changing this resets artwork areas.</span><FieldError message={form.errors.category} /></label>
+                        <label className="block"><span className="mb-1.5 block text-xs font-bold">Customer group <span className="font-medium text-slate-400">— who it is for</span></span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Use Unisex for products without a gender-specific fit. <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Manage catalog structure</a>.</span><FieldError message={form.errors.gender} /></label>
                         <TextField label="Display order" type="number" min="0" value={form.data.sort_order} onChange={(e) => form.setData('sort_order', Number(e.target.value))} error={form.errors.sort_order} />
                         <TextField label="Viewer fit height" type="number" min="0.1" max="20" step="0.05" value={form.data.fit_height} onChange={(e) => form.setData('fit_height', Number(e.target.value))} error={form.errors.fit_height} />
                         <label className="block md:col-span-2 lg:col-span-3"><span className="mb-1.5 block text-xs font-bold">Description</span><textarea value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} rows="3" className="w-full rounded-xl border-slate-300 text-sm" /><FieldError message={form.errors.description} /></label>
@@ -483,9 +540,14 @@ export default function ProductEditor({ product, audiences = [], categories = []
 
                 <section id="product-assets" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 className="text-lg font-black">Assets and storefront capabilities</h2>
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        <TextField label={editing ? 'Replace GLB model (optional)' : 'GLB model'} type="file" accept=".glb,model/gltf-binary" onChange={(e) => form.setData('model', e.target.files[0])} help={product?.model_original_name ? `Current: ${product.model_original_name}` : 'Maximum 100 MB'} error={form.errors.model} />
-                        <TextField label="Product thumbnail (optional)" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => form.setData('thumbnail', e.target.files[0])} error={form.errors.thumbnail} />
+                    <p className="mt-1 text-xs text-slate-500">Upload the 3D model and review the exact storefront thumbnail before saving.</p>
+                    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <TextField label={editing ? 'Replace GLB model (optional)' : 'GLB model'} type="file" accept=".glb,model/gltf-binary" onChange={(e) => form.setData('model', e.target.files?.[0] ?? null)} help={product?.model_original_name ? `Current model: ${product.model_original_name}` : 'GLB format · Maximum 100 MB'} error={form.errors.model} />
+                            {form.data.model && <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-emerald-600 shadow-sm"><UiIcon name="check" className="h-4 w-4" /></span><span className="min-w-0"><strong className="block truncate">{form.data.model.name}</strong><span className="text-[10px] text-emerald-700">Ready to upload · {formatFileSize(form.data.model.size)}</span></span></div>}
+                            <GlbModelPreview modelFile={form.data.model} modelUrl={product?.modelUrl} />
+                        </div>
+                        <ThumbnailUpload file={form.data.thumbnail} currentUrl={product?.thumbnailUrl} category={form.data.category} onChange={(file) => form.setData('thumbnail', file)} error={form.errors.thumbnail} />
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                         <Toggle label="Solid colors" description="Allow configured material zones to be recolored." checked={form.data.supports_colors} onChange={(value) => form.setData('supports_colors', value)} />
@@ -577,12 +639,12 @@ export default function ProductEditor({ product, audiences = [], categories = []
                         <PrintAreaBindingSelector
                             modelFile={form.data.model}
                             modelUrl={product?.modelUrl}
-                            category={form.data.category}
                             value={form.data.print_areas}
                             onChange={handleArtworkAreasChange}
                             error={form.errors.print_areas}
                             onInspection={handleInspection}
                             onDisableArtwork={disableArtworkFeatures}
+                            supportsLogos={form.data.supports_logos}
                             enabled={form.data.supports_patterns || form.data.supports_logos}
                         />
                     </div>

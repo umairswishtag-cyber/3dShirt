@@ -1,5 +1,5 @@
 import { DEFAULT_SHIRT_COLORS } from '../config/shirtZones';
-import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
+import { DESIGN_AREAS_BY_ID, getLogoDesignArea } from '../config/designAreas';
 import {
     createDefaultPatternColors,
     createDefaultPatternZones,
@@ -37,15 +37,15 @@ export function parseLocalDesign(rawValue) {
         throw new Error('This saved design is not compatible with the current configurator.');
     }
 
+    const product = PRODUCTS_BY_ID[value.productId];
     const validObjects = value.designObjects.filter(
         (object) =>
             object &&
             object.type === 'image' &&
             typeof object.id === 'string' &&
-            Boolean(DESIGN_AREAS_BY_ID[object.areaId]) &&
+            Boolean(product.model.printAreas?.[object.areaId] || DESIGN_AREAS_BY_ID[object.areaId]) &&
             typeof object.source === 'string',
-    ).map((object) => constrainDesignObject(object, DESIGN_AREAS_BY_ID[object.areaId]));
-    const product = PRODUCTS_BY_ID[value.productId];
+    ).map((object) => constrainDesignObject(object, getLogoDesignArea(product, object.areaId)));
     const patterns = product.patterns ?? [];
     const defaultPatternColors = createDefaultPatternColors(patterns);
     const patternColors = Object.fromEntries(
@@ -87,7 +87,7 @@ export function parseLocalDesign(rawValue) {
         patternColors,
         patternZones,
         designObjects: validObjects,
-        activeDesignAreaId: DESIGN_AREAS_BY_ID[value.activeDesignAreaId]
+        activeDesignAreaId: (product.model.printAreas?.[value.activeDesignAreaId] || DESIGN_AREAS_BY_ID[value.activeDesignAreaId])
             ? value.activeDesignAreaId
             : 'front',
         updatedAt: value.updatedAt ?? null,

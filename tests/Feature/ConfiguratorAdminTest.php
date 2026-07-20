@@ -103,6 +103,59 @@ class ConfiguratorAdminTest extends TestCase
             ->assertJsonCount(0, 'data');
     }
 
+    public function test_admin_can_move_a_misclassified_audience_to_categories_without_losing_products(): void
+    {
+        $user = User::factory()->create();
+        $cup = ConfiguratorTaxonomy::create([
+            'type' => 'audience',
+            'slug' => 'cup',
+            'label' => 'Cup',
+            'sort_order' => 100,
+        ]);
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'custom-cup',
+            'name' => 'Custom Cup',
+            'gender' => 'cup',
+            'category' => 'shirts',
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('admin.configurator.taxonomies.move', $cup), [
+                'replacement_slug' => 'unisex',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('configurator_taxonomies', [
+            'id' => $cup->id,
+            'type' => 'category',
+            'slug' => 'cup',
+        ]);
+        $this->assertDatabaseHas('configurator_products', [
+            'id' => $product->id,
+            'gender' => 'unisex',
+            'category' => 'cup',
+        ]);
+    }
+
+    public function test_catalog_options_reject_obvious_product_types_as_customer_groups(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('admin.configurator.taxonomies.store'), [
+                'type' => 'audience',
+                'label' => 'Coffee Cups',
+            ])
+            ->assertSessionHasErrors('label');
+
+        $this->assertDatabaseMissing('configurator_taxonomies', [
+            'type' => 'audience',
+            'slug' => 'coffee-cups',
+        ]);
+    }
+
     public function test_uploaded_pattern_is_sanitized_and_exposes_detected_colors(): void
     {
         Storage::fake('public');
@@ -288,6 +341,8 @@ class ConfiguratorAdminTest extends TestCase
             'outwardNormalZ' => null,
             'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
             'projection' => ['type' => 'box', 'axis' => null, 'direction' => null],
+            'logoBounds' => ['x' => 0.25, 'y' => 0.2, 'width' => 0.5, 'height' => 0.45],
+            'logoProjection' => ['type' => 'planar', 'axis' => 'z', 'direction' => 1],
         ];
 
         $this->actingAs($user)->put(
@@ -303,7 +358,9 @@ class ConfiguratorAdminTest extends TestCase
         $this->assertTrue($product->fresh()->is_published);
         $this->getJson('/api/configurator/catalog')
             ->assertOk()
-            ->assertJsonPath('data.0.model.printAreas.fullBody.projection.type', 'box');
+            ->assertJsonPath('data.0.model.printAreas.fullBody.projection.type', 'box')
+            ->assertJsonPath('data.0.model.printAreas.fullBody.logoProjection.type', 'planar')
+            ->assertJsonPath('data.0.model.printAreas.fullBody.logoBounds.width', 0.5);
     }
 
     public function test_footwear_and_headwear_artwork_areas_are_valid_product_configuration(): void
@@ -341,6 +398,100 @@ class ConfiguratorAdminTest extends TestCase
 
             $this->assertArrayHasKey($case['area'], $product->fresh()->print_areas);
         }
+    }
+
+    public function test_box_projected_logo_requires_an_admin_selected_model_face(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'wrap-cup',
+            'category' => 'cups',
+            'model_url' => '/models/wrap-cup.glb',
+            'supports_logos' => false,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($user)->put(route('admin.configurator.products.update', $product), [
+            ...$this->validProductData(),
+            'category' => 'cups',
+            'supports_logos' => true,
+            'is_published' => true,
+            'print_areas' => [
+                'fullBody' => [
+                    'meshName' => 'CupMesh',
+                    'outwardNormalZ' => null,
+                    'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+                    'projection' => ['type' => 'box', 'axis' => null, 'direction' => null],
+                    'logoBounds' => ['x' => 0.2, 'y' => 0.2, 'width' => 0.6, 'height' => 0.6],
+                ],
+            ],
+        ])->assertSessionHasErrors('print_areas');
+
+        $this->assertFalse($product->fresh()->is_published);
+    }
+
+    public function test_multiple_generic_named_surface_areas_are_saved_and_reach_the_storefront(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'future-product',
+            'model_url' => '/models/future-product.glb',
+            'supports_logos' => false,
+            'is_published' => false,
+        ]);
+        $placement = [
+            'type' => 'surface',
+            'origin' => [0.12, 0.5, -0.08],
+            'uAxis' => [0.707107, 0, 0.707107],
+            'vAxis' => [0, 1, 0],
+            'normal' => [-0.707107, 0, 0.707107],
+            'width' => 0.24,
+            'height' => 0.65,
+        ];
+
+        $this->actingAs($user)->put(route('admin.configurator.products.update', $product), [
+            ...$this->validProductData(),
+            'supports_logos' => true,
+            'is_published' => true,
+            'print_areas' => [
+                'logo1' => [
+                    'label' => 'Logo 1',
+                    'cameraView' => 'front',
+                    'meshName' => 'FutureMesh_42',
+                    'outwardNormalZ' => null,
+                    'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+                    'logoBounds' => ['x' => 0.333846, 'y' => 0.05, 'width' => 0.332308, 'height' => 0.9],
+                    'logoPlacement' => $placement,
+                ],
+                'logo2' => [
+                    'label' => 'Logo 2',
+                    'cameraView' => 'back',
+                    'meshName' => 'FutureMesh_42',
+                    'outwardNormalZ' => null,
+                    'uvBounds' => ['min' => [0, 0], 'max' => [1, 1]],
+                    'logoBounds' => ['x' => 0.05, 'y' => 0.333846, 'width' => 0.9, 'height' => 0.332308],
+                    'logoPlacement' => [
+                        ...$placement,
+                        'origin' => [-0.12, 0.5, 0.08],
+                        'width' => 0.65,
+                        'height' => 0.24,
+                    ],
+                ],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->getJson('/api/configurator/catalog')
+            ->assertOk()
+            ->assertJsonPath('data.0.model.printAreas.logo1.label', 'Logo 1')
+            ->assertJsonPath('data.0.model.printAreas.logo1.logoPlacement.type', 'surface')
+            ->assertJsonPath('data.0.model.printAreas.logo1.logoPlacement.height', 0.65)
+            ->assertJsonPath('data.0.model.printAreas.logo2.label', 'Logo 2')
+            ->assertJsonPath('data.0.model.printAreas.logo2.cameraView', 'back')
+            ->assertJsonPath('data.0.model.printAreas.logo2.logoPlacement.width', 0.65);
     }
 
     public function test_patterns_capability_requires_an_active_pattern_before_publishing(): void

@@ -1,6 +1,5 @@
 import './bootstrap';
 import '../css/app.css';
-import "@shopify/polaris/build/esm/styles.css";
 import { createInertiaApp } from '@inertiajs/react';
 import { AppProvider } from '@shopify/polaris';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

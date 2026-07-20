@@ -9,7 +9,7 @@ import {
 } from '../canvas/designTextureManager';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
-export function useDesignTexture(areaId) {
+export function useDesignTexture(areaId, layer = 'composite') {
     const invalidate = useThree((state) => state.invalidate);
     const maxAnisotropy = useThree((state) => state.gl.capabilities.getMaxAnisotropy());
     const objects = useConfiguratorStore(
@@ -28,11 +28,17 @@ export function useDesignTexture(areaId) {
     const patternEnabled = useConfiguratorStore(
         (state) => state.patternZones[areaId],
     );
-    const canvas = useMemo(() => getDesignTextureCanvas(areaId), [areaId]);
+    const logoBounds = useConfiguratorStore(
+        (state) => state.product.model.printAreas?.[areaId]?.logoBounds ?? null,
+    );
+    const canvas = useMemo(
+        () => getDesignTextureCanvas(areaId, layer),
+        [areaId, layer],
+    );
     const texture = useMemo(() => {
         const nextTexture = new CanvasTexture(canvas);
         nextTexture.colorSpace = SRGBColorSpace;
-        nextTexture.flipY = DESIGN_AREAS_BY_ID[areaId].texture.flipY;
+        nextTexture.flipY = DESIGN_AREAS_BY_ID[areaId]?.texture.flipY ?? false;
         nextTexture.anisotropy = maxAnisotropy;
         nextTexture.needsUpdate = true;
         return nextTexture;
@@ -41,11 +47,14 @@ export function useDesignTexture(areaId) {
     useEffect(() => {
         let active = true;
 
-        renderDesignArea(areaId, objects, {
-            id: patternEnabled ? selectedPatternId : null,
-            pattern: patternEnabled ? selectedPattern : null,
+        const includesObjects = layer !== 'pattern';
+        const includesPattern = layer !== 'logos';
+
+        renderDesignArea(areaId, includesObjects ? objects : [], {
+            id: includesPattern && patternEnabled ? selectedPatternId : null,
+            pattern: includesPattern && patternEnabled ? selectedPattern : null,
             colors: patternColors,
-        }).then(() => {
+        }, layer, layer === 'logos' ? logoBounds : null).then(() => {
             if (!active) return;
             texture.needsUpdate = true;
             invalidate();
@@ -54,7 +63,7 @@ export function useDesignTexture(areaId) {
         return () => {
             active = false;
         };
-    }, [areaId, invalidate, objects, patternColors, patternEnabled, selectedPattern, selectedPatternId, texture]);
+    }, [areaId, invalidate, layer, logoBounds, objects, patternColors, patternEnabled, selectedPattern, selectedPatternId, texture]);
 
     useEffect(() => () => texture.dispose(), [texture]);
 

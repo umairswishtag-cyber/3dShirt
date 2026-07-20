@@ -64,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('admin/configurator')->name('admin.configurator.')->group(function () {
         Route::get('catalog-options', [ConfiguratorTaxonomyController::class, 'index'])->name('taxonomies.index');
         Route::post('catalog-options', [ConfiguratorTaxonomyController::class, 'store'])->name('taxonomies.store');
+        Route::patch('catalog-options/{taxonomy}/move', [ConfiguratorTaxonomyController::class, 'move'])->name('taxonomies.move');
         Route::delete('catalog-options/{taxonomy}', [ConfiguratorTaxonomyController::class, 'destroy'])->name('taxonomies.destroy');
         Route::get('preview/{product?}', [StorefrontConfiguratorController::class, 'preview'])
             ->name('preview');

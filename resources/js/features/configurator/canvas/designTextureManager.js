@@ -78,26 +78,41 @@ function getPatternImage(pattern, colors) {
     return patternImagePromises.get(cacheKey);
 }
 
-export function getDesignTextureCanvas(areaId) {
-    if (!canvases.has(areaId)) {
+function getLayerKey(areaId, layer) {
+    return `${areaId}:${layer}`;
+}
+
+export function getDesignTextureCanvas(areaId, layer = 'composite') {
+    const layerKey = getLayerKey(areaId, layer);
+
+    if (!canvases.has(layerKey)) {
         const canvas = document.createElement('canvas');
         canvas.width = DESIGN_TEXTURE_SIZE;
         canvas.height = DESIGN_TEXTURE_SIZE;
         canvas.dataset.designAreaId = areaId;
-        canvases.set(areaId, canvas);
+        canvas.dataset.designLayer = layer;
+        canvases.set(layerKey, canvas);
     }
 
-    return canvases.get(areaId);
+    return canvases.get(layerKey);
 }
 
-export async function renderDesignArea(areaId, objects, patternSelection = null) {
+export async function renderDesignArea(
+    areaId,
+    objects,
+    patternSelection = null,
+    layer = 'composite',
+    boundsOverride = null,
+) {
     const area = DESIGN_AREAS_BY_ID[areaId];
-    const canvas = getDesignTextureCanvas(areaId);
+    const bounds = boundsOverride ?? area?.bounds ?? { x: 0.1, y: 0.1, width: 0.8, height: 0.8 };
+    const layerKey = getLayerKey(areaId, layer);
+    const canvas = getDesignTextureCanvas(areaId, layer);
     const context = canvas.getContext('2d');
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = 'high';
-    const version = (renderVersions.get(areaId) ?? 0) + 1;
-    renderVersions.set(areaId, version);
+    const version = (renderVersions.get(layerKey) ?? 0) + 1;
+    renderVersions.set(layerKey, version);
 
     const imageObjects = objects
         .filter((object) => object.type === 'image')
@@ -116,7 +131,7 @@ export async function renderDesignArea(areaId, objects, patternSelection = null)
         })),
     ]);
 
-    if (renderVersions.get(areaId) !== version) return canvas;
+    if (renderVersions.get(layerKey) !== version) return canvas;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -127,10 +142,10 @@ export async function renderDesignArea(areaId, objects, patternSelection = null)
     context.save();
     context.beginPath();
     context.rect(
-        area.bounds.x * canvas.width,
-        area.bounds.y * canvas.height,
-        area.bounds.width * canvas.width,
-        area.bounds.height * canvas.height,
+        bounds.x * canvas.width,
+        bounds.y * canvas.height,
+        bounds.width * canvas.width,
+        bounds.height * canvas.height,
     );
     context.clip();
 

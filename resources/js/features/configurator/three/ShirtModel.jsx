@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
-import { Box3, Float32BufferAttribute, FrontSide, Vector3 } from 'three';
+import { Box3, CanvasTexture, Float32BufferAttribute, FrontSide, SRGBColorSpace, Vector3 } from 'three';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
@@ -78,9 +78,32 @@ function addProjectedUvs(geometry, projection) {
     geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
 }
 
+function addSurfacePlacementUvs(geometry, placement, logoBounds) {
+    const position = geometry.getAttribute('position');
+    const uvs = new Float32Array(position.count * 2);
+    const origin = new Vector3().fromArray(placement.origin);
+    const horizontal = new Vector3().fromArray(placement.uAxis).normalize();
+    const vertical = new Vector3().fromArray(placement.vAxis).normalize();
+    const point = new Vector3();
+    const relative = new Vector3();
+    const bounds = logoBounds ?? { x: 0.05, y: 0.05, width: 0.9, height: 0.9 };
+
+    for (let index = 0; index < position.count; index += 1) {
+        point.fromBufferAttribute(position, index);
+        relative.copy(point).sub(origin);
+        const u = relative.dot(horizontal) / Math.max(placement.width, 0.000001) + 0.5;
+        const v = relative.dot(vertical) / Math.max(placement.height, 0.000001) + 0.5;
+        uvs[index * 2] = bounds.x + u * bounds.width;
+        uvs[index * 2 + 1] = bounds.y + v * bounds.height;
+    }
+
+    geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
+}
+
 function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
     const projection = binding.projection;
-    const geometry = projection && sourceGeometry.index
+    const placement = binding.logoPlacement;
+    const geometry = (projection || placement) && sourceGeometry.index
         ? sourceGeometry.toNonIndexed()
         : sourceGeometry.clone();
     const position = geometry.getAttribute('position');
@@ -91,6 +114,7 @@ function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
         : Array.from({ length: position.count }, (_, index) => index);
     const filteredIndices = [];
     const minimumFacing = 0.25;
+    const placementNormal = placement ? new Vector3().fromArray(placement.normal).normalize() : null;
 
     for (let index = 0; index < indices.length; index += 3) {
         const a = indices[index];
@@ -101,11 +125,19 @@ function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
             ? (normal[`get${projectionAxis.toUpperCase()}`](a) + normal[`get${projectionAxis.toUpperCase()}`](b) + normal[`get${projectionAxis.toUpperCase()}`](c)) / 3
             : null;
         const averageNormalZ = (normal.getZ(a) + normal.getZ(b) + normal.getZ(c)) / 3;
+        const averageNormal = placement
+            ? new Vector3(
+                (normal.getX(a) + normal.getX(b) + normal.getX(c)) / 3,
+                (normal.getY(a) + normal.getY(b) + normal.getY(c)) / 3,
+                (normal.getZ(a) + normal.getZ(b) + normal.getZ(c)) / 3,
+            ).normalize()
+            : null;
 
         if (
-            projection?.type === 'box' ||
+            (placement && averageNormal.dot(placementNormal) > 0.05) ||
+            (!placement && projection?.type === 'box') ||
             (projection?.type === 'planar' && averageProjectionNormal * projection.direction > minimumFacing) ||
-            (!projection && (binding.outwardNormalZ === null || averageNormalZ * binding.outwardNormalZ > minimumFacing))
+            (!placement && !projection && (binding.outwardNormalZ === null || averageNormalZ * binding.outwardNormalZ > minimumFacing))
         ) {
             filteredIndices.push(a, b, c);
         }
@@ -113,7 +145,8 @@ function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
 
     geometry.setIndex(filteredIndices);
     geometry.clearGroups();
-    if (projection) addProjectedUvs(geometry, projection);
+    if (placement) addSurfacePlacementUvs(geometry, placement, binding.logoBounds);
+    else if (projection) addProjectedUvs(geometry, projection);
 
     // Lift the print less than a millimetre in model space so it follows the
     // cloth without z-fighting or being depth-shifted through the other side.
@@ -133,13 +166,20 @@ function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
     return geometry;
 }
 
-function PrintSurface({ geometry, texture, uvBounds, name }) {
+function PrintSurface({
+    geometry,
+    texture,
+    uvBounds,
+    name,
+    renderOrder,
+    isArtworkLayer = false,
+}) {
     useEffect(() => {
         configurePrintTexture(texture, uvBounds);
     }, [texture, uvBounds]);
 
     return (
-        <mesh name={name} geometry={geometry} renderOrder={2}>
+        <mesh name={name} geometry={geometry} renderOrder={renderOrder}>
             <meshBasicMaterial
                 map={texture}
                 transparent
@@ -147,8 +187,8 @@ function PrintSurface({ geometry, texture, uvBounds, name }) {
                 depthWrite={false}
                 depthTest
                 polygonOffset
-                polygonOffsetFactor={-4}
-                polygonOffsetUnits={-4}
+                polygonOffsetFactor={isArtworkLayer ? -8 : -4}
+                polygonOffsetUnits={isArtworkLayer ? -8 : -4}
                 side={FrontSide}
                 toneMapped={false}
             />
@@ -156,16 +196,90 @@ function PrintSurface({ geometry, texture, uvBounds, name }) {
     );
 }
 
-function BoundPrintSurface({ areaId, binding, geometry }) {
-    const texture = useDesignTexture(areaId);
+function LogoZoneGuide({ geometry, logoBounds }) {
+    const texture = useMemo(() => {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const context = canvas.getContext('2d');
+        const bounds = logoBounds ?? { x: 0.05, y: 0.05, width: 0.9, height: 0.9 };
+        context.strokeStyle = '#2563eb';
+        context.lineWidth = 8;
+        context.setLineDash([18, 12]);
+        context.strokeRect(
+            bounds.x * size + 4,
+            bounds.y * size + 4,
+            bounds.width * size - 8,
+            bounds.height * size - 8,
+        );
+        const nextTexture = new CanvasTexture(canvas);
+        nextTexture.colorSpace = SRGBColorSpace;
+        nextTexture.flipY = false;
+        nextTexture.needsUpdate = true;
+        return nextTexture;
+    }, [logoBounds]);
+
+    useEffect(() => () => texture.dispose(), [texture]);
 
     return (
-        <PrintSurface
-            name={`print_${areaId}`}
-            geometry={geometry}
-            texture={texture}
-            uvBounds={binding.uvBounds}
-        />
+        <mesh name="active_logo_zone_guide" geometry={geometry} renderOrder={20}>
+            <meshBasicMaterial
+                map={texture}
+                transparent
+                alphaTest={0.01}
+                depthWrite={false}
+                depthTest
+                polygonOffset
+                polygonOffsetFactor={-10}
+                polygonOffsetUnits={-10}
+                side={FrontSide}
+                toneMapped={false}
+            />
+        </mesh>
+    );
+}
+
+function BoundPrintSurface({ areaId, binding, geometries }) {
+    const patternTexture = useDesignTexture(areaId, 'pattern');
+    const artworkTexture = useDesignTexture(areaId, 'logos');
+    const hasPattern = useConfiguratorStore(
+        (state) => Boolean(state.patternZones[areaId] && state.selectedPatternId),
+    );
+    const hasArtwork = useConfiguratorStore(
+        (state) => state.designObjects.some(
+            (object) => object.areaId === areaId && object.type === 'image',
+        ),
+    );
+    const isActiveLogoArea = useConfiguratorStore(
+        (state) => state.activeDesignAreaId === areaId,
+    );
+
+    return (
+        <>
+            {hasPattern && geometries.pattern && (
+                <PrintSurface
+                    name={`pattern_${areaId}`}
+                    geometry={geometries.pattern}
+                    texture={patternTexture}
+                    uvBounds={binding.uvBounds}
+                    renderOrder={2}
+                />
+            )}
+            {hasArtwork && geometries.artwork && (
+                <PrintSurface
+                    name={`artwork_${areaId}`}
+                    geometry={geometries.artwork}
+                    texture={artworkTexture}
+                    uvBounds={binding.logoPlacement ? { min: [0, 0], max: [1, 1] } : binding.uvBounds}
+                    renderOrder={10}
+                    isArtworkLayer
+                />
+            )}
+            {isActiveLogoArea && binding.logoPlacement && geometries.artwork && (
+                <LogoZoneGuide geometry={geometries.artwork} logoBounds={binding.logoBounds} />
+            )}
+        </>
     );
 }
 
@@ -189,14 +303,28 @@ export default function ShirtModel() {
                 );
             }
 
-            return [
-                areaId,
-                createOutwardPrintGeometry(
+            const pattern = createOutwardPrintGeometry(
+                node.geometry,
+                { ...binding, logoPlacement: null },
+                node.matrixWorld,
+            );
+            const canProjectArtwork = binding.logoPlacement?.type === 'surface'
+                || binding.projection?.type !== 'box'
+                || binding.logoProjection?.type === 'planar';
+            const artwork = canProjectArtwork
+                ? createOutwardPrintGeometry(
                     node.geometry,
-                    binding,
+                    {
+                        ...binding,
+                        projection: binding.logoPlacement
+                            ? null
+                            : binding.logoProjection ?? binding.projection,
+                    },
                     node.matrixWorld,
-                ),
-            ];
+                )
+                : null;
+
+            return [areaId, { pattern, artwork }];
         });
 
         return Object.fromEntries(entries);
@@ -217,7 +345,10 @@ export default function ShirtModel() {
 
     useEffect(
         () => () => {
-            Object.values(printMeshes).forEach((geometry) => geometry.dispose());
+            Object.values(printMeshes).forEach((geometries) => {
+                geometries.pattern?.dispose();
+                geometries.artwork?.dispose();
+            });
         },
         [printMeshes],
     );
@@ -254,7 +385,7 @@ export default function ShirtModel() {
                         key={areaId}
                         areaId={areaId}
                         binding={binding}
-                        geometry={printMeshes[areaId]}
+                        geometries={printMeshes[areaId]}
                     />
                 ))}
             </group>

@@ -1,8 +1,9 @@
-import { PATTERN_ZONE_OPTIONS } from '../config/patterns';
+import { getDesignArea } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function PatternCoverageControls() {
     const zoneIds = useConfiguratorStore((state) => state.product.patternZones ?? []);
+    const product = useConfiguratorStore((state) => state.product);
     const patternZones = useConfiguratorStore((state) => state.patternZones);
     const setPatternZoneEnabled = useConfiguratorStore(
         (state) => state.setPatternZoneEnabled,
@@ -10,7 +11,7 @@ export default function PatternCoverageControls() {
     const applyPatternToFullShirt = useConfiguratorStore(
         (state) => state.applyPatternToFullShirt,
     );
-    const zones = PATTERN_ZONE_OPTIONS.filter((zone) => zoneIds.includes(zone.id));
+    const zones = zoneIds.map((zoneId) => getDesignArea(product, zoneId)).filter(Boolean);
     const fullShirtEnabled = zones.every(
         (zone) => patternZones[zone.id],
     );
@@ -32,7 +33,7 @@ export default function PatternCoverageControls() {
                             : 'border border-blue-200 bg-white text-blue-700 hover:bg-blue-50'
                     }`}
                 >
-                    Full shirt
+                    All areas
                 </button>
             </div>
 
@@ -69,7 +70,7 @@ export default function PatternCoverageControls() {
             </div>
 
             <p className="mt-2 text-[10px] leading-4 text-slate-500">
-                Choosing a solid zone color automatically turns its pattern off. The collar always uses a solid color.
+                Choosing a solid zone color automatically turns off patterns connected to that color area.
             </p>
         </div>
     );

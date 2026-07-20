@@ -68,7 +68,7 @@ export default function ConfigurationPanel({ embedded = false }) {
     const duplicateDesignObject = useConfiguratorStore((state) => state.duplicateDesignObject);
     const fitDesignObject = useConfiguratorStore((state) => state.fitDesignObject);
     const removeDesignObject = useConfiguratorStore((state) => state.removeDesignObject);
-    const flipEditorY = shouldFlipEditorY(activeDesignAreaId, product.category);
+    const flipEditorY = shouldFlipEditorY(product, activeDesignAreaId);
 
     const content = !object ? (
         <div className="space-y-5">

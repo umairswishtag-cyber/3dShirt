@@ -67,7 +67,71 @@ export const DESIGN_AREAS_BY_ID = Object.fromEntries(
     DESIGN_AREAS.map((area) => [area.id, area]),
 );
 
-export function shouldFlipEditorY(areaId, category) {
-    return ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category)
+const headline = (value) => value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const DEFAULT_BOUNDS = { x: 0.1, y: 0.1, width: 0.8, height: 0.8 };
+
+function validBounds(bounds) {
+    return bounds
+        && Number.isFinite(bounds.x)
+        && Number.isFinite(bounds.y)
+        && Number.isFinite(bounds.width)
+        && Number.isFinite(bounds.height)
+        && bounds.width > 0
+        && bounds.height > 0;
+}
+
+export function getDesignArea(product, areaId) {
+    const binding = product?.model?.printAreas?.[areaId];
+    const legacy = DESIGN_AREAS_BY_ID[areaId];
+    if (!binding && !legacy) return null;
+
+    return {
+        id: areaId,
+        label: binding?.label || legacy?.label || headline(areaId),
+        shortLabel: binding?.label || legacy?.shortLabel || headline(areaId),
+        shirtZoneId: legacy?.shirtZoneId ?? 'body',
+        cameraView: binding?.cameraView || legacy?.cameraView || 'front',
+        textureSize: legacy?.textureSize ?? { width: DESIGN_TEXTURE_SIZE, height: DESIGN_TEXTURE_SIZE },
+        bounds: legacy?.bounds ?? DEFAULT_BOUNDS,
+        texture: legacy?.texture ?? { flipY: false },
+    };
+}
+
+export function getLogoDesignArea(product, areaId) {
+    const area = getDesignArea(product, areaId);
+    if (!area) return null;
+    const logoBounds = product?.model?.printAreas?.[areaId]?.logoBounds;
+
+    return validBounds(logoBounds)
+        ? { ...area, bounds: logoBounds }
+        : area;
+}
+
+export function supportsLogoPlacement(binding) {
+    if (!binding) return false;
+    if (binding.logoPlacement?.type === 'surface') return true;
+    if (binding.label) return false;
+
+    return binding.projection?.type !== 'box'
+        || binding.logoProjection?.type === 'planar';
+}
+
+export function getLogoAreaIds(product) {
+    return Object.entries(product?.model?.printAreas ?? {})
+        .filter(([, binding]) => supportsLogoPlacement(binding))
+        .map(([areaId]) => areaId);
+}
+
+export function shouldFlipEditorY(product, areaId) {
+    const binding = product?.model?.printAreas?.[areaId];
+    if (binding?.logoPlacement?.type === 'surface') return false;
+    if (typeof binding?.flipEditorY === 'boolean') return binding.flipEditorY;
+
+    // Compatibility for catalog records created before surface-based zones.
+    return ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(product?.category)
         && ['frontPanel', 'backPanel', 'leftPanel', 'rightPanel', 'brim', 'fullBody'].includes(areaId);
 }

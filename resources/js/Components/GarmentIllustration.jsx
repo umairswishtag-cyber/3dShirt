@@ -2,7 +2,8 @@ export default function GarmentIllustration({ type = 'shirt', className = '' }) 
     const dress = type === 'dress' || type === 'dresses';
     const footwear = ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(type);
     const headwear = ['caps', 'hats', 'cap', 'hat'].includes(type);
-    const label = dress ? 'Dress' : footwear ? 'Footwear' : headwear ? 'Headwear' : 'Shirt';
+    const drinkware = ['cup', 'cups', 'mug', 'mugs', 'drinkware'].includes(type);
+    const label = dress ? 'Dress' : footwear ? 'Footwear' : headwear ? 'Headwear' : drinkware ? 'Cup' : 'Shirt';
 
     return (
         <svg viewBox="0 0 240 180" className={className} role="img" aria-label={`${label} illustration`}>
@@ -18,7 +19,14 @@ export default function GarmentIllustration({ type = 'shirt', className = '' }) 
             <circle cx="120" cy="85" r="70" fill="#eff6ff" />
             <circle cx="182" cy="38" r="9" fill="#d1fae5" />
             <circle cx="53" cy="127" r="7" fill="#fef3c7" />
-            {footwear ? (
+            {drinkware ? (
+                <g filter="url(#garment-shadow)">
+                    <path d="M70 47h91v71c0 28-18 43-45 43s-46-15-46-43V47Z" fill="url(#fabric-shirt)" stroke="#2563eb" strokeWidth="2" />
+                    <path d="M161 69h14c27 0 30 48 0 52h-15" fill="none" stroke="#2563eb" strokeWidth="10" />
+                    <ellipse cx="115.5" cy="48" rx="45.5" ry="11" fill="#eff6ff" stroke="#2563eb" strokeWidth="2" />
+                    <path d="M89 82h53M89 95h42" stroke="#93c5fd" strokeWidth="3" strokeLinecap="round" />
+                </g>
+            ) : footwear ? (
                 <g filter="url(#garment-shadow)">
                     <path d="M45 91c20 4 39-2 51-28l25 31 66 17c12 3 15 21 3 27-8 4-105 5-132 0-18-4-27-26-13-47Z" fill="url(#fabric-shirt)" stroke="#2563eb" strokeWidth="2" />
                     <path d="M52 124h142M105 82l-17 18M116 93l-16 14" stroke="#60a5fa" strokeWidth="3" />

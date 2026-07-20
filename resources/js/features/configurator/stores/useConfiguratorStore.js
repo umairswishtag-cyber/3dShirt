@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
+import { DESIGN_AREAS_BY_ID, getDesignArea, getLogoAreaIds, getLogoDesignArea } from '../config/designAreas';
 import {
     createDefaultPatternColors,
     createDefaultPatternZones,
@@ -21,12 +21,6 @@ const productColors = (product) => ({
     ...DEFAULT_SHIRT_COLORS,
     ...(product?.defaultColors ?? {}),
 });
-const SHIRT_ZONE_PATTERN_AREAS = {
-    body: ['front', 'back', 'leftShoe', 'rightShoe', 'toe', 'heel', 'tongue', 'frontPanel', 'backPanel', 'leftPanel', 'rightPanel', 'brim', 'fullBody'],
-    leftSleeve: ['leftSleeve', 'fullBody'],
-    rightSleeve: ['rightSleeve', 'fullBody'],
-};
-
 const clone = (value) => {
     if (typeof structuredClone === 'function') {
         return structuredClone(value);
@@ -43,14 +37,14 @@ const createSnapshot = (state) => ({
     designObjects: state.designObjects.map((object) => ({ ...object })),
 });
 
-const restoreSnapshot = (snapshot) => ({
+const restoreSnapshot = (snapshot, product) => ({
     shirtColors: { ...snapshot.shirtColors },
     selectedPatternId: snapshot.selectedPatternId ?? null,
     patternColors: clone(snapshot.patternColors ?? createDefaultPatternColors()),
     patternZones: { ...(snapshot.patternZones ?? createDefaultPatternZones()) },
     designObjects: snapshot.designObjects.map((object) => constrainDesignObject(
         { ...object },
-        DESIGN_AREAS_BY_ID[object.areaId],
+        getLogoDesignArea(product, object.areaId),
     )),
 });
 
@@ -83,6 +77,10 @@ export const useConfiguratorStore = create((set, get) => ({
     selectProduct: (productId) => {
         const product = PRODUCTS_BY_ID[productId];
         if (!product) return false;
+        const activeDesignAreaId = getLogoAreaIds(product)[0]
+            ?? Object.keys(product.model.printAreas ?? {})[0]
+            ?? 'front';
+        const activeArea = getDesignArea(product, activeDesignAreaId);
 
         try {
             localStorage.removeItem(LOCAL_DESIGN_STORAGE_KEY);
@@ -92,9 +90,9 @@ export const useConfiguratorStore = create((set, get) => ({
 
         set((state) => ({
             product,
-            activeDesignAreaId: Object.keys(product.model.printAreas ?? {})[0] ?? 'front',
+            activeDesignAreaId,
             activeShirtZoneId: product.colorZones[0] ?? 'body',
-            cameraView: 'front',
+            cameraView: activeArea?.cameraView ?? 'front',
             cameraRequestId: state.cameraRequestId + 1,
             shirtColors: productColors(product),
             selectedPatternId: null,
@@ -114,7 +112,7 @@ export const useConfiguratorStore = create((set, get) => ({
     },
 
     setActiveDesignArea: (areaId) => {
-        const area = DESIGN_AREAS_BY_ID[areaId];
+        const area = getDesignArea(get().product, areaId);
         if (!area) return;
 
         set((state) => ({
@@ -138,7 +136,9 @@ export const useConfiguratorStore = create((set, get) => ({
 
     setShirtZoneColor: (zoneId, color) => {
         const state = get();
-        const patternAreaIds = SHIRT_ZONE_PATTERN_AREAS[zoneId] ?? [];
+        const patternAreaIds = (state.product.patternZones ?? []).filter(
+            (areaId) => getDesignArea(state.product, areaId)?.shirtZoneId === zoneId,
+        );
         const patternIsEnabled = patternAreaIds.some(
             (areaId) => state.patternZones[areaId] === true,
         );
@@ -229,7 +229,7 @@ export const useConfiguratorStore = create((set, get) => ({
         const state = get();
         const nextObject = constrainDesignObject(
             { ...object, id: object.id ?? makeObjectId() },
-            DESIGN_AREAS_BY_ID[object.areaId],
+            getLogoDesignArea(state.product, object.areaId),
         );
 
         set({
@@ -250,7 +250,7 @@ export const useConfiguratorStore = create((set, get) => ({
 
         const nextObject = constrainDesignObject(
             { ...object, ...changes },
-            DESIGN_AREAS_BY_ID[object.areaId],
+            getLogoDesignArea(state.product, object.areaId),
         );
         const designObjects = state.designObjects.map((item) => item.id === objectId ? nextObject : item);
 
@@ -268,7 +268,10 @@ export const useConfiguratorStore = create((set, get) => ({
         const state = get();
         const object = state.designObjects.find((item) => item.id === objectId);
         if (!object) return;
-        const nextObject = fitDesignObjectInsideArea(object, DESIGN_AREAS_BY_ID[object.areaId]);
+        const nextObject = fitDesignObjectInsideArea(
+            object,
+            getLogoDesignArea(state.product, object.areaId),
+        );
 
         set({
             designObjects: state.designObjects.map((item) => item.id === objectId ? nextObject : item),
@@ -322,7 +325,7 @@ export const useConfiguratorStore = create((set, get) => ({
             x: Math.min(0.94, source.x + 0.04),
             y: Math.min(0.94, source.y + 0.04),
             zIndex: Math.max(0, ...state.designObjects.map((object) => object.zIndex ?? 0)) + 1,
-        }, DESIGN_AREAS_BY_ID[source.areaId]);
+        }, getLogoDesignArea(state.product, source.areaId));
 
         set({
             designObjects: [...state.designObjects, duplicate],
@@ -341,7 +344,7 @@ export const useConfiguratorStore = create((set, get) => ({
         if (!previous) return;
 
         set({
-            ...restoreSnapshot(previous),
+            ...restoreSnapshot(previous, state.product),
             selectedObjectId: null,
             past: state.past.slice(0, -1),
             future: [createSnapshot(state), ...state.future].slice(0, MAX_HISTORY_LENGTH),
@@ -356,7 +359,7 @@ export const useConfiguratorStore = create((set, get) => ({
         if (!next) return;
 
         set({
-            ...restoreSnapshot(next),
+            ...restoreSnapshot(next, state.product),
             selectedObjectId: null,
             past: pushHistory(state.past, createSnapshot(state)),
             future: state.future.slice(1),
@@ -367,6 +370,10 @@ export const useConfiguratorStore = create((set, get) => ({
 
     resetDesign: () => {
         const state = get();
+        const activeDesignAreaId = getLogoAreaIds(state.product)[0]
+            ?? Object.keys(state.product.model.printAreas ?? {})[0]
+            ?? 'front';
+        const activeArea = getDesignArea(state.product, activeDesignAreaId);
         try {
             localStorage.removeItem(LOCAL_DESIGN_STORAGE_KEY);
         } catch {
@@ -374,9 +381,9 @@ export const useConfiguratorStore = create((set, get) => ({
         }
 
         set({
-            activeDesignAreaId: 'front',
+            activeDesignAreaId,
             activeShirtZoneId: state.product.colorZones[0] ?? 'body',
-            cameraView: 'front',
+            cameraView: activeArea?.cameraView ?? 'front',
             cameraRequestId: state.cameraRequestId + 1,
             shirtColors: productColors(state.product),
             selectedPatternId: null,
@@ -416,10 +423,11 @@ export const useConfiguratorStore = create((set, get) => ({
             if (!rawValue) return { ok: true, restored: false };
 
             const draft = parseLocalDesign(rawValue);
-            const area = DESIGN_AREAS_BY_ID[draft.activeDesignAreaId];
+            const product = PRODUCTS_BY_ID[draft.productId];
+            const area = getDesignArea(product, draft.activeDesignAreaId);
 
             set((state) => ({
-                product: PRODUCTS_BY_ID[draft.productId],
+                product,
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
                 patternColors: draft.patternColors,
@@ -447,10 +455,11 @@ export const useConfiguratorStore = create((set, get) => ({
     loadDesignDocument: (document) => {
         try {
             const draft = parseLocalDesign(JSON.stringify(document));
-            const area = DESIGN_AREAS_BY_ID[draft.activeDesignAreaId];
+            const product = PRODUCTS_BY_ID[draft.productId];
+            const area = getDesignArea(product, draft.activeDesignAreaId);
 
             set((state) => ({
-                product: PRODUCTS_BY_ID[draft.productId],
+                product,
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
                 patternColors: draft.patternColors,

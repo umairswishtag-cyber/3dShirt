@@ -1,9 +1,10 @@
-import { DESIGN_AREAS } from '../config/designAreas';
+import { getDesignArea, getLogoAreaIds } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
 export default function DesignAreaSelector({ compact = false }) {
     const supportsLogos = useConfiguratorStore((state) => state.product.capabilities.logos);
-    const printAreaIds = useConfiguratorStore((state) => Object.keys(state.product.model.printAreas ?? {}));
+    const product = useConfiguratorStore((state) => state.product);
+    const printAreaIds = useConfiguratorStore((state) => getLogoAreaIds(state.product));
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
     const setActiveDesignArea = useConfiguratorStore((state) => state.setActiveDesignArea);
 
@@ -14,9 +15,9 @@ export default function DesignAreaSelector({ compact = false }) {
             className={`flex items-center rounded-xl border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur ${
                 compact ? 'gap-0.5' : 'gap-1'
             }`}
-            aria-label="Print area"
+            aria-label="Logo placement area"
         >
-            {DESIGN_AREAS.filter((area) => printAreaIds.includes(area.id)).map((area) => (
+            {printAreaIds.map((areaId) => getDesignArea(product, areaId)).filter(Boolean).map((area) => (
                 <button
                     key={area.id}
                     type="button"

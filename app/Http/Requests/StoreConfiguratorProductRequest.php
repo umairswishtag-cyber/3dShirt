@@ -42,7 +42,9 @@ class StoreConfiguratorProductRequest extends FormRequest
             'pattern_is_active' => ['nullable', 'boolean'],
             'mesh_zones' => ['required', 'array'],
             'mesh_zones.*' => ['string', 'max:64'],
-            'print_areas' => ['array:front,back,leftSleeve,rightSleeve,leftShoe,rightShoe,toe,heel,tongue,frontPanel,backPanel,leftPanel,rightPanel,brim,fullBody'],
+            'print_areas' => ['array', 'max:30'],
+            'print_areas.*.label' => ['nullable', 'string', 'max:80'],
+            'print_areas.*.cameraView' => ['nullable', 'in:front,back,left,right'],
             'print_areas.*.meshName' => ['required', 'string', 'max:160'],
             'print_areas.*.outwardNormalZ' => ['nullable', 'numeric', 'between:-1,1'],
             'print_areas.*.uvBounds' => ['required', 'array'],
@@ -54,6 +56,27 @@ class StoreConfiguratorProductRequest extends FormRequest
             'print_areas.*.projection.type' => ['required_with:print_areas.*.projection', 'in:planar,box'],
             'print_areas.*.projection.axis' => ['nullable', 'in:x,y,z'],
             'print_areas.*.projection.direction' => ['nullable', 'integer', 'in:-1,1'],
+            'print_areas.*.logoBounds' => ['nullable', 'array:x,y,width,height'],
+            'print_areas.*.logoBounds.x' => ['required_with:print_areas.*.logoBounds', 'numeric', 'between:0,1'],
+            'print_areas.*.logoBounds.y' => ['required_with:print_areas.*.logoBounds', 'numeric', 'between:0,1'],
+            'print_areas.*.logoBounds.width' => ['required_with:print_areas.*.logoBounds', 'numeric', 'gt:0', 'max:1'],
+            'print_areas.*.logoBounds.height' => ['required_with:print_areas.*.logoBounds', 'numeric', 'gt:0', 'max:1'],
+            'print_areas.*.logoProjection' => ['nullable', 'array'],
+            'print_areas.*.logoProjection.type' => ['required_with:print_areas.*.logoProjection', 'in:planar'],
+            'print_areas.*.logoProjection.axis' => ['required_with:print_areas.*.logoProjection', 'in:x,y,z'],
+            'print_areas.*.logoProjection.direction' => ['required_with:print_areas.*.logoProjection', 'integer', 'in:-1,1'],
+            'print_areas.*.logoPlacement' => ['nullable', 'array:type,origin,uAxis,vAxis,normal,width,height'],
+            'print_areas.*.logoPlacement.type' => ['required_with:print_areas.*.logoPlacement', 'in:surface'],
+            'print_areas.*.logoPlacement.origin' => ['required_with:print_areas.*.logoPlacement', 'array', 'size:3'],
+            'print_areas.*.logoPlacement.origin.*' => ['numeric'],
+            'print_areas.*.logoPlacement.uAxis' => ['required_with:print_areas.*.logoPlacement', 'array', 'size:3'],
+            'print_areas.*.logoPlacement.uAxis.*' => ['numeric', 'between:-1,1'],
+            'print_areas.*.logoPlacement.vAxis' => ['required_with:print_areas.*.logoPlacement', 'array', 'size:3'],
+            'print_areas.*.logoPlacement.vAxis.*' => ['numeric', 'between:-1,1'],
+            'print_areas.*.logoPlacement.normal' => ['required_with:print_areas.*.logoPlacement', 'array', 'size:3'],
+            'print_areas.*.logoPlacement.normal.*' => ['numeric', 'between:-1,1'],
+            'print_areas.*.logoPlacement.width' => ['required_with:print_areas.*.logoPlacement', 'numeric', 'gt:0', 'max:100000'],
+            'print_areas.*.logoPlacement.height' => ['required_with:print_areas.*.logoPlacement', 'numeric', 'gt:0', 'max:100000'],
             'color_zones' => ['required_if:supports_colors,true', 'array'],
             'color_zones.*.id' => ['required_with:color_zones', 'string', 'max:64', 'regex:/^[A-Za-z][A-Za-z0-9_-]*$/'],
             'color_zones.*.label' => ['required_with:color_zones', 'string', 'max:80'],
@@ -61,7 +84,7 @@ class StoreConfiguratorProductRequest extends FormRequest
             'allowed_colors' => ['required', 'array'],
             'allowed_colors.*' => ['regex:/^#[0-9A-Fa-f]{6}$/'],
             'pattern_zones' => ['array'],
-            'pattern_zones.*' => ['in:front,back,leftSleeve,rightSleeve,leftShoe,rightShoe,toe,heel,tongue,frontPanel,backPanel,leftPanel,rightPanel,brim,fullBody'],
+            'pattern_zones.*' => ['string', 'max:64', 'regex:/^[A-Za-z][A-Za-z0-9_-]*$/'],
             'supports_colors' => ['required', 'boolean'],
             'supports_patterns' => ['required', 'boolean'],
             'supports_logos' => ['required', 'boolean'],
@@ -93,6 +116,22 @@ class StoreConfiguratorProductRequest extends FormRequest
                 $validator->errors()->add('print_areas', 'Choose at least one model area where customers can add patterns or logos. You can still save without it as a draft.');
             }
 
+            if ($this->boolean('is_published') && $this->boolean('supports_logos')) {
+                $hasLogoReadyArea = collect($this->input('print_areas', []) ?? [])->contains(
+                    fn ($area) => is_array($area)
+                        && (($area['logoPlacement']['type'] ?? null) === 'surface'
+                        || (! array_key_exists('label', $area) && (
+                            ($area['projection']['type'] ?? null) !== 'box'
+                            || ($area['logoProjection']['type'] ?? null) === 'planar'
+                        ))
+                        )
+                );
+
+                if (! $hasLogoReadyArea) {
+                    $validator->errors()->add('print_areas', 'Draw a logo-safe zone on at least one model face before publishing logo placement.');
+                }
+            }
+
             if (
                 $this->boolean('is_published') &&
                 $this->boolean('supports_colors') &&
@@ -118,6 +157,28 @@ class StoreConfiguratorProductRequest extends FormRequest
                     if (! array_key_exists($patternZone, $printAreas)) {
                         $validator->errors()->add('pattern_zones', "Review the {$patternZone} artwork area before publishing.");
                     }
+                }
+            }
+
+            foreach ($this->input('print_areas', []) ?? [] as $areaId => $printArea) {
+                if (! is_string($areaId) || ! preg_match('/^[A-Za-z][A-Za-z0-9_-]{0,63}$/', $areaId)) {
+                    $validator->errors()->add('print_areas', 'Artwork area identifiers must start with a letter and contain only letters, numbers, dashes, or underscores.');
+                }
+
+                if (! is_array($printArea)) {
+                    continue;
+                }
+
+                $bounds = $printArea['logoBounds'] ?? null;
+                if (! is_array($bounds)) {
+                    continue;
+                }
+
+                if (($bounds['x'] ?? 0) + ($bounds['width'] ?? 0) > 1) {
+                    $validator->errors()->add("print_areas.{$areaId}.logoBounds.width", 'The logo zone must stay inside the model texture width.');
+                }
+                if (($bounds['y'] ?? 0) + ($bounds['height'] ?? 0) > 1) {
+                    $validator->errors()->add("print_areas.{$areaId}.logoBounds.height", 'The logo zone must stay inside the model texture height.');
                 }
             }
 

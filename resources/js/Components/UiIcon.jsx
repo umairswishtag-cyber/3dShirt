@@ -12,6 +12,7 @@ const paths = {
     dress: <><path d="M9 3h6l1 5-2 3 4 10H6l4-10-2-3 1-5Z" /><path d="M9 3a3 3 0 0 0 6 0" /></>,
     cap: <><path d="M5 14c0-5 2.8-8 7-8s7 3 7 8H5Z" /><path d="M5 14c4-1 8-.5 11 2 2.5 2 5 1 6 0-2-2-4-3-7-3" /></>,
     footwear: <><path d="M4 7v7c0 2 2 3 5 3h10c2 0 3-1 3-2.5 0-1-1-1.8-2.5-2L13 11 9 6 4 7Z" /><path d="M4 14h18" /></>,
+    cup: <><path d="M5 5h12v11a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V5Z" /><path d="M17 8h1.5a3 3 0 0 1 0 6H17M4 5h14" /></>,
     user: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
     users: <><circle cx="9" cy="8" r="3" /><path d="M3 19a6 6 0 0 1 12 0M16 6.5a3 3 0 0 1 0 5.5M17 14a5 5 0 0 1 4 5" /></>,
     bookmark: <path d="M6 3.5h12v17L12 16l-6 4.5v-17Z" />,

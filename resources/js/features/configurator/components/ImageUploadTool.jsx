@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { DESIGN_AREAS_BY_ID } from '../config/designAreas';
+import { getDesignArea, getLogoAreaIds, getLogoDesignArea, supportsLogoPlacement } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import { storeDesignAsset } from '@/services/designAssetService';
 
@@ -35,9 +35,23 @@ export default function ImageUploadTool() {
     const [error, setError] = useState(null);
     const [isReading, setIsReading] = useState(false);
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
+    const product = useConfiguratorStore((state) => state.product);
     const designObjects = useConfiguratorStore((state) => state.designObjects);
     const addDesignObject = useConfiguratorStore((state) => state.addDesignObject);
-    const area = DESIGN_AREAS_BY_ID[activeDesignAreaId];
+    const setActiveDesignArea = useConfiguratorStore((state) => state.setActiveDesignArea);
+    const area = getLogoDesignArea(product, activeDesignAreaId);
+    const binding = product.model.printAreas?.[activeDesignAreaId];
+    const logoAreas = getLogoAreaIds(product)
+        .map((areaId) => getDesignArea(product, areaId))
+        .filter(Boolean);
+
+    if (!supportsLogoPlacement(binding)) {
+        return (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                Logo placement is not configured for this model area yet. Ask the administrator to draw a logo-safe zone on the product GLB.
+            </p>
+        );
+    }
 
     const handleFile = async (file) => {
         setError(null);
@@ -95,6 +109,24 @@ export default function ImageUploadTool() {
 
     return (
         <div className="space-y-4">
+            {logoAreas.length > 1 && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-3">
+                    <p className="text-xs font-black text-slate-900">Choose logo placement</p>
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500">Each placement can contain one or more uploaded logos.</p>
+                    <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                        {logoAreas.map((logoArea) => (
+                            <button
+                                key={logoArea.id}
+                                type="button"
+                                onClick={() => setActiveDesignArea(logoArea.id)}
+                                className={`rounded-lg border px-2.5 py-2 text-left text-xs font-bold transition ${activeDesignAreaId === logoArea.id ? 'border-blue-600 bg-blue-600 text-white shadow-sm' : 'border-blue-100 bg-white text-slate-700 hover:border-blue-300'}`}
+                            >
+                                {logoArea.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
             <button
                 type="button"
                 disabled={isReading}
@@ -107,7 +139,7 @@ export default function ImageUploadTool() {
                 <span className="text-sm font-semibold text-slate-800">
                     {isReading ? 'Preparing image…' : `Add ${area.label} logo`}
                 </span>
-                <span className="mt-1 text-xs text-slate-500">SVG, PNG, JPEG or WebP · max 2 MB</span>
+                <span className="mt-1 text-xs text-slate-500">SVG, PNG, JPEG or WebP · max 2 MB · multiple logos allowed</span>
             </button>
             <input
                 ref={inputRef}

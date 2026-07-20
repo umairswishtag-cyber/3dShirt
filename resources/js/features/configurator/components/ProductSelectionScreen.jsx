@@ -5,26 +5,26 @@ import UiIcon from '@/Components/UiIcon';
 import { GARMENT_CATEGORIES, GENDER_OPTIONS, PRODUCT_CATALOG } from '../config/productCatalog';
 
 export default function ProductSelectionScreen({ onSelect, adminPreview = false }) {
-    const [gender, setGender] = useState(null);
     const [category, setCategory] = useState(null);
+    const [gender, setGender] = useState(null);
     const products = useMemo(() => PRODUCT_CATALOG.filter((product) => product.gender === gender && product.category === category), [category, gender]);
-    const genders = useMemo(() => {
-        const known = new Map(GENDER_OPTIONS.map((item) => [item.id, item]));
-        PRODUCT_CATALOG.forEach((product) => known.set(product.gender, {
-            id: product.gender,
-            label: product.audienceLabel || known.get(product.gender)?.label || titleCase(product.gender),
-        }));
-        return [...known.values()].filter((option) => PRODUCT_CATALOG.some((product) => product.gender === option.id));
-    }, []);
     const categories = useMemo(() => {
         const known = new Map(GARMENT_CATEGORIES.map((item) => [item.id, item]));
         PRODUCT_CATALOG.forEach((product) => {
             known.set(product.category, { id: product.category, label: product.categoryLabel || known.get(product.category)?.label || titleCase(product.category) });
         });
-        return [...known.values()];
+        return [...known.values()].filter((option) => PRODUCT_CATALOG.some((product) => product.category === option.id));
     }, []);
+    const audiences = useMemo(() => {
+        const known = new Map(GENDER_OPTIONS.map((item) => [item.id, item]));
+        PRODUCT_CATALOG.forEach((product) => known.set(product.gender, {
+            id: product.gender,
+            label: product.audienceLabel || known.get(product.gender)?.label || titleCase(product.gender),
+        }));
+        return [...known.values()].filter((option) => PRODUCT_CATALOG.some((product) => product.category === category && product.gender === option.id));
+    }, [category]);
 
-    const chooseGender = (genderId) => { setGender(genderId); setCategory(null); };
+    const chooseCategory = (categoryId) => { setCategory(categoryId); setGender(null); };
 
     return (
         <div className="relative min-h-dvh overflow-hidden bg-[#f6f8fc] text-slate-950">
@@ -40,37 +40,40 @@ export default function ProductSelectionScreen({ onSelect, adminPreview = false 
 
             <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-11">
                 <div className="mb-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-                    <div><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700"><UiIcon name="sparkles" className="h-3.5 w-3.5" />New design</span><h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Choose a garment</h1><p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Pick who it is for, choose a category, then select the 3D model you want to customize.</p></div>
+                    <div><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700"><UiIcon name="sparkles" className="h-3.5 w-3.5" />New design</span><h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Choose a product</h1><p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Choose what you want to customize, select its audience or fit, then pick a published 3D model.</p></div>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                        <ProgressStep number="1" label="Fit" active />
+                        <ProgressStep number="1" label="Category" active />
                         <span className="h-px w-6 bg-slate-200" />
-                        <ProgressStep number="2" label="Category" active={Boolean(gender)} />
+                        <ProgressStep number="2" label="Audience" active={Boolean(category)} />
                         <span className="h-px w-6 bg-slate-200" />
-                        <ProgressStep number="3" label="Model" active={Boolean(category)} />
+                        <ProgressStep number="3" label="Model" active={Boolean(gender)} />
                     </div>
                 </div>
 
                 <div className="overflow-hidden rounded-[2rem] border border-white bg-white/90 shadow-[0_24px_70px_rgba(15,23,42,0.09)] backdrop-blur-xl">
-                    <SelectionSection number="1" title="Who is this garment for?" hint="Choose a fit collection">
-                        {genders.length === 0 ? <EmptyCatalog /> : (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                {genders.map((option) => <OptionCard key={option.id} selected={gender === option.id} onClick={() => chooseGender(option.id)} icon={option.id === 'kids' ? 'sparkles' : option.id === 'unisex' ? 'users' : 'user'} label={option.label} description={option.id === 'kids' ? 'Young creators' : option.id === 'unisex' ? 'Flexible fit' : `${option.label} collection`} />)}
+                    <SelectionSection number="1" title="What would you like to customize?" hint="Choose a product category">
+                        {categories.length === 0 ? <EmptyCatalog /> : (
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {categories.map((option) => {
+                                    const count = PRODUCT_CATALOG.filter((product) => product.category === option.id).length;
+                                    return <OptionCard key={option.id} selected={category === option.id} onClick={() => chooseCategory(option.id)} icon={categoryIcon(option.id)} label={option.label} description={`${count} model${count === 1 ? '' : 's'} available`} />;
+                                })}
                             </div>
                         )}
                     </SelectionSection>
 
-                    {gender && (
-                        <SelectionSection number="2" title="What would you like to create?" hint="Select a garment category" bordered>
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {categories.map((option) => {
-                                    const available = PRODUCT_CATALOG.some((product) => product.gender === gender && product.category === option.id);
-                                    return <OptionCard key={option.id} selected={category === option.id} disabled={!available} onClick={() => setCategory(option.id)} icon={categoryIcon(option.id)} label={option.label} description={available ? `${PRODUCT_CATALOG.filter((product) => product.gender === gender && product.category === option.id).length} model${PRODUCT_CATALOG.filter((product) => product.gender === gender && product.category === option.id).length === 1 ? '' : 's'} available` : 'Coming soon'} />;
+                    {category && (
+                        <SelectionSection number="2" title="Who is it for?" hint="Choose an available audience or fit" bordered>
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {audiences.map((option) => {
+                                    const count = PRODUCT_CATALOG.filter((product) => product.category === category && product.gender === option.id).length;
+                                    return <OptionCard key={option.id} selected={gender === option.id} onClick={() => setGender(option.id)} icon={option.id === 'kids' ? 'sparkles' : option.id === 'unisex' ? 'users' : 'user'} label={option.label} description={`${count} model${count === 1 ? '' : 's'} available`} />;
                                 })}
                             </div>
                         </SelectionSection>
                     )}
 
-                    {category && (
+                    {gender && (
                         <SelectionSection number="3" title="Choose your 3D model" hint="You can change this later" bordered>
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                 {products.map((product) => (
@@ -108,5 +111,5 @@ function EmptyCatalog() {
     return <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-9 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-white text-slate-400 shadow-sm"><UiIcon name="products" /></span><p className="mt-4 text-sm font-bold">No garments are published yet</p><p className="mt-1 text-xs text-slate-500">An administrator must publish a configured 3D product first.</p></div>;
 }
 
-const categoryIcon = (category) => category === 'dresses' ? 'dress' : category === 'shirts' ? 'shirt' : ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category) ? 'cap' : ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(category) ? 'footwear' : 'products';
+const categoryIcon = (category) => category === 'dresses' ? 'dress' : category === 'shirts' ? 'shirt' : ['cap', 'caps', 'hat', 'hats', 'headwear'].includes(category) ? 'cap' : ['footwear', 'shoe', 'shoes', 'sneakers', 'boots', 'sandals'].includes(category) ? 'footwear' : ['cup', 'cups', 'mug', 'mugs'].includes(category) ? 'cup' : 'products';
 const titleCase = (value) => value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());

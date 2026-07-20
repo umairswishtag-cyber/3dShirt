@@ -7,7 +7,7 @@ import {
     Transformer,
 } from 'react-konva';
 import { shallow } from 'zustand/shallow';
-import { DESIGN_AREAS_BY_ID, shouldFlipEditorY } from '../config/designAreas';
+import { getLogoDesignArea, shouldFlipEditorY } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import {
     designObjectToKonvaProps,
@@ -110,7 +110,7 @@ export default function DesignCanvas({ compact = false }) {
     const [canvasSize, setCanvasSize] = useState(compact ? 230 : 300);
     const activeDesignAreaId = useConfiguratorStore((state) => state.activeDesignAreaId);
     const selectedObjectId = useConfiguratorStore((state) => state.selectedObjectId);
-    const productCategory = useConfiguratorStore((state) => state.product.category);
+    const product = useConfiguratorStore((state) => state.product);
     const selectDesignObject = useConfiguratorStore((state) => state.selectDesignObject);
     const objects = useConfiguratorStore(
         (state) =>
@@ -119,8 +119,8 @@ export default function DesignCanvas({ compact = false }) {
                 .sort((left, right) => (left.zIndex ?? 0) - (right.zIndex ?? 0)),
         shallow,
     );
-    const area = DESIGN_AREAS_BY_ID[activeDesignAreaId];
-    const flipEditorY = shouldFlipEditorY(activeDesignAreaId, productCategory);
+    const area = getLogoDesignArea(product, activeDesignAreaId);
+    const flipEditorY = shouldFlipEditorY(product, activeDesignAreaId);
 
     useEffect(() => {
         if (!containerRef.current) return undefined;

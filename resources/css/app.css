@@ -1,1 +1,83 @@
-@import "tailwindcss";
+/*
+ * Keep third-party component styles first and application utilities last.
+ * Tailwind's `important` flag is intentional: Polaris ships opinionated element
+ * styles and previously won the cascade on otherwise valid utility classes.
+ */
+@import "@shopify/polaris/build/esm/styles.css";
+@import "tailwindcss" important;
+@plugin "@tailwindcss/forms";
+
+@theme {
+    --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+    --color-brand-50: #f5f7ff;
+    --color-brand-100: #e8edff;
+    --color-brand-500: #4f63f6;
+    --color-brand-600: #3d50e7;
+    --color-brand-700: #3040c9;
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+    }
+
+    html {
+        background: #f7f9fc;
+    }
+
+    body {
+        min-width: 320px;
+        min-height: 100vh;
+        background: #f7f9fc;
+        color: #151827;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]) {
+        cursor: pointer;
+    }
+
+    ::selection {
+        background: #dce2ff;
+        color: #2637ba;
+    }
+}
+
+@layer components {
+    .app-surface {
+        border: 1px solid rgb(222 227 239 / 0.9);
+        background: rgb(255 255 255 / 0.92);
+        box-shadow: 0 14px 38px rgb(29 38 77 / 0.055);
+    }
+
+    .app-focus {
+        outline: none;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .app-focus:focus-visible {
+        border-color: #91a0ff;
+        box-shadow: 0 0 0 4px rgb(79 99 246 / 0.12);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
