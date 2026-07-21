@@ -4,7 +4,7 @@ import { Bounds, Center, OrbitControls } from '@react-three/drei';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import UiIcon from '@/Components/UiIcon';
 
-export default function GlbModelPreview({ modelFile, modelUrl }) {
+export default function GlbModelPreview({ modelFile, modelUrl, compact = false }) {
     const [state, setState] = useState({ status: modelFile || modelUrl ? 'loading' : 'empty', scene: null });
 
     useEffect(() => {
@@ -51,7 +51,7 @@ export default function GlbModelPreview({ modelFile, modelUrl }) {
     }, [modelFile, modelUrl]);
 
     return (
-        <div className="relative mt-3 aspect-[1.5] min-h-48 overflow-hidden rounded-2xl border border-indigo-100 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#eef2ff_55%,#e0e7ff_100%)] shadow-inner">
+        <div className={`relative overflow-hidden border border-indigo-100 bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#eef2ff_55%,#e0e7ff_100%)] shadow-inner ${compact ? 'h-36 rounded-xl' : 'mt-3 aspect-[1.5] min-h-48 rounded-2xl'}`}>
             {state.status === 'ready' && state.scene && (
                 <PreviewErrorBoundary fallback={<PreviewFailed />}>
                     <Canvas camera={{ position: [3, 2, 4], fov: 38 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
@@ -70,7 +70,7 @@ export default function GlbModelPreview({ modelFile, modelUrl }) {
             {state.status === 'loading' && <PreviewState loading icon="sparkles" title="Preparing 3D preview" description="Reading model geometry and materials…" />}
             {state.status === 'failed' && <PreviewFailed />}
 
-            {state.status === 'ready' && <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-3"><span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/80 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-white shadow-lg backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Live 3D preview</span><span className="rounded-full bg-white/90 px-2.5 py-1.5 text-[9px] font-bold text-slate-500 shadow-sm backdrop-blur">Drag to rotate · Scroll to zoom</span></div>}
+            {state.status === 'ready' && <div className={`pointer-events-none absolute flex items-center justify-between gap-2 ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'}`}><span className={`inline-flex items-center gap-1 rounded-full bg-slate-950/80 font-black uppercase text-white shadow-lg backdrop-blur ${compact ? 'px-2 py-1 text-[7px]' : 'px-2.5 py-1.5 text-[9px] tracking-wider'}`}><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />3D preview</span>{!compact && <span className="rounded-full bg-white/90 px-2.5 py-1.5 text-[9px] font-bold text-slate-500 shadow-sm backdrop-blur">Drag to rotate · Scroll to zoom</span>}</div>}
         </div>
     );
 }

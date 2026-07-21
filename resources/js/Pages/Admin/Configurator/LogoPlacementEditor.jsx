@@ -25,7 +25,7 @@ function rectangleBetween(start, end) {
     };
 }
 
-function logoBoundsForPlacement(width, height) {
+export function logoBoundsForPlacement(width, height) {
     const maximum = 0.9;
     const aspect = width / Math.max(height, 0.000001);
     const bounds = aspect >= 1
@@ -278,27 +278,8 @@ export default function LogoPlacementEditor({ scene, area, binding, zones = [], 
         setMessage(drag.mode === 'move' ? 'Logo zone moved. Save the product to publish its new position.' : 'Logo-safe zone updated. Save the product to publish this placement.');
     };
 
-    const updateZoneSize = (dimension, value) => {
-        if (!placement || !Number.isFinite(value) || value < 0.001) return;
-        const nextPlacement = {
-            ...placement,
-            [dimension]: clean(value),
-        };
-        onChange({
-            logoPlacement: nextPlacement,
-            logoBounds: logoBoundsForPlacement(nextPlacement.width, nextPlacement.height),
-            cameraView: binding.cameraView ?? 'front',
-        });
-        setMessage(`${dimension === 'width' ? 'Width' : 'Height'} updated. Save the product to publish the resized zone.`);
-    };
-
-    const scaleZoneDimension = (dimension, factor) => {
-        if (!placement) return;
-        updateZoneSize(dimension, placement[dimension] * factor);
-    };
-
     return (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-fuchsia-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-fuchsia-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-fuchsia-100 px-4 py-3">
                 <div>
                     <p className="text-sm font-black text-slate-900">Edit {area.label}</p>
@@ -313,7 +294,7 @@ export default function LogoPlacementEditor({ scene, area, binding, zones = [], 
                 </div>
             </div>
 
-            <div className={`relative aspect-[1.8] min-h-72 overflow-hidden bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#f5f3ff_55%,#ede9fe_100%)] ${interactionMode ? 'cursor-crosshair' : 'cursor-grab'}`}>
+            <div className={`relative min-h-[28rem] overflow-hidden bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#f5f3ff_55%,#ede9fe_100%)] lg:h-[clamp(32rem,62vh,48rem)] ${interactionMode ? 'cursor-crosshair' : 'cursor-grab'}`}>
                 <Canvas camera={{ position: [3, 2, 4], fov: 38 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
                     <hemisphereLight intensity={2.2} groundColor="#c4b5fd" />
                     <directionalLight position={[4, 6, 5]} intensity={2.5} />
@@ -332,37 +313,31 @@ export default function LogoPlacementEditor({ scene, area, binding, zones = [], 
                 </div>
             </div>
 
-            {placement && (
-                <div className="border-t border-fuchsia-100 bg-white px-4 py-3">
-                    <div className="mb-3">
-                        <p className="text-xs font-black text-slate-900">Resize logo zone</p>
-                        <p className="mt-0.5 text-[10px] leading-4 text-slate-500">Width and height change independently while the zone stays centered on the same model surface.</p>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        {['width', 'height'].map((dimension) => (
-                            <div key={dimension} className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                                <label className="mb-2 block text-[10px] font-black uppercase tracking-wide text-slate-500" htmlFor={`${area.id}-${dimension}`}>{dimension}</label>
-                                <div className="flex items-center gap-1.5">
-                                    <button type="button" onClick={() => scaleZoneDimension(dimension, 0.9)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-base font-black text-slate-700 hover:border-fuchsia-300 hover:text-fuchsia-700" aria-label={`Reduce zone ${dimension}`}>−</button>
-                                    <input
-                                        id={`${area.id}-${dimension}`}
-                                        type="number"
-                                        min="0.001"
-                                        step="any"
-                                        value={placement[dimension]}
-                                        onChange={(event) => updateZoneSize(dimension, Number(event.target.value))}
-                                        className="h-9 min-w-0 flex-1 rounded-lg border-slate-300 bg-white px-2 text-center font-mono text-xs font-bold text-slate-800 focus:border-fuchsia-500 focus:ring-fuchsia-500"
-                                    />
-                                    <button type="button" onClick={() => scaleZoneDimension(dimension, 1.1)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-base font-black text-slate-700 hover:border-fuchsia-300 hover:text-fuchsia-700" aria-label={`Increase zone ${dimension}`}>+</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             <div className="border-t border-fuchsia-100 bg-fuchsia-50/60 px-4 py-3 text-xs leading-5 text-slate-600">
                 {message ?? 'Add Logo 1, Logo 2, Logo 3, or more. Each zone keeps its own mesh, shape, position, orientation, and storefront placement.'}
+            </div>
+        </div>
+    );
+}
+
+export function ModelOverview({ scene }) {
+    return (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-4 py-3">
+                <p className="text-sm font-black text-slate-900">3D model preview</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">Select or create a logo zone to draw its placement on the model.</p>
+            </div>
+            <div className="relative min-h-[28rem] cursor-grab overflow-hidden bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#f8fafc_55%,#e2e8f0_100%)] lg:h-[clamp(32rem,62vh,48rem)]">
+                <Canvas camera={{ position: [3, 2, 4], fov: 38 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+                    <hemisphereLight intensity={2.2} groundColor="#cbd5e1" />
+                    <directionalLight position={[4, 6, 5]} intensity={2.5} />
+                    <directionalLight position={[-4, 2, -3]} intensity={1.1} color="#e2e8f0" />
+                    <Bounds fit clip observe margin={1.18}><Center><primitive object={scene} /></Center></Bounds>
+                    <OrbitControls makeDefault enablePan={false} minDistance={0.5} maxDistance={20} />
+                </Canvas>
+                <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-950/80 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white shadow backdrop-blur">
+                    Drag model to rotate · scroll to zoom
+                </span>
             </div>
         </div>
     );

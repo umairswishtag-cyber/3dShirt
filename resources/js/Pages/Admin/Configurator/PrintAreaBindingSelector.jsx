@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import LogoPlacementEditor from './LogoPlacementEditor';
+import LogoPlacementEditor, { logoBoundsForPlacement, ModelOverview } from './LogoPlacementEditor';
 
 const boxProjection = { type: 'box', axis: null, direction: null };
 
@@ -75,6 +75,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
     const [meshes, setMeshes] = useState([]);
     const [previewScene, setPreviewScene] = useState(null);
     const [activeLogoAreaId, setActiveLogoAreaId] = useState(null);
+    const [expandedAreaId, setExpandedAreaId] = useState(null);
     const [status, setStatus] = useState(modelFile || modelUrl ? 'loading' : 'empty');
     const [inspectionError, setInspectionError] = useState(null);
     const bindings = useMemo(() => parseBindings(value), [value]);
@@ -87,6 +88,19 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
         })),
         [bindings],
     );
+
+    useEffect(() => {
+        if (printAreas.length === 0) {
+            setExpandedAreaId(null);
+            setActiveLogoAreaId(null);
+            return;
+        }
+
+        setExpandedAreaId((current) => printAreas.some((area) => area.id === current) ? current : printAreas[0].id);
+        if (supportsLogos) {
+            setActiveLogoAreaId((current) => printAreas.some((area) => area.id === current) ? current : printAreas[0].id);
+        }
+    }, [printAreas, supportsLogos]);
 
     useEffect(() => {
         let active = true;
@@ -194,7 +208,8 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
             nextBindings,
             isLogo ? patternAreaIds : [...patternAreaIds, areaId],
         );
-        setActiveLogoAreaId(isLogo ? areaId : null);
+        setExpandedAreaId(areaId);
+        setActiveLogoAreaId(supportsLogos ? areaId : null);
     };
 
     const setAreaMesh = (areaId, meshName) => {
@@ -224,6 +239,11 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
         commitAreas(next, patternAreaIds.filter((id) => id !== areaId));
     };
 
+    const selectLogoArea = (areaId) => {
+        setExpandedAreaId(areaId);
+        setActiveLogoAreaId(areaId);
+    };
+
     const setLogoPlacement = (areaId, { logoBounds, logoPlacement, cameraView }) => {
         const nextBinding = { ...bindings[areaId] };
         if (logoPlacement && logoBounds) {
@@ -243,136 +263,140 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
         });
     };
 
+    const updateLogoPlacementDimension = (areaId, dimension, value) => {
+        const placement = bindings[areaId]?.logoPlacement;
+        if (!placement || !Number.isFinite(value) || value < 0.001) return;
+        const nextPlacement = { ...placement, [dimension]: Number(value.toFixed(6)) };
+        setLogoPlacement(areaId, {
+            logoPlacement: nextPlacement,
+            logoBounds: logoBoundsForPlacement(nextPlacement.width, nextPlacement.height),
+            cameraView: bindings[areaId]?.cameraView ?? 'front',
+        });
+    };
+
     if (!enabled) return null;
 
     return (
         <div className="xl:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                    <p className="text-sm font-black text-slate-800">Pattern areas and logo zones</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Configure them independently. For example: patterns on sleeves, with logo placements on the front and back.</p>
-                </div>
-                {status === 'ready' && (
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase text-emerald-700">{meshes.length} model part{meshes.length === 1 ? '' : 's'}</span>
-                        {supportsPatterns && <button type="button" onClick={() => addArea('pattern')} className="rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs font-black text-purple-700 hover:bg-purple-50">+ Add pattern area</button>}
-                        {supportsLogos && <button type="button" onClick={() => addArea('logo')} className="rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-black text-white hover:bg-fuchsia-700">+ Add logo zone</button>}
-                    </div>
-                )}
+            <div>
+                <p className="text-sm font-black text-slate-800">Pattern areas and logo zones</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Settings stay in the left panel while the larger model canvas remains visible on the right.</p>
             </div>
 
             {status === 'empty' && <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-500">Upload the 3D model first. Available artwork areas will appear here.</p>}
             {status === 'loading' && <p className="mt-3 animate-pulse rounded-xl bg-blue-50 p-4 text-xs font-semibold text-blue-700">Checking where artwork can be placed…</p>}
             {inspectionError && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">{inspectionError}</p>}
-            {status === 'ready' && meshes.length > 0 && uvMeshCount === 0 && (
-                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold leading-5 text-blue-900">
-                    This model has no UV map. Patterns will use an automatic full-mesh projection; logo zones use the exact surface you draw and do not depend on UVs.
-                    {onDisableArtwork && (
-                        <button type="button" onClick={onDisableArtwork} className="mt-3 block rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-black text-blue-800 hover:bg-blue-100">
-                            Use this as a solid-color product
-                        </button>
-                    )}
-                </div>
-            )}
 
             {status === 'ready' && meshes.length > 0 && (
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    {printAreas.map((area) => (
-                        <div key={area.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                            <div className="mb-2 flex flex-wrap gap-1.5">
-                                {patternAreaSet.has(area.id) && <span className="rounded-full bg-purple-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-purple-700">Pattern area</span>}
-                                {bindings[area.id]?.logoPlacement && <span className="rounded-full bg-fuchsia-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-fuchsia-700">Logo zone</span>}
-                                {!patternAreaSet.has(area.id) && !bindings[area.id]?.logoPlacement && <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-amber-700">Setup needed</span>}
+                <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(17rem,3fr)_minmax(0,7fr)]">
+                    <aside className="space-y-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+                        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-black text-slate-900">Area settings</p>
+                                <span className="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase text-emerald-700">{meshes.length} model part{meshes.length === 1 ? '' : 's'}</span>
                             </div>
-                            <div className="mb-2 flex items-center gap-2">
-                                <input
-                                    value={area.label}
-                                    onChange={(event) => setAreaLabel(area.id, event.target.value)}
-                                    aria-label="Artwork area name"
-                                    className="h-9 min-w-0 flex-1 rounded-lg border-slate-300 text-xs font-black text-slate-800 focus:border-fuchsia-500 focus:ring-fuchsia-500"
-                                />
-                                <button type="button" onClick={() => removeArea(area.id)} className="rounded-lg px-2 py-2 text-[10px] font-black text-red-600 hover:bg-red-50">Remove</button>
+                            <div className="mt-3 grid gap-2">
+                                {supportsPatterns && <button type="button" onClick={() => addArea('pattern')} className="rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs font-black text-purple-700 hover:bg-purple-50">+ Add pattern area</button>}
+                                {supportsLogos && <button type="button" onClick={() => addArea('logo')} className="rounded-lg bg-fuchsia-600 px-3 py-2 text-xs font-black text-white hover:bg-fuchsia-700">+ Add logo zone</button>}
                             </div>
-                            <select
-                                value={bindings[area.id]?.meshName ?? ''}
-                                onChange={(event) => setAreaMesh(area.id, event.target.value)}
-                                aria-label={`${area.label} GLB mesh`}
-                                className="h-11 w-full rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500"
-                            >
-                                {meshes.map((mesh) => (
-                                    <option key={mesh.name} value={mesh.name}>
-                                        {mesh.name} {mesh.uvBounds ? '(UV mapped)' : '(automatic projection)'}
-                                    </option>
-                                ))}
-                            </select>
-                            {bindings[area.id] && (
-                                <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
-                                    {supportsPatterns && (
-                                        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-purple-100 bg-purple-50/60 px-3 py-2">
-                                            <span>
-                                                <span className="block text-[11px] font-black text-slate-800">Allow patterns here</span>
-                                                <span className="block text-[9px] text-slate-500">Customers will see this area in Pattern coverage.</span>
-                                            </span>
-                                            <input
-                                                type="checkbox"
-                                                checked={patternAreaSet.has(area.id)}
-                                                onChange={(event) => setPatternArea(area.id, event.target.checked)}
-                                                className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                                            />
-                                        </label>
-                                    )}
-                                    {supportsLogos && (
-                                        <div className="flex items-center justify-between gap-3 rounded-lg border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2">
-                                            <span>
-                                                <span className="block text-[11px] font-black text-slate-800">Logo placement</span>
-                                                <span className="block text-[9px] text-slate-500">{bindings[area.id].logoPlacement ? 'A logo-safe surface is ready.' : 'No logo placement on this area.'}</span>
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setActiveLogoAreaId(area.id)}
-                                                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-black ${activeLogoAreaId === area.id ? 'bg-fuchsia-600 text-white' : 'border border-fuchsia-200 bg-white text-fuchsia-700 hover:bg-fuchsia-100'}`}
-                                            >
-                                                {bindings[area.id].logoPlacement ? 'Edit zone' : 'Draw zone'}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         </div>
-                    ))}
+
+                        {uvMeshCount === 0 && (
+                            <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-[11px] font-semibold leading-5 text-blue-900">
+                                This model has no UV map. Patterns use automatic projection; logo zones use the surface you draw.
+                                {onDisableArtwork && <button type="button" onClick={onDisableArtwork} className="mt-2 block w-full rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-black text-blue-800 hover:bg-blue-100">Use as a solid-color product</button>}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            {printAreas.map((area) => {
+                                const isExpanded = expandedAreaId === area.id;
+                                const placement = bindings[area.id]?.logoPlacement;
+                                return (
+                                    <section key={area.id} className={`overflow-hidden rounded-xl border bg-white shadow-sm ${activeLogoAreaId === area.id ? 'border-fuchsia-300 ring-1 ring-fuchsia-100' : 'border-slate-200'}`}>
+                                        <button type="button" onClick={() => setExpandedAreaId(isExpanded ? null : area.id)} aria-expanded={isExpanded} className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left hover:bg-slate-50">
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-xs font-black text-slate-900">{area.label}</span>
+                                                <span className="mt-1 flex flex-wrap gap-1">
+                                                    {patternAreaSet.has(area.id) && <span className="rounded-full bg-purple-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-purple-700">Pattern</span>}
+                                                    {placement && <span className="rounded-full bg-fuchsia-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-fuchsia-700">Logo zone</span>}
+                                                    {!patternAreaSet.has(area.id) && !placement && <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-amber-700">Setup needed</span>}
+                                                </span>
+                                            </span>
+                                            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}><path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="space-y-3 border-t border-slate-100 p-3">
+                                                <label className="block">
+                                                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-500">Area name</span>
+                                                    <input value={area.label} onChange={(event) => setAreaLabel(area.id, event.target.value)} className="h-9 w-full rounded-lg border-slate-300 text-xs font-black text-slate-800 focus:border-fuchsia-500 focus:ring-fuchsia-500" />
+                                                </label>
+                                                <label className="block">
+                                                    <span className="mb-1 block text-[10px] font-black uppercase tracking-wide text-slate-500">GLB mesh</span>
+                                                    <select value={bindings[area.id]?.meshName ?? ''} onChange={(event) => setAreaMesh(area.id, event.target.value)} className="h-10 w-full rounded-lg border-slate-300 text-xs focus:border-blue-500 focus:ring-blue-500">
+                                                        {meshes.map((mesh) => <option key={mesh.name} value={mesh.name}>{mesh.name} {mesh.uvBounds ? '(UV mapped)' : '(automatic projection)'}</option>)}
+                                                    </select>
+                                                </label>
+
+                                                {supportsPatterns && (
+                                                    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-purple-100 bg-purple-50/60 px-3 py-2">
+                                                        <span><span className="block text-[11px] font-black text-slate-800">Allow patterns here</span><span className="block text-[9px] text-slate-500">Show this area in Pattern coverage.</span></span>
+                                                        <input type="checkbox" checked={patternAreaSet.has(area.id)} onChange={(event) => setPatternArea(area.id, event.target.checked)} className="rounded border-purple-300 text-purple-600 focus:ring-purple-500" />
+                                                    </label>
+                                                )}
+
+                                                {supportsLogos && (
+                                                    <div className="rounded-lg border border-fuchsia-100 bg-fuchsia-50/60 p-3">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span><span className="block text-[11px] font-black text-slate-800">Logo placement</span><span className="block text-[9px] text-slate-500">{placement ? 'A logo-safe surface is ready.' : 'Draw a safe surface on the model.'}</span></span>
+                                                            <button type="button" onClick={() => selectLogoArea(area.id)} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-black ${activeLogoAreaId === area.id ? 'bg-fuchsia-600 text-white' : 'border border-fuchsia-200 bg-white text-fuchsia-700 hover:bg-fuchsia-100'}`}>{placement ? 'Edit zone' : 'Draw zone'}</button>
+                                                        </div>
+                                                        {placement && (
+                                                            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-fuchsia-100 pt-3">
+                                                                {['width', 'height'].map((dimension) => (
+                                                                    <label key={dimension} className="block">
+                                                                        <span className="mb-1 block text-[9px] font-black uppercase tracking-wide text-slate-500">{dimension}</span>
+                                                                        <input type="number" min="0.001" step="any" value={placement[dimension]} onChange={(event) => updateLogoPlacementDimension(area.id, dimension, Number(event.target.value))} className="h-9 w-full rounded-lg border-slate-300 bg-white px-2 text-center font-mono text-[11px] font-bold focus:border-fuchsia-500 focus:ring-fuchsia-500" />
+                                                                    </label>
+                                                                ))}
+                                                                <p className="col-span-2 text-[9px] leading-4 text-slate-500">Resize values keep the zone centered on the same surface.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                <button type="button" onClick={() => removeArea(area.id)} className="w-full rounded-lg border border-red-100 px-3 py-2 text-[10px] font-black text-red-600 hover:bg-red-50">Remove area</button>
+                                            </div>
+                                        )}
+                                    </section>
+                                );
+                            })}
+                        </div>
+
+                        {printAreas.length === 0 && <p className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-4 text-center text-xs font-semibold text-slate-500">Add the first pattern area or logo zone above.</p>}
+                        {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+                        {patternZonesError && <p className="text-xs font-semibold text-red-600">{patternZonesError}</p>}
+                        <details className="rounded-xl border border-slate-200 bg-slate-50">
+                            <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-slate-500">Developer: placement data</summary>
+                            <div className="border-t border-slate-200 p-3"><textarea value={value} onChange={(event) => onChange(event.target.value)} rows="10" spellCheck="false" className="w-full rounded-xl border border-slate-300 bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-100 focus:border-blue-500 focus:ring-blue-500" /></div>
+                        </details>
+                    </aside>
+
+                    <div className="min-w-0 lg:sticky lg:top-24">
+                        {supportsLogos && previewScene && activeLogoAreaId && bindings[activeLogoAreaId] ? (
+                            <LogoPlacementEditor
+                                key={activeLogoAreaId}
+                                scene={previewScene}
+                                area={printAreas.find((area) => area.id === activeLogoAreaId) ?? { id: activeLogoAreaId, label: headline(activeLogoAreaId) }}
+                                binding={bindings[activeLogoAreaId]}
+                                zones={Object.entries(bindings).map(([id, zoneBinding]) => ({ id, label: zoneBinding.label || headline(id), binding: zoneBinding }))}
+                                onChange={(placement) => setLogoPlacement(activeLogoAreaId, placement)}
+                            />
+                        ) : previewScene ? <ModelOverview scene={previewScene} /> : null}
+                    </div>
                 </div>
             )}
-
-            {status === 'ready' && meshes.length > 0 && printAreas.length === 0 && (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {supportsPatterns && <button type="button" onClick={() => addArea('pattern')} className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-5 text-sm font-black text-purple-700 hover:bg-purple-50">+ Create Pattern 1 area</button>}
-                    {supportsLogos && <button type="button" onClick={() => addArea('logo')} className="rounded-xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/50 p-5 text-sm font-black text-fuchsia-700 hover:bg-fuchsia-50">+ Create Logo 1 placement</button>}
-                </div>
-            )}
-
-            {supportsLogos && previewScene && activeLogoAreaId && bindings[activeLogoAreaId] && (
-                <LogoPlacementEditor
-                    scene={previewScene}
-                    area={printAreas.find((area) => area.id === activeLogoAreaId) ?? { id: activeLogoAreaId, label: headline(activeLogoAreaId) }}
-                    binding={bindings[activeLogoAreaId]}
-                    zones={Object.entries(bindings).map(([id, zoneBinding]) => ({
-                        id,
-                        label: zoneBinding.label || headline(id),
-                        binding: zoneBinding,
-                    }))}
-                    onChange={(placement) => setLogoPlacement(activeLogoAreaId, placement)}
-                />
-            )}
-
-            {error && <p className="mt-2 text-xs font-semibold text-red-600">{error}</p>}
-            {patternZonesError && <p className="mt-2 text-xs font-semibold text-red-600">{patternZonesError}</p>}
-
-            <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50">
-                <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-slate-500">Developer: artwork placement data</summary>
-                <div className="border-t border-slate-200 p-3">
-                    <textarea value={value} onChange={(event) => onChange(event.target.value)} rows="10" spellCheck="false" className="w-full rounded-xl border border-slate-300 bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-100 focus:border-blue-500 focus:ring-blue-500" />
-                </div>
-            </details>
         </div>
     );
 }

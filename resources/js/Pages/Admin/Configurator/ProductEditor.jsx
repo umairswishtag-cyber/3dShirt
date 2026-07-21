@@ -43,25 +43,25 @@ function ThumbnailUpload({ file, currentUrl, category, onChange, error }) {
     }, [currentUrl, file]);
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
             <div className="flex items-center justify-between gap-3">
-                <div><p className="text-xs font-bold text-slate-700">Product thumbnail <span className="font-medium text-slate-400">(optional)</span></p><p className="mt-1 text-[11px] text-slate-500">Shown in the storefront product picker.</p></div>
+                <div><p className="text-xs font-bold text-slate-700">Product thumbnail <span className="font-medium text-slate-400">(optional)</span></p><p className="mt-0.5 text-[10px] text-slate-500">Storefront product picker image.</p></div>
                 {file && <button type="button" onClick={() => onChange(null)} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">{currentUrl ? 'Use saved image' : 'Clear selection'}</button>}
             </div>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_168px] sm:items-center">
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
                 <div>
-                    <input key={file ? `${file.name}-${file.lastModified}` : 'empty-thumbnail'} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange(event.target.files?.[0] ?? null)} className="block h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm file:mr-3 file:border-0 file:border-r file:border-slate-200 file:bg-transparent file:pr-3 file:text-xs file:font-bold focus:border-indigo-500 focus:ring-indigo-500" />
-                    <p className="mt-1.5 text-[11px] leading-4 text-slate-500">PNG, JPEG, or WebP · Maximum 5 MB</p>
-                    {file && <p className="mt-1 truncate text-[11px] font-semibold text-emerald-700">Ready to upload: {file.name}</p>}
+                    <input key={file ? `${file.name}-${file.lastModified}` : 'empty-thumbnail'} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onChange(event.target.files?.[0] ?? null)} className="block h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-xs file:mr-2 file:border-0 file:border-r file:border-slate-200 file:bg-transparent file:pr-2 file:text-[10px] file:font-bold focus:border-indigo-500 focus:ring-indigo-500" />
+                    <p className="mt-1 text-[9px] text-slate-500">PNG, JPEG or WebP · 5 MB max</p>
+                    {file && <p className="mt-0.5 truncate text-[9px] font-semibold text-emerald-700">Ready: {file.name}</p>}
                     <FieldError message={error} />
                 </div>
 
-                <div className="relative grid aspect-[1.5] place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="relative grid h-20 place-items-center overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                     {previewUrl
                         ? <img src={previewUrl} alt="Product thumbnail preview" className="h-full w-full object-contain p-2" />
                         : <GarmentIllustration type={category} className="h-full w-full" />}
-                    <span className={`absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide shadow-sm backdrop-blur ${previewUrl ? 'bg-white/90 text-indigo-700' : 'bg-slate-900/80 text-white'}`}><UiIcon name={previewUrl ? 'check' : 'sparkles'} className="h-3 w-3" />{file ? 'New preview' : currentUrl ? 'Saved thumbnail' : 'Preview'}</span>
+                    <span className={`absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wide shadow-sm backdrop-blur ${previewUrl ? 'bg-white/90 text-indigo-700' : 'bg-slate-900/80 text-white'}`}><UiIcon name={previewUrl ? 'check' : 'sparkles'} className="h-2.5 w-2.5" />{file ? 'New' : currentUrl ? 'Saved' : 'Preview'}</span>
                 </div>
             </div>
         </div>
@@ -79,129 +79,87 @@ function JsonField({ label, value, onChange, error, help, rows = 6 }) {
     );
 }
 
-function ColorOptionsField({ zonesValue, paletteValue, onZonesChange, onPaletteChange, zonesError, paletteError }) {
+function ColorModelField({ zonesValue, mappingsValue, meshes, onZonesChange, onMappingsChange, zonesError, mappingsError }) {
     const zones = parseJsonField(zonesValue, 'array').value;
-    const palette = parseJsonField(paletteValue, 'array').value;
+    const mappings = parseJsonField(mappingsValue, 'object');
+    const [autoSignature, setAutoSignature] = useState(null);
+    const zoneIds = new Set(zones.map((zone) => zone.id));
+    const connectedMeshes = meshes.filter((mesh) => zoneIds.has(mappings.value[mesh.name]));
+    const modelSignature = `${meshes.map((mesh) => mesh.name).join('|')}::${zones[0]?.id ?? ''}`;
+
+    useEffect(() => {
+        if (meshes.length === 0 || zones.length !== 1 || connectedMeshes.length > 0 || autoSignature === modelSignature) return;
+        onMappingsChange(JSON.stringify(Object.fromEntries(meshes.map((mesh) => [mesh.name, zones[0].id])), null, 2));
+        setAutoSignature(modelSignature);
+    }, [autoSignature, connectedMeshes.length, meshes, modelSignature, onMappingsChange, zones]);
+
     const updateZone = (index, changes) => {
         onZonesChange(JSON.stringify(zones.map((zone, zoneIndex) => zoneIndex === index ? { ...zone, ...changes } : zone), null, 2));
     };
+    const addZone = () => {
+        let number = zones.length + 1;
+        while (zones.some((zone) => zone.id === `area${number}`)) number += 1;
+        onZonesChange(JSON.stringify([...zones, { id: `area${number}`, label: `Area ${number}`, defaultColor: '#F8FAFC' }], null, 2));
+    };
+    const setZoneMesh = (zoneId, meshName, checked) => {
+        const next = { ...mappings.value };
+        if (checked) next[meshName] = zoneId;
+        else if (next[meshName] === zoneId) delete next[meshName];
+        onMappingsChange(JSON.stringify(next, null, 2));
+    };
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h3 className="text-sm font-black">Solid color choices</h3>
-                    <p className="mt-1 text-xs text-slate-500">Name each customer color option and choose its starting color.</p>
+                    <h3 className="text-sm font-black">Colors and model parts</h3>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Create a color, then select every GLB part it should control.</p>
                 </div>
-                <button type="button" onClick={() => onZonesChange(JSON.stringify([...zones, { id: `area${zones.length + 1}`, label: `Area ${zones.length + 1}`, defaultColor: '#F8FAFC' }], null, 2))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold">Add color area</button>
+                <div className="flex items-center gap-2">
+                    {meshes.length > 0 && <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase ${connectedMeshes.length === meshes.length ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{connectedMeshes.length}/{meshes.length} parts</span>}
+                    <button type="button" onClick={addZone} className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-[11px] font-bold hover:bg-slate-50">+ Add color</button>
+                </div>
             </div>
             <div className="mt-3 space-y-2">
                 {zones.map((zone, index) => (
-                    <div key={zone.id} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[44px_minmax(0,1fr)_auto] sm:items-center">
-                        <input type="color" value={zone.defaultColor || '#F8FAFC'} onChange={(event) => updateZone(index, { defaultColor: event.target.value.toUpperCase() })} className="h-10 w-11 cursor-pointer rounded border-0 bg-transparent p-0" aria-label={`${zone.label || zone.id} starting color`} />
-                        <input value={zone.label || ''} onChange={(event) => updateZone(index, { label: event.target.value })} className="h-10 rounded-lg border-slate-300 text-sm" aria-label="Color area name" />
-                        {zones.length > 1 && <button type="button" onClick={() => onZonesChange(JSON.stringify(zones.filter((_, zoneIndex) => zoneIndex !== index), null, 2))} className="rounded-lg px-2 py-2 text-xs font-bold text-red-600">Remove</button>}
+                    <div key={zone.id} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-2 sm:grid-cols-[38px_minmax(8rem,1fr)_minmax(11rem,1.2fr)_auto] sm:items-center">
+                        <input type="color" value={zone.defaultColor || '#F8FAFC'} onChange={(event) => updateZone(index, { defaultColor: event.target.value.toUpperCase() })} className="h-9 w-9 cursor-pointer rounded border-0 bg-transparent p-0" aria-label={`${zone.label || zone.id} starting color`} />
+                        <input value={zone.label || ''} onChange={(event) => updateZone(index, { label: event.target.value })} className="h-9 min-w-0 rounded-lg border-slate-300 text-xs font-semibold" aria-label="Color area name" />
+                        <details className="group relative">
+                            <summary className="flex h-9 cursor-pointer list-none items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 text-[11px] font-bold text-slate-700 hover:border-blue-300">
+                                <span>{meshes.filter((mesh) => mappings.value[mesh.name] === zone.id).length || 'No'} model part{meshes.filter((mesh) => mappings.value[mesh.name] === zone.id).length === 1 ? '' : 's'}</span>
+                                <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 transition-transform group-open:rotate-180" aria-hidden="true"><path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </summary>
+                            <div className="absolute right-0 z-30 mt-1 max-h-60 w-full min-w-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                                {meshes.length > 0 ? meshes.map((mesh) => {
+                                    const assignedZoneId = mappings.value[mesh.name];
+                                    const assignedZone = zones.find((item) => item.id === assignedZoneId);
+                                    return (
+                                        <label key={mesh.name} className="flex cursor-pointer items-start gap-2 rounded-lg px-2 py-2 hover:bg-slate-50">
+                                            <input type="checkbox" checked={assignedZoneId === zone.id} onChange={(event) => setZoneMesh(zone.id, mesh.name, event.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                            <span className="min-w-0"><span className="block truncate text-[11px] font-bold text-slate-800" title={mesh.name}>{meshes.length === 1 ? 'Whole product' : mesh.name}</span>{assignedZoneId && assignedZoneId !== zone.id && <span className="block truncate text-[9px] text-slate-400">Currently: {assignedZone?.label || assignedZoneId}</span>}</span>
+                                        </label>
+                                    );
+                                }) : <p className="px-2 py-3 text-[11px] text-slate-500">Upload the GLB model first.</p>}
+                            </div>
+                        </details>
+                        {zones.length > 1 && <button type="button" onClick={() => onZonesChange(JSON.stringify(zones.filter((_, zoneIndex) => zoneIndex !== index), null, 2))} className="rounded-lg px-2 py-2 text-[10px] font-bold text-red-600 hover:bg-red-50">Remove</button>}
                     </div>
                 ))}
             </div>
             <FieldError message={zonesError} />
-
-            <div className="mt-5 hidden">
-                <div className="flex items-center justify-between gap-2">
-                    <div>
-                        <p className="text-xs font-black">Colors customers can choose</p>
-                        <p className="mt-1 text-[11px] text-slate-500">Click a swatch to change it.</p>
-                    </div>
-                    <button type="button" onClick={() => onPaletteChange(JSON.stringify([...palette, '#FFFFFF'], null, 2))} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold">Add color</button>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                    {palette.map((color, index) => (
-                        <label key={`${color}-${index}`} className="group relative h-10 w-10 cursor-pointer overflow-hidden rounded-full border-2 border-white shadow ring-1 ring-slate-300" style={{ backgroundColor: color }} title={color}>
-                            <input type="color" value={color} onChange={(event) => onPaletteChange(JSON.stringify(palette.map((item, itemIndex) => itemIndex === index ? event.target.value.toUpperCase() : item), null, 2))} className="absolute inset-0 cursor-pointer opacity-0" aria-label={`Change customer color ${index + 1}`} />
-                        </label>
-                    ))}
-                </div>
-                <FieldError message={paletteError} />
-            </div>
-        </div>
-    );
-}
-
-function MeshZoneField({ meshes, value, colorZonesValue, onChange, onUseSingleColor, error }) {
-    const mappings = parseJsonField(value, 'object');
-    const colorZones = parseJsonField(colorZonesValue, 'array').value;
-    const [reviewOpen, setReviewOpen] = useState(colorZones.length > 1);
-    const [autoSignature, setAutoSignature] = useState(null);
-    const modelSignature = `${meshes.map((mesh) => mesh.name).join('|')}::${colorZones[0]?.id ?? ''}`;
-    const zoneIds = new Set(colorZones.map((zone) => zone.id));
-    const recognizedMappings = meshes.filter((mesh) => zoneIds.has(mappings.value[mesh.name]));
-
-    useEffect(() => {
-        if (meshes.length === 0 || colorZones.length !== 1 || recognizedMappings.length > 0 || autoSignature === modelSignature) return;
-        onChange(JSON.stringify(Object.fromEntries(meshes.map((mesh) => [mesh.name, colorZones[0].id])), null, 2));
-        setAutoSignature(modelSignature);
-    }, [autoSignature, colorZones, meshes, modelSignature, onChange, recognizedMappings.length]);
-    const setMapping = (meshName, zoneId) => {
-        const next = { ...mappings.value };
-        if (zoneId) next[meshName] = zoneId;
-        else delete next[meshName];
-        onChange(JSON.stringify(next, null, 2));
-    };
-
-    return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                    <p className="text-sm font-black text-slate-800">Connect colors to the 3D model</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                        {colorZones.length === 1 ? 'This is set up automatically for a single-color product.' : 'Choose which color option controls each model part.'}
-                    </p>
-                </div>
-                {meshes.length > 0 && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black uppercase text-emerald-700">{recognizedMappings.length} parts connected</span>}
-            </div>
-            {meshes.length === 1 && colorZones.length > 1 && (
-                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-                    This model has one editable part, so it cannot use separate sleeve, front, and back colors.
-                    <button type="button" onClick={() => onUseSingleColor?.(meshes[0].name, colorZones.find((zone) => zone.id === mappings.value[meshes[0].name]) ?? colorZones[0])} className="mt-2 block rounded-lg bg-amber-700 px-3 py-2 font-black text-white hover:bg-amber-800">
-                        Use one color for the whole product
-                    </button>
-                </div>
-            )}
-            {meshes.length > 0 && colorZones.length === 1 && !reviewOpen && (
-                <button type="button" onClick={() => setReviewOpen(true)} className="mt-3 text-xs font-bold text-slate-600 underline">Review individual model parts</button>
-            )}
-            {meshes.length > 0 && (reviewOpen || colorZones.length > 1) ? (
-                <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
-                    {meshes.map((mesh) => (
-                        <label key={mesh.name} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-center">
-                            <span className="truncate text-xs font-bold text-slate-700" title={mesh.name}>{meshes.length === 1 ? 'Whole product' : mesh.name}</span>
-                            <select value={mappings.value[mesh.name] ?? ''} onChange={(event) => setMapping(mesh.name, event.target.value)} className="h-10 rounded-lg border-slate-300 text-xs">
-                                <option value="">Not color editable</option>
-                                {colorZones.map((zone) => <option key={zone.id} value={zone.id}>{zone.label || zone.id}</option>)}
-                            </select>
-                        </label>
-                    ))}
-                </div>
-            ) : (
-                meshes.length === 0 && <p className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-500">Upload the 3D model first. We will connect its parts automatically.</p>
-            )}
             {!mappings.valid && <FieldError message="Mesh mappings contain invalid JSON. Assign a mesh to reset them." />}
-            <FieldError message={error} />
-            <details className="mt-3 rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-slate-500">Developer: model-part data</summary>
-                <div className="border-t border-slate-200 p-3">
-                    <textarea value={value} onChange={(event) => onChange(event.target.value)} rows="8" spellCheck="false" className="w-full rounded-xl border border-slate-300 bg-slate-950 p-3 font-mono text-xs leading-5 text-slate-100" />
-                </div>
-            </details>
+            <FieldError message={mappingsError} />
+            {meshes.length > 0 && connectedMeshes.length < meshes.length && <p className="mt-2 text-[10px] font-semibold text-amber-700">{meshes.length - connectedMeshes.length} model part{meshes.length - connectedMeshes.length === 1 ? '' : 's'} still need a color.</p>}
         </div>
     );
 }
 
 function Toggle({ label, description, checked, onChange }) {
     return (
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 hover:border-slate-300">
-            <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-            <span><span className="block text-sm font-bold">{label}</span><span className="mt-0.5 block text-xs leading-5 text-slate-500">{description}</span></span>
+        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 hover:border-slate-300">
+            <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+            <span><span className="block text-xs font-bold">{label}</span><span className="block text-[10px] leading-4 text-slate-500">{description}</span></span>
         </label>
     );
 }
@@ -550,20 +508,22 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     </div>
                 </section>
 
-                <section id="product-assets" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="text-lg font-semibold">Assets and storefront capabilities</h2>
-                    <p className="mt-1 text-xs text-slate-500">Upload the 3D model and review the exact storefront thumbnail before saving.</p>
-                    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <TextField label={editing ? 'Replace GLB model (optional)' : 'GLB model'} type="file" accept=".glb,model/gltf-binary" onChange={(e) => form.setData('model', e.target.files?.[0] ?? null)} help={product?.model_original_name ? `Current model: ${product.model_original_name}` : 'GLB format · Maximum 100 MB'} error={form.errors.model} />
-                            <div  style={{ width: '350px', height: '300px' , overflow: 'hidden', position: 'relative', borderRadius: '1rem', backgroundColor: '#f9fafb' }}>
-                            {form.data.model && <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-emerald-600 shadow-sm"><UiIcon name="check" className="h-4 w-4" /></span><span className="min-w-0"><strong className="block truncate">{form.data.model.name}</strong><span className="text-[10px] text-emerald-700">Ready to upload · {formatFileSize(form.data.model.size)}</span></span></div>}
-                            <GlbModelPreview modelFile={form.data.model} modelUrl={product?.modelUrl} />
+                <section id="product-assets" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <h2 className="text-base font-semibold">Assets and capabilities</h2>
+                    <p className="mt-0.5 text-[11px] text-slate-500">Replace the model, update its thumbnail, or change available customization tools.</p>
+                    <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_13rem] sm:items-start">
+                                <div className="min-w-0">
+                                    <TextField label={editing ? 'Replace GLB model (optional)' : 'GLB model'} type="file" accept=".glb,model/gltf-binary" onChange={(e) => form.setData('model', e.target.files?.[0] ?? null)} help={product?.model_original_name ? `Current: ${product.model_original_name}` : 'GLB · Maximum 100 MB'} error={form.errors.model} />
+                                    {form.data.model && <p className="mt-2 truncate rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-semibold text-emerald-700"><UiIcon name="check" className="mr-1 inline h-3 w-3" />{form.data.model.name} · {formatFileSize(form.data.model.size)}</p>}
+                                </div>
+                                <GlbModelPreview compact modelFile={form.data.model} modelUrl={product?.modelUrl} />
                             </div>
                         </div>
                         <ThumbnailUpload file={form.data.thumbnail} currentUrl={product?.thumbnailUrl} category={form.data.category} onChange={(file) => form.setData('thumbnail', file)} error={form.errors.thumbnail} />
                     </div>
-                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <div className="mt-3 grid gap-2 md:grid-cols-3">
                         <Toggle label="Solid colors" description="Allow configured material zones to be recolored." checked={form.data.supports_colors} onChange={(value) => form.setData('supports_colors', value)} />
                         <Toggle label="SVG patterns" description="Show this product's active uploaded patterns." checked={form.data.supports_patterns} onChange={(value) => form.setData('supports_patterns', value)} />
                         <Toggle label="Logo placement" description="Allow image uploads on configured print areas." checked={form.data.supports_logos} onChange={(value) => form.setData('supports_logos', value)} />
@@ -576,7 +536,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     <FieldError message={form.errors.is_published} />
 
                     {!editing && (
-                        <div id="product-patterns" className={`mt-5 scroll-mt-24 rounded-2xl border p-4 ${form.data.supports_patterns ? 'border-purple-200 bg-purple-50' : 'border-slate-200 bg-slate-50'}`}>
+                        <div id="product-patterns" className={`mt-3 scroll-mt-24 rounded-xl border p-3 ${form.data.supports_patterns ? 'border-purple-200 bg-purple-50' : 'border-slate-200 bg-slate-50'}`}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <h3 className="text-sm font-black text-slate-950">Initial SVG pattern</h3>
                                 <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase text-slate-500">Optional</span>
@@ -607,7 +567,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     )}
 
                     {editing && (
-                        <a href="#product-patterns" className="mt-5 flex items-center justify-between rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-bold text-purple-800 hover:bg-purple-100">
+                        <a href="#product-patterns" className="mt-3 flex items-center justify-between rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-bold text-purple-800 hover:bg-purple-100">
                             Upload and manage SVG patterns
                             <span aria-hidden="true">↓</span>
                         </a>
@@ -625,26 +585,15 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     )}
 
                     {form.data.supports_colors && (
-                        <div className="mt-5 space-y-4">
-                            <ColorOptionsField
+                        <div className="mt-5">
+                            <ColorModelField
                                 zonesValue={form.data.color_zones}
-                                paletteValue={form.data.allowed_colors}
-                                onZonesChange={handleColorZonesChange}
-                                onPaletteChange={(value) => form.setData('allowed_colors', value)}
-                                zonesError={form.errors.color_zones}
-                                paletteError={form.errors.allowed_colors}
-                            />
-                            <MeshZoneField
+                                mappingsValue={form.data.mesh_zones}
                                 meshes={modelInspection.meshes}
-                                value={form.data.mesh_zones}
-                                colorZonesValue={form.data.color_zones}
-                                onChange={(value) => form.setData('mesh_zones', value)}
-                                onUseSingleColor={(meshName, zone) => form.setData({
-                                    ...form.data,
-                                    color_zones: JSON.stringify([zone], null, 2),
-                                    mesh_zones: JSON.stringify({ [meshName]: zone.id }, null, 2),
-                                })}
-                                error={form.errors.mesh_zones}
+                                onZonesChange={handleColorZonesChange}
+                                onMappingsChange={(value) => form.setData('mesh_zones', value)}
+                                zonesError={form.errors.color_zones}
+                                mappingsError={form.errors.mesh_zones}
                             />
                         </div>
                     )}
