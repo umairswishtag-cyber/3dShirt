@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import LogoPlacementEditor, { logoBoundsForPlacement, ModelOverview } from './LogoPlacementEditor';
+import {
+    applyModelPreviewColors,
+    parseModelColorConfiguration,
+    prepareModelPreviewMaterials,
+} from './modelPreviewMaterials';
 
 const boxProjection = { type: 'box', axis: null, direction: null };
 
@@ -71,7 +76,7 @@ function disposeScene(scene) {
     });
 }
 
-export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, patternZonesValue = [], onChange, error, patternZonesError, onInspection, onDisableArtwork, supportsPatterns = false, supportsLogos = false, enabled = true }) {
+export default function PrintAreaBindingSelector({ modelFile, modelUrl, colorZones = [], meshZones = {}, value, patternZonesValue = [], onChange, error, patternZonesError, onInspection, onDisableArtwork, supportsPatterns = false, supportsLogos = false, enabled = true }) {
     const [meshes, setMeshes] = useState([]);
     const [previewScene, setPreviewScene] = useState(null);
     const [activeLogoAreaId, setActiveLogoAreaId] = useState(null);
@@ -81,6 +86,14 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
     const bindings = useMemo(() => parseBindings(value), [value]);
     const patternAreaIds = useMemo(() => parseAreaIds(patternZonesValue), [patternZonesValue]);
     const patternAreaSet = useMemo(() => new Set(patternAreaIds), [patternAreaIds]);
+    const parsedColorZones = useMemo(() => {
+        const parsed = parseModelColorConfiguration(colorZones, []);
+        return Array.isArray(parsed) ? parsed : [];
+    }, [colorZones]);
+    const parsedMeshZones = useMemo(() => {
+        const parsed = parseModelColorConfiguration(meshZones, {});
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    }, [meshZones]);
     const printAreas = useMemo(
         () => Object.entries(bindings).map(([id, binding]) => ({
             id,
@@ -132,6 +145,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
                     })
                     : await loader.loadAsync(modelUrl);
                 loadedScene = gltf.scene;
+                prepareModelPreviewMaterials(loadedScene);
                 const inspectedMeshes = inspectScene(gltf.scene);
                 if (!active) {
                     disposeScene(loadedScene);
@@ -166,6 +180,11 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, value, p
             if (loadedScene) disposeScene(loadedScene);
         };
     }, [modelFile, modelUrl, onInspection]);
+
+    useEffect(() => {
+        if (!previewScene) return;
+        applyModelPreviewColors(previewScene, parsedColorZones, parsedMeshZones);
+    }, [parsedColorZones, parsedMeshZones, previewScene]);
 
     const uvMeshCount = meshes.filter((mesh) => mesh.uvBounds).length;
 
