@@ -52,10 +52,21 @@ class CustomerDesignAssetService
         }
 
         return [
-            'url' => config('filesystems.disks.public.driver') === 'local'
-                ? '/storage/'.$path
-                : Storage::disk('public')->url($path),
+            'url' => request()->routeIs('shopify.app-proxy.graphql')
+                ? $this->shopifyProxyUrl($path)
+                : (config('filesystems.disks.public.driver') === 'local'
+                    ? '/storage/'.$path
+                    : Storage::disk('public')->url($path)),
         ];
+    }
+
+    private function shopifyProxyUrl(string $path): string
+    {
+        $encodedPath = collect(explode('/', $path))
+            ->map(fn (string $segment): string => rawurlencode($segment))
+            ->implode('/');
+
+        return '/apps/configurator/assets/'.$encodedPath;
     }
 
     private function sanitizeSvg(string $svg): string
@@ -86,11 +97,13 @@ class CustomerDesignAssetService
         foreach ($elements as $element) {
             if (in_array(strtolower($element->localName), $blockedElements, true)) {
                 $element->parentNode?->removeChild($element);
+
                 continue;
             }
 
             if (strtolower($element->localName) === 'style' && $this->containsUnsafeSvgCss($element->textContent)) {
                 $element->parentNode?->removeChild($element);
+
                 continue;
             }
 

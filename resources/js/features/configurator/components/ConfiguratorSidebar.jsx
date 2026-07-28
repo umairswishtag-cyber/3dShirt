@@ -80,7 +80,7 @@ export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
     });
 
     return (
-        <aside className="hidden min-h-0 w-[340px] shrink-0 border-r border-slate-200 bg-white lg:flex">
+        <aside className="hidden min-h-0 w-[clamp(280px,15vw,340px)] shrink-0 border-r border-slate-200 bg-white lg:flex">
             <nav className="flex w-[76px] shrink-0 flex-col items-stretch gap-1 border-r border-slate-100 bg-slate-50 p-2" aria-label="Configurator tools">
                 {visibleTools.map((tool) => (
                     <button

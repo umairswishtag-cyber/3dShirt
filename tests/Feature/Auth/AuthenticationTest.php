@@ -19,6 +19,26 @@ class AuthenticationTest extends TestCase
         );
     }
 
+    public function test_login_screen_uses_https_routes_behind_a_reverse_proxy(): void
+    {
+        $response = $this
+            ->withServerVariables([
+                'HTTP_HOST' => 'umair.xoarhigh.info',
+                'HTTP_X_FORWARDED_HOST' => 'umair.xoarhigh.info',
+                'HTTP_X_FORWARDED_PORT' => '443',
+                'HTTP_X_FORWARDED_PROTO' => 'https',
+            ])
+            ->get('/admin/login');
+
+        $response
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('ziggy.url', 'https://umair.xoarhigh.info')
+                ->where('ziggy.location', 'https://umair.xoarhigh.info/admin/login')
+            )
+            ->assertDontSee('http://umair.xoarhigh.info/admin/login', escape: false);
+    }
+
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
         $user = User::factory()->create();

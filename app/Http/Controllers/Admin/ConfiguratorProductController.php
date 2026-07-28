@@ -11,6 +11,7 @@ use App\Services\Configurator\ConfiguratorProductService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 class ConfiguratorProductController extends Controller
 {
@@ -19,10 +20,11 @@ class ConfiguratorProductController extends Controller
         private readonly ConfiguratorAssetStorageService $storage,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         return Inertia::render('Admin/Configurator/ProductsIndex', [
             'products' => ConfiguratorProduct::query()
+                ->when(! $request->user()->isPlatformAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
                 ->withCount([
                     'patterns',
                     'patterns as active_patterns_count' => fn ($query) => $query->where('is_active', true),
@@ -34,8 +36,10 @@ class ConfiguratorProductController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        abort_if($request->user()->isPlatformAdmin(), 403, 'Platform administrators do not own storefront products.');
+
         return Inertia::render('Admin/Configurator/ProductEditor', [
             'product' => null,
             ...$this->taxonomyOptions(),
@@ -44,6 +48,7 @@ class ConfiguratorProductController extends Controller
 
     public function store(StoreConfiguratorProductRequest $request): RedirectResponse
     {
+        abort_if($request->user()->isPlatformAdmin(), 403, 'Platform administrators do not own storefront products.');
         $product = $this->products->create($request->validated(), $request->user()?->id);
 
         return redirect()->route('admin.configurator.products.edit', $product)
@@ -52,8 +57,9 @@ class ConfiguratorProductController extends Controller
                 : 'Draft created. It remains hidden until you publish it.');
     }
 
-    public function edit(ConfiguratorProduct $product): Response
+    public function edit(Request $request, ConfiguratorProduct $product): Response
     {
+        $this->authorizeStoreProduct($request, $product);
         $product->load('patterns');
 
         return Inertia::render('Admin/Configurator/ProductEditor', [
@@ -64,6 +70,7 @@ class ConfiguratorProductController extends Controller
 
     public function update(StoreConfiguratorProductRequest $request, ConfiguratorProduct $product): RedirectResponse
     {
+        $this->authorizeStoreProduct($request, $product);
         $wasPublished = $product->is_published;
         $updated = $this->products->update($product, $request->validated());
 
@@ -77,8 +84,9 @@ class ConfiguratorProductController extends Controller
         return back()->with('success', $message);
     }
 
-    public function destroy(ConfiguratorProduct $product): RedirectResponse
+    public function destroy(Request $request, ConfiguratorProduct $product): RedirectResponse
     {
+        $this->authorizeStoreProduct($request, $product);
         $this->products->delete($product);
 
         return redirect()->route('admin.configurator.products.index')
@@ -116,5 +124,13 @@ class ConfiguratorProductController extends Controller
             'audiences' => $items->where('type', ConfiguratorTaxonomy::TYPE_AUDIENCE)->values(),
             'categories' => $items->where('type', ConfiguratorTaxonomy::TYPE_CATEGORY)->values(),
         ];
+    }
+
+    private function authorizeStoreProduct(Request $request, ConfiguratorProduct $product): void
+    {
+        abort_unless(
+            $request->user()->isPlatformAdmin() || (int) $product->user_id === (int) $request->user()->id,
+            404,
+        );
     }
 }

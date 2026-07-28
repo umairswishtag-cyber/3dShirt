@@ -1,0 +1,49 @@
+{% liquid
+  assign configured_page = block.settings.page_handle | strip
+  assign should_load = false
+
+  if request.page_type == 'page'
+    if configured_page == blank or page.handle == configured_page
+      assign should_load = true
+    endif
+  endif
+%}
+
+{% if should_load %}
+  <div
+    hidden
+    data-shirt-configurator-embed
+    data-target-id="{{ block.settings.target_id | escape }}"
+    data-customer-name="{{ customer.name | escape }}"
+    data-customer-email="{{ customer.email | escape }}"
+    data-login-url="{{ routes.storefront_login_url }}"
+    data-stylesheet-url="https://umair.xoarhigh.info/build/shopify/configurator-embed.css?v=13"
+  ></div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Configurator loader",
+  "target": "body",
+  "javascript": "configurator-loader.js",
+  "enabled_on": {
+    "templates": ["page"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "target_id",
+      "label": "Target element ID",
+      "default": "shirt-configurator",
+      "info": "The configurator is appended inside this theme element. Enter the ID without #."
+    },
+    {
+      "type": "text",
+      "id": "page_handle",
+      "label": "Page handle",
+      "default": "configurator",
+      "info": "Load only on this Shopify page. Leave blank for every page template."
+    }
+  ]
+}
+{% endschema %}

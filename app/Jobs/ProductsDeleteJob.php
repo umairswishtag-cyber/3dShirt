@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Osiset\ShopifyApp\Objects\Values\ShopDomain;
 use App\Repositories\Product\ProductRepositoryInterface;
 use Osiset\ShopifyApp\Contracts\Queries\Shop as IShopQuery;
+use App\Models\User;
 
 class ProductsDeleteJob implements ShouldQueue
 {
@@ -52,8 +53,12 @@ class ProductsDeleteJob implements ShouldQueue
     public function handle(IShopQuery $shopQuery)
     {
         $payload = $this->data;
+        $domain = $this->shopDomain instanceof ShopDomain
+            ? $this->shopDomain->toNative()
+            : (string) $this->shopDomain;
+        $store = User::query()->where('name', $domain)->firstOrFail();
         $this->getProductRepository(app(ProductRepositoryInterface::class));
-        if($this->deleteProduct($payload->id)){
+        if($this->deleteProduct($payload->id, $store)){
             $this->logInfo("Product Delete Job Sucessfull.");
         }else{
             $this->logInfo("Product Delete Job Failed! ");

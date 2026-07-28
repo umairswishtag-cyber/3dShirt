@@ -1,0 +1,24 @@
+client_id = "8faf4c39541ff431e3c4046bcbda9a62"
+name = "3D Shirt Configurator"
+application_url = "https://umair.xoarhigh.info"
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = false
+dev_store_url = "umair-kdfnaegu.myshopify.com"
+
+[access_scopes]
+scopes = "read_products,write_products,read_orders,write_orders,read_customers,write_customers,read_locations,read_inventory,write_app_proxy"
+
+[auth]
+redirect_urls = [
+  "https://umair.xoarhigh.info/authenticate"
+]
+
+[webhooks]
+api_version = "2026-07"
+
+[app_proxy]
+url = "/shopify/app-proxy/configurator"
+prefix = "apps"
+subpath = "configurator"

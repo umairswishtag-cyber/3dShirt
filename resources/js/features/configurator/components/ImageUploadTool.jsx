@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react';
-import { usePage } from '@inertiajs/react';
 import { getDesignArea, getLogoAreaIds, getLogoDesignArea, supportsLogoPlacement } from '../config/designAreas';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
-import { storeDesignAsset } from '@/services/designAssetService';
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -30,7 +28,6 @@ function readImage(file) {
 }
 
 export default function ImageUploadTool() {
-    const customer = usePage().props.customer;
     const inputRef = useRef(null);
     const [error, setError] = useState(null);
     const [isReading, setIsReading] = useState(false);
@@ -71,7 +68,7 @@ export default function ImageUploadTool() {
         setIsReading(true);
         try {
             const { source: inlineSource, image } = await readImage(imageFile);
-            const source = customer ? await storeDesignAsset(inlineSource, imageFile.name) : inlineSource;
+            const source = inlineSource;
             const aspectRatio = image.naturalWidth / image.naturalHeight || 1;
             const width = Math.min(0.3, area.bounds.width * 0.48);
             const height = Math.min(width / aspectRatio, area.bounds.height * 0.48);

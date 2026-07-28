@@ -1,0 +1,66 @@
+<div
+  id="shirt-configurator-{{ block.id }}"
+  class="shirt-configurator"
+  aria-label="{{ block.settings.title | escape }}"
+  {% if customer %}
+    data-shirt-configurator-root
+    data-customer-name="{{ customer.name | escape }}"
+    data-customer-email="{{ customer.email | escape }}"
+    data-login-url="{{ routes.storefront_login_url }}"
+    data-stylesheet-url="https://umair.xoarhigh.info/build/shopify/configurator-embed.css?v=13"
+  {% endif %}
+>
+  {% unless customer %}
+    <div class="shirt-configurator__signin">
+      <h2>{{ block.settings.signin_title | escape }}</h2>
+      <p>{{ block.settings.signin_text | escape }}</p>
+      <a href="{{ routes.storefront_login_url }}">
+        {{ block.settings.signin_label | escape }}
+      </a>
+    </div>
+  {% endunless %}
+
+  <noscript>
+    <p class="shirt-configurator__noscript">
+      JavaScript is required to use the 3D configurator.
+    </p>
+  </noscript>
+</div>
+
+{% schema %}
+{
+  "name": "3D Configurator",
+  "target": "section",
+  "javascript": "configurator-loader.js",
+  "stylesheet": "configurator.css",
+  "enabled_on": {
+    "templates": ["page"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Accessible title",
+      "default": "3D product configurator"
+    },
+    {
+      "type": "text",
+      "id": "signin_title",
+      "label": "Sign-in heading",
+      "default": "Sign in to start designing"
+    },
+    {
+      "type": "textarea",
+      "id": "signin_text",
+      "label": "Sign-in message",
+      "default": "Use your Shopify customer account to open the configurator and keep all your saved designs together."
+    },
+    {
+      "type": "text",
+      "id": "signin_label",
+      "label": "Sign-in button label",
+      "default": "Sign in with Shopify"
+    }
+  ]
+}
+{% endschema %}

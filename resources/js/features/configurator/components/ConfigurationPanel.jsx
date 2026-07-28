@@ -225,7 +225,7 @@ export default function ConfigurationPanel({ embedded = false }) {
     if (embedded) return content;
 
     return (
-        <aside className="hidden min-h-0 w-[320px] shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-5 lg:block">
+        <aside className="hidden min-h-0 w-[clamp(280px,15vw,340px)] shrink-0 overflow-y-auto border-l border-slate-200 bg-white p-5 lg:block">
             <div className="mb-5 flex items-center justify-between">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                     {object ? 'Image settings' : 'Design details'}

@@ -4,7 +4,7 @@ import GarmentIllustration from '@/Components/GarmentIllustration';
 import UiIcon from '@/Components/UiIcon';
 import { GARMENT_CATEGORIES, GENDER_OPTIONS, PRODUCT_CATALOG } from '../config/productCatalog';
 
-export default function ProductSelectionScreen({ onSelect, adminPreview = false }) {
+export default function ProductSelectionScreen({ onSelect, adminPreview = false, embedded = false, accountUrl = '/account' }) {
     const [category, setCategory] = useState(null);
     const [gender, setGender] = useState(null);
     const products = useMemo(() => PRODUCT_CATALOG.filter((product) => product.gender === gender && product.category === category), [category, gender]);
@@ -34,11 +34,17 @@ export default function ProductSelectionScreen({ onSelect, adminPreview = false 
             <header className="relative border-b border-white/80 bg-white/70 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
                     <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-md">3D</span><span><strong className="block text-sm font-black">Design studio</strong><span className="text-xs text-slate-500">Choose your starting garment</span></span></div>
-                    <button type="button" onClick={() => router.visit(adminPreview ? route('admin.configurator.products.index') : '/account')} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 hover:shadow-md"><UiIcon name={adminPreview ? 'arrow' : 'bookmark'} className="h-4 w-4" /><span className="hidden sm:inline">{adminPreview ? 'Back to products' : 'My saved designs'}</span><span className="sm:hidden">{adminPreview ? 'Back' : 'Saved'}</span></button>
+                    {(!embedded || adminPreview) && (
+                        <button type="button" onClick={() => {
+                            const url = adminPreview ? route('admin.configurator.products.index') : accountUrl;
+                            if (embedded) window.location.assign(url);
+                            else router.visit(url);
+                        }} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 hover:shadow-md"><UiIcon name={adminPreview ? 'arrow' : 'bookmark'} className="h-4 w-4" /><span className="hidden sm:inline">{adminPreview ? 'Back to products' : 'My saved designs'}</span><span className="sm:hidden">{adminPreview ? 'Back' : 'Saved'}</span></button>
+                    )}
                 </div>
             </header>
 
-            <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-11">
+            <main className="relative mx-auto w-full max-w-[100rem] px-4 py-8 sm:px-6 sm:py-11">
                 <div className="mb-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                     <div><span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700"><UiIcon name="sparkles" className="h-3.5 w-3.5" />New design</span><h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Choose a product</h1><p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">Choose what you want to customize, select its audience or fit, then pick a published 3D model.</p></div>
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-400">

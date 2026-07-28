@@ -1,0 +1,44 @@
+.shirt-configurator {
+  display: block;
+  width: 100vw;
+  max-width: none;
+  min-width: 0;
+  /* margin-inline: calc(50% - 50vw); */
+  overflow: clip;
+}
+
+.shirt-configurator__signin,
+.shirt-configurator__noscript {
+  display: grid;
+  min-height: 360px;
+  place-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.shirt-configurator__signin h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.shirt-configurator__signin p {
+  max-width: 38rem;
+  margin: 1rem auto 1.5rem;
+  color: #475569;
+}
+
+.shirt-configurator__signin a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #0f172a;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}

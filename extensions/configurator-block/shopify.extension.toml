@@ -1,0 +1,8 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "3D Configurator"
+handle = "configurator-block"
+uid = "da121eba-e648-1ce6-427c-2e201a0c0cf4220e90d5"
+type = "theme"
+

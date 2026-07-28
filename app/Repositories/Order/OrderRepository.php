@@ -34,9 +34,12 @@ class OrderRepository implements OrderRepositoryInterface
         $order = $this->model->find($id);
         return $order;
     }
-    public function getByShopifyId(int $id)
+    public function getByShopifyId(int $id, ?int $userId = null)
     {
-        $order = $this->model->where('shopify_order_id', $id)->first();
+        $order = $this->model
+            ->where('shopify_order_id', $id)
+            ->when($userId, fn ($query) => $query->where('user_id', $userId))
+            ->first();
         return $order;
     }
     public function getByUserId(int $id)
@@ -115,13 +118,15 @@ class OrderRepository implements OrderRepositoryInterface
                 $q->where('fulfillment_status', $filters['fulfillment_status']);
             })
             ->when($filters['query'], function ($q) use ($filters) {
-                $q->where('name', 'LIKE', "%{$filters['query']}%")
-                    ->orWhere('financial_status', 'LIKE', "%{$filters['query']}%")
-                    ->orWhere("fulfillment_status", "LIKE", "%{$filters['query']}%")
-                    ->orWhereHas('orderCustomer', function ($q) use ($filters) {
-                        $q->where('first_name', 'LIKE', "%{$filters['query']}%")
-                            ->orWhere('last_name', 'LIKE', "%{$filters['query']}%")
-                            ->orWhere('email', 'LIKE', "%{$filters['query']}%");
+                $q->where(function ($query) use ($filters) {
+                    $query->where('name', 'LIKE', "%{$filters['query']}%")
+                        ->orWhere('financial_status', 'LIKE', "%{$filters['query']}%")
+                        ->orWhere("fulfillment_status", "LIKE", "%{$filters['query']}%")
+                        ->orWhereHas('orderCustomer', function ($customerQuery) use ($filters) {
+                            $customerQuery->where('first_name', 'LIKE', "%{$filters['query']}%")
+                                ->orWhere('last_name', 'LIKE', "%{$filters['query']}%")
+                                ->orWhere('email', 'LIKE', "%{$filters['query']}%");
+                        });
                     });
             })
             ->get();
@@ -129,4 +134,3 @@ class OrderRepository implements OrderRepositoryInterface
         return response()->json($orders);
     }
 }
-

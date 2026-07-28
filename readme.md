@@ -6,6 +6,9 @@ The storefront configurator now uses an authenticated, database-backed administr
 
 See [Configurator Admin Guide](docs/configurator-admin.md) for setup, GLB mesh/UV bindings, SVG color detection, publishing, routes, service boundaries, and upload limits.
 
+See [Shopify Configurator Page Guide](docs/shopify-configurator-page.md) to
+deploy the theme app block and add the configurator to a Shopify page.
+
 After login, administrators are redirected to `/admin`, where they can create a GLB product, manage the storefront catalog, preview the storefront, or open the existing orders dashboard.
 
 After pulling these changes run:

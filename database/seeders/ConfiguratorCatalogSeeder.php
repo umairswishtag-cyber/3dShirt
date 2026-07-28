@@ -3,17 +3,22 @@
 namespace Database\Seeders;
 
 use App\Models\ConfiguratorProduct;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class ConfiguratorCatalogSeeder extends Seeder
 {
     public function run(): void
     {
+        $ownerId = User::query()
+            ->where('is_platform_admin', false)
+            ->oldest('id')
+            ->value('id');
         $palette = ['#F8FAFC', '#111827', '#172554', '#2563EB', '#DC2626', '#16A34A', '#FACC15', '#F97316', '#64748B', '#7C3AED'];
         $coverage = ['front', 'back', 'leftSleeve', 'rightSleeve'];
 
         $shirt = ConfiguratorProduct::updateOrCreate(
-            ['slug' => 'basic-tshirt'],
+            ['user_id' => $ownerId, 'slug' => 'basic-tshirt'],
             [
                 'name' => 'Men Basic T-Shirt',
                 'gender' => 'men',
@@ -70,7 +75,7 @@ class ConfiguratorCatalogSeeder extends Seeder
             ]);
         }
 
-        ConfiguratorProduct::updateOrCreate(['slug' => 'men-shirt-2'], [
+        ConfiguratorProduct::updateOrCreate(['user_id' => $ownerId, 'slug' => 'men-shirt-2'], [
             'name' => 'Men T-Shirt Model 2', 'gender' => 'men', 'category' => 'shirts',
             'description' => 'Single-zone solid-color garment. Product UV adapter pending.',
             'model_url' => '/models/men/man-2.glb', 'fit_height' => 2.45,
@@ -80,7 +85,7 @@ class ConfiguratorCatalogSeeder extends Seeder
             'supports_patterns' => false, 'supports_logos' => false, 'is_published' => true, 'sort_order' => 20,
         ]);
 
-        ConfiguratorProduct::updateOrCreate(['slug' => 'women-tshirt-dress'], [
+        ConfiguratorProduct::updateOrCreate(['user_id' => $ownerId, 'slug' => 'women-tshirt-dress'], [
             'name' => 'Women T-Shirt Dress', 'gender' => 'women', 'category' => 'dresses',
             'description' => 'Single-zone solid-color dress. This source GLB has no UV map.',
             'model_url' => '/models/women/women.glb', 'fit_height' => 2.45,

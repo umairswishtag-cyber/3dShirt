@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Osiset\ShopifyApp\Objects\Values\ShopDomain;
 use App\Repositories\Order\OrderRepositoryInterface;
 use Osiset\ShopifyApp\Contracts\Queries\Shop as IShopQuery;
+use App\Models\User;
 
 class OrdersDeleteJob implements ShouldQueue
 {
@@ -52,8 +53,12 @@ class OrdersDeleteJob implements ShouldQueue
     public function handle(IShopQuery $shopQuery)
     {
         $payload = $this->data;
+        $domain = $this->shopDomain instanceof ShopDomain
+            ? $this->shopDomain->toNative()
+            : (string) $this->shopDomain;
+        $store = User::query()->where('name', $domain)->firstOrFail();
         $this->getOrderRepository(app(OrderRepositoryInterface::class));
-        if($this->deleteOrder($payload->id)){
+        if($this->deleteOrder($payload->id, $store)){
             $this->logInfo("Order Delete Job Sucessfull.");
         }else{
             $this->logInfo("Order Delete Job Failed! ");

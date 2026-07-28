@@ -10,6 +10,12 @@ export class GraphQLRequestError extends Error {
     }
 }
 
+let graphqlEndpoint = '/graphql';
+
+export function setGraphqlEndpoint(endpoint) {
+    graphqlEndpoint = endpoint || '/graphql';
+}
+
 export async function graphqlRequest(query, variables = {}) {
     const csrfToken = document.cookie
         .split('; ')
@@ -17,7 +23,7 @@ export async function graphqlRequest(query, variables = {}) {
         ?.split('=')
         .slice(1)
         .join('=');
-    const response = await fetch('/graphql', {
+    const response = await fetch(graphqlEndpoint, {
         method: 'POST',
         credentials: 'same-origin',
         headers: {

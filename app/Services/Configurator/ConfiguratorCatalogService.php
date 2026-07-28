@@ -6,6 +6,7 @@ use App\Models\ConfiguratorPattern;
 use App\Models\ConfiguratorProduct;
 use App\Models\ConfiguratorTaxonomy;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class ConfiguratorCatalogService
 {
@@ -17,12 +18,17 @@ class ConfiguratorCatalogService
     ) {}
 
     /** @return array<int, array<string, mixed>> */
-    public function publishedCatalog(): array
+    public function publishedCatalog(?User $store = null): array
     {
         return ConfiguratorProduct::query()
+            ->when($store, fn ($query) => $query->where('user_id', $store->id))
+            ->when(! $store, fn ($query) => $query->whereRaw('1 = 0'))
             ->where('is_published', true)
             ->where(fn ($query) => $query->whereNotNull('model_path')->orWhereNotNull('model_url'))
-            ->with(['patterns' => fn ($query) => $query->where('is_active', true)])
+            ->with([
+                'patterns' => fn ($query) => $query->where('is_active', true),
+                'owner.chatbotSetting',
+            ])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
@@ -72,6 +78,8 @@ class ConfiguratorCatalogService
                 'patterns' => $product->supports_patterns,
                 'logos' => $product->supports_logos,
             ],
+            'assistant' => $product->owner?->chatbotSetting?->storefrontConfig()
+                ?? ['enabled' => false],
             'patterns' => $product->patterns
                 ->map(fn (ConfiguratorPattern $pattern) => [
                     'id' => $pattern->slug,

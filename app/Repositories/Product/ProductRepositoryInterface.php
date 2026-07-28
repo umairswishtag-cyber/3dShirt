@@ -6,7 +6,7 @@ interface ProductRepositoryInterface
 {
     public function getById(int $id);
 
-    public function getByShopifyId(int $id);
+    public function getByShopifyId(int $id, ?int $userId = null);
 
     public function getByUserId(int $id);
 

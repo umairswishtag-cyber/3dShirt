@@ -8,7 +8,7 @@ import CustomerAuthShell from './CustomerAuthShell';
 
 const LOGIN = `mutation CustomerLogin($input: CustomerLoginInput!) { customerLogin(input: $input) { message customer { id name email } } }`;
 
-export default function Login({ intendedUrl }) {
+export default function Login({ intendedUrl, storefront }) {
     const [form, setForm] = useState({ email: '', password: '', remember: false });
     const [errors, setErrors] = useState({});
     const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export default function Login({ intendedUrl }) {
         try {
             const data = await graphqlRequest(LOGIN, { input: form });
             toast.success(data.customerLogin.message);
-            setTimeout(() => router.visit(intendedUrl || '/configurator'), 350);
+            setTimeout(() => router.visit(intendedUrl || storefront.configuratorUrl), 350);
         } catch (error) {
             setErrors(error.fieldErrors ?? {}); toast.error(error.message);
         } finally { setBusy(false); }
@@ -33,7 +33,7 @@ export default function Login({ intendedUrl }) {
                     <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-600"><input type="checkbox" checked={form.remember} onChange={(e) => setForm({ ...form, remember: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />Keep me signed in</label>
                     <button disabled={busy} className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl disabled:translate-y-0 disabled:opacity-60">{busy ? 'Signing in…' : 'Sign in and continue'}{!busy && <UiIcon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />}</button>
                 </form>
-                <p className="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-500">New here? <Link href="/register" className="font-bold text-blue-600 hover:text-blue-700">Create your account</Link></p>
+                <p className="mt-7 border-t border-slate-100 pt-6 text-center text-sm text-slate-500">New here? <Link href={storefront.registerUrl} className="font-bold text-blue-600 hover:text-blue-700">Create your account</Link></p>
             </CustomerAuthShell>
         </>
     );

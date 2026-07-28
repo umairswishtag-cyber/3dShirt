@@ -590,13 +590,19 @@ class ConfiguratorAdminTest extends TestCase
 
     public function test_drafts_and_inactive_patterns_do_not_reach_the_storefront_catalog(): void
     {
+        $store = User::factory()->create([
+            'name' => 'catalog-store.myshopify.com',
+            'storefront_key' => 'catalog-store.myshopify.com',
+        ]);
         $published = ConfiguratorProduct::create([
             ...$this->validProductData(),
+            'user_id' => $store->id,
             'slug' => 'published-shirt',
             'model_url' => '/models/published.glb',
         ]);
         ConfiguratorProduct::create([
             ...$this->validProductData(),
+            'user_id' => $store->id,
             'name' => 'Draft shirt',
             'slug' => 'draft-shirt',
             'model_url' => '/models/draft.glb',
@@ -607,7 +613,7 @@ class ConfiguratorAdminTest extends TestCase
             'color_slots' => [], 'is_active' => false,
         ]);
 
-        $this->getJson('/api/configurator/catalog')
+        $this->getJson(route('store.configurator.catalog', ['store' => $store->storefront_key]))
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonCount(0, 'data.0.patterns');

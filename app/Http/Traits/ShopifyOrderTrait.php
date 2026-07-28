@@ -198,7 +198,7 @@ trait ShopifyOrderTrait
         try {
             $formatdData = $this->formatOrderData($order, $user);
             if ($update) {
-                $order = $this->order->getByShopifyId($order->id);
+                $order = $this->order->getByShopifyId($order->id, $user->id);
                 if (!$order) {
                     Log::info("Order May be deleted: " . json_encode($order, JSON_PRETTY_PRINT));
                     DB::rollBack();
@@ -312,11 +312,15 @@ trait ShopifyOrderTrait
         }
         return $orderFulfillments;
     }
-    public function deleteOrder($orderId)
+    public function deleteOrder($orderId, User $user)
     {
         DB::beginTransaction();
         try {
-            $order = $this->order->getByShopifyId($orderId);
+            $order = $this->order->getByShopifyId($orderId, $user->id);
+            if (! $order) {
+                DB::rollBack();
+                return true;
+            }
             $this->order->delete($order->id);
         } catch (\Exception $e) {
             DB::rollBack();

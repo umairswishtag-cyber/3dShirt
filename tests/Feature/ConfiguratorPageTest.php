@@ -14,14 +14,19 @@ class ConfiguratorPageTest extends TestCase
 
     public function test_the_configurator_page_is_available(): void
     {
+        $store = User::factory()->create([
+            'name' => 'page-store.myshopify.com',
+            'storefront_key' => 'page-store.myshopify.com',
+        ]);
         $customer = Customer::query()->create([
+            'user_id' => $store->id,
             'name' => 'Test Customer',
             'email' => 'customer@example.com',
             'password' => 'password123',
         ]);
 
         $this->actingAs($customer, 'customer');
-        $response = $this->get('/configurator');
+        $response = $this->get(route('store.configurator', ['store' => $store->storefront_key]));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page

@@ -28,9 +28,12 @@ class ProductRepository implements ProductRepositoryInterface
         $product = $this->model->find($id);
         return $product;
     }
-    public function getByShopifyId(int $id)
+    public function getByShopifyId(int $id, ?int $userId = null)
     {
-        $product = $this->model->where('shopify_product_id', $id)->first();
+        $product = $this->model
+            ->where('shopify_product_id', $id)
+            ->when($userId, fn ($query) => $query->where('user_id', $userId))
+            ->first();
         return $product;
     }
     public function getByUserId(int $id)
@@ -47,7 +50,8 @@ class ProductRepository implements ProductRepositoryInterface
         unset($data['media']);
 
         $product = $this->model->updateOrCreate([
-            'shopify_product_id' => $data['shopify_product_id']
+            'shopify_product_id' => $data['shopify_product_id'],
+            'user_id' => $data['user_id'],
         ], (array) $data);
 
         foreach ($varients as $varient) {

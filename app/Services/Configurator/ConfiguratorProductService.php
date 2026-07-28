@@ -21,7 +21,7 @@ class ConfiguratorProductService
         return DB::transaction(function () use ($data, $userId) {
             $attributes = $this->productAttributes($data);
             $attributes['user_id'] = $userId;
-            $attributes['slug'] = $this->uniqueSlug($data['name']);
+            $attributes['slug'] = $this->uniqueSlug($data['name'], $userId);
             $this->applyUploads($attributes, $data);
 
             $product = ConfiguratorProduct::create($attributes);
@@ -131,12 +131,12 @@ class ConfiguratorProductService
         }
     }
 
-    private function uniqueSlug(string $name): string
+    private function uniqueSlug(string $name, ?int $userId): string
     {
         $base = Str::slug($name) ?: 'garment';
         $slug = $base;
         $counter = 2;
-        while (ConfiguratorProduct::where('slug', $slug)->exists()) {
+        while (ConfiguratorProduct::where('user_id', $userId)->where('slug', $slug)->exists()) {
             $slug = $base.'-'.$counter++;
         }
 

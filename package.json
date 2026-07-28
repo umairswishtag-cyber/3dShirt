@@ -3,7 +3,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "npm run build:admin && npm run build:shopify-embed",
+        "build:admin": "vite build",
+        "build:shopify-embed": "vite build --config vite.embed.config.js"
     },
     "devDependencies": {
         "@headlessui/react": "^2.2.6",

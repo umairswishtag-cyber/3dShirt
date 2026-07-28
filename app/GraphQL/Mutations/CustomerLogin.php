@@ -6,10 +6,14 @@ use App\Services\Customer\CustomerAccountService;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Services\Storefront\StorefrontContext;
 
 class CustomerLogin
 {
-    public function __construct(private readonly CustomerAccountService $accounts) {}
+    public function __construct(
+        private readonly CustomerAccountService $accounts,
+        private readonly StorefrontContext $storefront,
+    ) {}
 
     /** @param array<string, mixed> $args
      * @return array<string, mixed>
@@ -17,7 +21,8 @@ class CustomerLogin
     public function __invoke(mixed $root, array $args): array
     {
         $email = Str::lower((string) ($args['input']['email'] ?? ''));
-        $key = 'customer-login:'.sha1($email.'|'.request()->ip());
+        $store = $this->storefront->require();
+        $key = 'customer-login:'.sha1($store->id.'|'.$email.'|'.request()->ip());
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             throw ValidationException::withMessages([

@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // The app is served through an HTTPS reverse proxy (for example,
+        // Cloudflare Tunnel). Trust its forwarded headers so Laravel generates
+        // HTTPS URLs for Ziggy, authentication, redirects, and assets.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
@@ -28,10 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'customer.auth' => \App\Http\Middleware\AuthenticateCustomer::class,
             'customer.guest' => \App\Http\Middleware\RedirectIfCustomerAuthenticated::class,
+            'storefront' => \App\Http\Middleware\ResolveStorefrontStore::class,
+            'shopify.proxy.customer' => \App\Http\Middleware\AuthenticateShopifyProxyCustomer::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'authenticate',
             'authenticate/*',
+            'shopify/app-proxy/configurator/graphql',
             'webhook/*',
         ]);
 

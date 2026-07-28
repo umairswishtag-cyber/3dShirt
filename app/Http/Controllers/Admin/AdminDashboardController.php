@@ -7,19 +7,24 @@ use App\Models\ConfiguratorPattern;
 use App\Models\ConfiguratorProduct;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
+        $products = ConfiguratorProduct::query()
+            ->when(! $request->user()->isPlatformAdmin(), fn ($query) => $query->where('user_id', $request->user()->id));
+        $productIds = (clone $products)->pluck('id');
+
         return Inertia::render('Admin/Dashboard', [
             'summary' => [
-                'products' => ConfiguratorProduct::count(),
-                'published' => ConfiguratorProduct::where('is_published', true)->count(),
-                'drafts' => ConfiguratorProduct::where('is_published', false)->count(),
-                'patterns' => ConfiguratorPattern::where('is_active', true)->count(),
+                'products' => (clone $products)->count(),
+                'published' => (clone $products)->where('is_published', true)->count(),
+                'drafts' => (clone $products)->where('is_published', false)->count(),
+                'patterns' => ConfiguratorPattern::whereIn('configurator_product_id', $productIds)->where('is_active', true)->count(),
             ],
-            'recentProducts' => ConfiguratorProduct::query()
+            'recentProducts' => (clone $products)
                 ->latest('updated_at')
                 ->limit(5)
                 ->get(['id', 'name', 'gender', 'category', 'is_published', 'updated_at']),

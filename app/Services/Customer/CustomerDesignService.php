@@ -38,7 +38,11 @@ class CustomerDesignService
         ])->validate();
 
         json_decode($data['document'], true, 512, JSON_THROW_ON_ERROR);
-        $product = ConfiguratorProduct::query()->where('slug', $data['productId'])->first();
+        $product = ConfiguratorProduct::query()
+            ->where('user_id', $customer->user_id)
+            ->where('slug', $data['productId'])
+            ->where('is_published', true)
+            ->firstOrFail();
         $design = isset($data['id'])
             ? $customer->designs()->where('public_id', $data['id'])->firstOrFail()
             : new CustomerDesign(['customer_id' => $customer->id]);
@@ -47,7 +51,7 @@ class CustomerDesignService
         $design->fill([
             'configurator_product_id' => $product?->id,
             'product_slug' => $data['productId'],
-            'product_name' => $data['productName'],
+            'product_name' => $product->name,
             'title' => $data['title'],
             'status' => $status,
             'document_version' => 1,

@@ -13,7 +13,7 @@ function HeaderButton({ children, className = '', ...props }) {
     );
 }
 
-export default function ConfiguratorHeader({ onReset, onChangeProduct, onSave, onFinalize, saving = false, adminPreview = false }) {
+export default function ConfiguratorHeader({ onReset, onChangeProduct, onSave, onFinalize, saving = false, adminPreview = false, embedded = false, accountUrl = '/account' }) {
     const product = useConfiguratorStore((state) => state.product);
     const isDirty = useConfiguratorStore((state) => state.isDirty);
     const lastSavedAt = useConfiguratorStore((state) => state.lastSavedAt);
@@ -93,7 +93,13 @@ export default function ConfiguratorHeader({ onReset, onChangeProduct, onSave, o
                 >
                     Finish
                 </HeaderButton>
-                <HeaderButton onClick={() => router.visit(adminPreview ? route('admin.configurator.products.index') : '/account')} className="hidden border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:block">{adminPreview ? 'Exit preview' : 'My designs'}</HeaderButton>
+                {(!embedded || adminPreview) && (
+                    <HeaderButton onClick={() => {
+                        const url = adminPreview ? route('admin.configurator.products.index') : accountUrl;
+                        if (embedded) window.location.assign(url);
+                        else router.visit(url);
+                    }} className="hidden border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:block">{adminPreview ? 'Exit preview' : 'My designs'}</HeaderButton>
+                )}
             </div>
         </header>
     );

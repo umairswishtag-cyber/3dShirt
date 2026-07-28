@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\ConfiguratorProduct;
 use App\Models\Customer;
 use App\Models\CustomerDesign;
+use App\Models\User;
+use App\Services\Storefront\StorefrontContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -13,9 +15,22 @@ class CustomerConfiguratorFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $store;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->store = User::factory()->create([
+            'name' => 'abc-store.myshopify.com',
+            'storefront_key' => 'abc-store.myshopify.com',
+        ]);
+        $this->withSession([StorefrontContext::SESSION_KEY => $this->store->id]);
+    }
+
     public function test_storefront_root_uses_customer_entry_routes(): void
     {
-        $this->get('/')->assertRedirect('/login');
+        $this->get('/')->assertRedirect(route('store.customer.login', ['store' => $this->store->storefront_key]));
         $this->get('/login')->assertOk()->assertInertia(
             fn ($page) => $page->component('Customer/Auth/Login'),
         );
@@ -28,14 +43,14 @@ class CustomerConfiguratorFlowTest extends TestCase
     {
         $this->actingAs($this->customer('dashboard@example.com'), 'customer');
 
-        $this->get('/')->assertRedirect('/account');
+        $this->get('/')->assertRedirect(route('store.customer.dashboard', ['store' => $this->store->storefront_key]));
     }
 
     public function test_guest_must_sign_in_before_opening_configurator(): void
     {
         $response = $this->get('/configurator');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect(route('store.customer.login', ['store' => $this->store->storefront_key]));
         $this->assertStringEndsWith('/configurator', session('url.intended'));
     }
 
@@ -63,6 +78,7 @@ class CustomerConfiguratorFlowTest extends TestCase
     {
         $customer = $this->customer('owner@example.com');
         $product = ConfiguratorProduct::query()->create([
+            'user_id' => $this->store->id,
             'name' => 'Everyday Shirt',
             'slug' => 'everyday-shirt',
             'gender' => 'unisex',
@@ -124,6 +140,15 @@ class CustomerConfiguratorFlowTest extends TestCase
     {
         Storage::fake('public');
         $this->actingAs($this->customer('logo-owner@example.com'), 'customer');
+        ConfiguratorProduct::query()->create([
+            'user_id' => $this->store->id,
+            'name' => 'Cap',
+            'slug' => 'cap',
+            'gender' => 'unisex',
+            'category' => 'caps',
+            'model_url' => '/models/cap.glb',
+            'is_published' => true,
+        ]);
         $png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
         $response = $this->graphQL(<<<'GRAPHQL'
@@ -204,6 +229,7 @@ class CustomerConfiguratorFlowTest extends TestCase
     private function customer(string $email): Customer
     {
         return Customer::query()->create([
+            'user_id' => $this->store->id,
             'name' => 'Test Customer',
             'email' => $email,
             'password' => 'password123',

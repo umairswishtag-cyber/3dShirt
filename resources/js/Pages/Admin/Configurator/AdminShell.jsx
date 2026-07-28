@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import UiIcon from '@/Components/UiIcon';
@@ -27,8 +27,11 @@ export default function AdminShell({ title, subtitle = null, children, actions =
                         <nav aria-label="Admin navigation" className="flex min-w-0 items-center gap-0.5 sm:gap-1">
                             <Link aria-current={url === '/admin' ? 'page' : undefined} href={route('admin.dashboard')} className={navClass(url === '/admin')}><UiIcon name="dashboard" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Dashboard</span></Link>
                             <Link aria-current={url.startsWith('/admin/configurator/products') ? 'page' : undefined} href={route('admin.configurator.products.index')} className={navClass(url.startsWith('/admin/configurator/products'))}><UiIcon name="products" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Products</span></Link>
+                            <Link aria-current={url.startsWith('/admin/customers') ? 'page' : undefined} href={route('admin.customers.index')} className={navClass(url.startsWith('/admin/customers'))}><UiIcon name="users" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Customers</span></Link>
                             <Link aria-current={url.startsWith('/admin/configurator/catalog-options') ? 'page' : undefined} href={route('admin.configurator.taxonomies.index')} className={navClass(url.startsWith('/admin/configurator/catalog-options'))}><UiIcon name="settings" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Catalog options</span></Link>
+                            <Link aria-current={url.startsWith('/admin/chatbot') ? 'page' : undefined} href={route('admin.chatbot.index')} className={navClass(url.startsWith('/admin/chatbot'))}><UiIcon name="chat" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Chatbot</span></Link>
                             <Link href={route('admin.configurator.preview')} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3.5 text-sm font-semibold text-slate-600 transition hover:bg-violet-50 hover:text-violet-700"><UiIcon name="storefront" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Storefront</span></Link>
+                            <button type="button" onClick={() => router.post(route('logout'))} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-700" aria-label="Sign out"><UiIcon name="logout" className="h-[18px] w-[18px]" /><span className="hidden xl:inline">Sign out</span></button>
                         </nav>
                     </div>
                 </header>

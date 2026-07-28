@@ -31,6 +31,7 @@ return [
          */
         'middleware' => [
             'web',
+            'storefront',
             // Ensures the request is not vulnerable to cross-site request forgery.
             Nuwave\Lighthouse\Http\Middleware\EnsureXHR::class,
 

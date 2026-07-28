@@ -13,8 +13,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(ConfiguratorCatalogSeeder::class);
-
         // User::factory(10)->create();
 
         User::firstOrCreate([
@@ -23,5 +21,12 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'password' => bcrypt('password'),
         ]);
+
+        $this->call(ConfiguratorCatalogSeeder::class);
     }
 }
+
+
+// URL: http://127.0.0.1:8000/admin/login
+// Email: superadmin@example.com
+// Password: 2R-#M3TCgOtaw*wkO.7D

@@ -23,6 +23,7 @@ const paths = {
     dashboard: <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></>,
     logout: <><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10" /></>,
     trash: <><path d="M4 7h16M9 3h6l1 4H8l1-4ZM7 7l1 14h8l1-14M10 11v6M14 11v6" /></>,
+    chat: <><path d="M20 14a4 4 0 0 1-4 4H9l-5 3 1.4-4.2A7 7 0 0 1 3 11.5C3 7.4 6.8 4 11.5 4S20 7.4 20 11.5V14Z" /><path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" /></>,
 };
 
 export default function UiIcon({ name, className = 'h-5 w-5', strokeWidth = 1.8 }) {

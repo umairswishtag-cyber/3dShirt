@@ -180,11 +180,15 @@ trait ShopifyProductTrait
         }
         return $productMedia;
     }
-    public function deleteProduct($productId)
+    public function deleteProduct($productId, User $user)
     {
         DB::beginTransaction();
         try {
-            $product = $this->product->getByShopifyId($productId);
+            $product = $this->product->getByShopifyId($productId, $user->id);
+            if (! $product) {
+                DB::rollBack();
+                return true;
+            }
             $this->product->delete($product->id);
         } catch (\Exception $e) {
             DB::rollBack();

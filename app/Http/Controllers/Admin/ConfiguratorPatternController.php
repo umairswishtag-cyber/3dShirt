@@ -18,6 +18,7 @@ class ConfiguratorPatternController extends Controller
 
     public function store(StoreConfiguratorPatternRequest $request, ConfiguratorProduct $product): RedirectResponse
     {
+        $this->authorizeStoreProduct($request, $product);
         $pattern = $this->products->addPattern($product, $request->validated());
 
         $message = match (true) {
@@ -32,6 +33,7 @@ class ConfiguratorPatternController extends Controller
 
     public function update(Request $request, ConfiguratorProduct $product, ConfiguratorPattern $pattern): RedirectResponse
     {
+        $this->authorizeStoreProduct($request, $product);
         abort_unless($pattern->configurator_product_id === $product->id, 404);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -47,11 +49,20 @@ class ConfiguratorPatternController extends Controller
         return back()->with('success', 'Pattern settings saved.');
     }
 
-    public function destroy(ConfiguratorProduct $product, ConfiguratorPattern $pattern): RedirectResponse
+    public function destroy(Request $request, ConfiguratorProduct $product, ConfiguratorPattern $pattern): RedirectResponse
     {
+        $this->authorizeStoreProduct($request, $product);
         abort_unless($pattern->configurator_product_id === $product->id, 404);
         $this->products->deletePattern($pattern);
 
         return back()->with('success', 'Pattern deleted.');
+    }
+
+    private function authorizeStoreProduct(Request $request, ConfiguratorProduct $product): void
+    {
+        abort_unless(
+            $request->user()->isPlatformAdmin() || (int) $product->user_id === (int) $request->user()->id,
+            404,
+        );
     }
 }
