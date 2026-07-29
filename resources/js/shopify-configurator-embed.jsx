@@ -73,9 +73,11 @@ async function mountConfigurator(host, config) {
         createRoot(appRoot).render(
             <ConfiguratorPage
                 catalog={payload.catalog}
+                initialProductId={payload.initialProductId}
                 storefront={{
                     ...payload.storefront,
                     configuratorUrl: window.location.pathname,
+                    customer: payload.customer,
                 }}
                 embedded
             />,

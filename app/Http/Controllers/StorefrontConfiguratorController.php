@@ -21,11 +21,14 @@ class StorefrontConfiguratorController extends Controller
     public function show(Request $request): Response
     {
         $store = $this->storefront->require($request);
+        $catalog = $this->catalog->publishedCatalog($store);
 
         return Inertia::render('Configurator/ConfiguratorPage', [
-            'catalog' => $this->catalog->publishedCatalog($store),
+            'catalog' => $catalog,
             'adminPreview' => false,
-            'initialProductId' => null,
+            'initialProductId' => count($catalog) === 1
+                ? $catalog[0]['id']
+                : null,
             'storefront' => $this->storefront->links($store),
         ]);
     }

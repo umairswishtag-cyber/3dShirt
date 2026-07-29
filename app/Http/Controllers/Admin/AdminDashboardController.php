@@ -13,11 +13,16 @@ class AdminDashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
+        $canCreateProducts = ! $request->user()->isPlatformAdmin();
         $products = ConfiguratorProduct::query()
-            ->when(! $request->user()->isPlatformAdmin(), fn ($query) => $query->where('user_id', $request->user()->id));
+            ->when($canCreateProducts, fn ($query) => $query->where('user_id', $request->user()->id));
         $productIds = (clone $products)->pluck('id');
 
         return Inertia::render('Admin/Dashboard', [
+            'canCreateProducts' => $canCreateProducts,
+            'createProductUrl' => $canCreateProducts
+                ? route('admin.configurator.products.create')
+                : null,
             'summary' => [
                 'products' => (clone $products)->count(),
                 'published' => (clone $products)->where('is_published', true)->count(),

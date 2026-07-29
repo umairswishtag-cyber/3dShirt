@@ -2,6 +2,7 @@ import { Head } from "@inertiajs/react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import ConfigurationPanel from "@/features/configurator/components/ConfigurationPanel";
+import ConfiguratorActionsPanel from "@/features/configurator/components/ConfiguratorActionsPanel";
 import ConfiguratorHeader from "@/features/configurator/components/ConfiguratorHeader";
 import ConfiguratorSidebar, {
     CONFIGURATOR_TOOLS,
@@ -9,7 +10,6 @@ import ConfiguratorSidebar, {
 } from "@/features/configurator/components/ConfiguratorSidebar";
 import DesignAreaSelector from "@/features/configurator/components/DesignAreaSelector";
 import MobileConfiguratorToolbar from "@/features/configurator/components/MobileConfiguratorToolbar";
-import ResetDesignDialog from "@/features/configurator/components/ResetDesignDialog";
 import ProductSelectionScreen from "@/features/configurator/components/ProductSelectionScreen";
 import { useConfiguratorKeyboardShortcuts } from "@/features/configurator/hooks/useConfiguratorKeyboardShortcuts";
 import { useLocalDesignPersistence } from "@/features/configurator/hooks/useLocalDesignPersistence";
@@ -23,7 +23,6 @@ import {
 } from "@/services/designAssetService";
 import CustomizationChatbot from "@/features/configurator/chatbot/CustomizationChatbot";
 import EmbeddedDesignLibrary from "@/features/configurator/components/EmbeddedDesignLibrary";
-import StorefrontWorkspaceTabs from "@/features/configurator/components/StorefrontWorkspaceTabs";
 
 const LOAD_DESIGN = `query LoadDesign($id: ID!) { myDesign(id: $id) { id title status document } }`;
 const SAVE_DESIGN = `
@@ -93,17 +92,9 @@ export default function ConfiguratorPage({
         () => new URLSearchParams(window.location.search).get("design"),
         [],
     );
-    const initialWorkspaceTab = useMemo(() => {
-        const tab = new URLSearchParams(window.location.search).get("tab");
-
-        return embedded && ["saved", "final"].includes(tab)
-            ? tab
-            : "configurator";
-    }, [embedded]);
-    const [workspaceTab, setWorkspaceTab] = useState(initialWorkspaceTab);
+    const [designLibraryOpen, setDesignLibraryOpen] = useState(false);
     const [activeTool, setActiveTool] = useState("colors");
     const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
-    const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [printEditorExpanded, setPrintEditorExpanded] = useState(false);
     const [catalogOpen, setCatalogOpen] = useState(
         !requestedDesignId && !initialProductId,
@@ -111,6 +102,7 @@ export default function ConfiguratorPage({
     const [designId, setDesignId] = useState(requestedDesignId);
     const [designTitle, setDesignTitle] = useState("");
     const [designStatus, setDesignStatus] = useState("DRAFT");
+    const [titleDirty, setTitleDirty] = useState(false);
     const [saving, setSaving] = useState(false);
     const selectedObjectId = useConfiguratorStore(
         (state) => state.selectedObjectId,
@@ -120,7 +112,6 @@ export default function ConfiguratorPage({
     const clearRestoreError = useConfiguratorStore(
         (state) => state.clearRestoreError,
     );
-    const resetDesign = useConfiguratorStore((state) => state.resetDesign);
     const selectProduct = useConfiguratorStore((state) => state.selectProduct);
     const loadDesignDocument = useConfiguratorStore(
         (state) => state.loadDesignDocument,
@@ -150,6 +141,8 @@ export default function ConfiguratorPage({
                   ? "image"
                   : "product",
         );
+        setDesignTitle(`${selectedProduct.name} design`);
+        setTitleDirty(false);
         setCatalogOpen(false);
     }, [initialProductId, requestedDesignId, selectProduct]);
 
@@ -169,6 +162,7 @@ export default function ConfiguratorPage({
                 setDesignId(design.id);
                 setDesignTitle(design.title);
                 setDesignStatus(design.status);
+                setTitleDirty(false);
                 setCatalogOpen(false);
             })
             .catch((error) => {
@@ -204,7 +198,8 @@ export default function ConfiguratorPage({
             const data = await graphqlRequest(SAVE_DESIGN, {
                 input: {
                     id: designId,
-                    title: designTitle || `${state.product.name} design`,
+                    title:
+                        designTitle.trim() || `${state.product.name} design`,
                     status: nextStatus,
                     productId: state.product.id,
                     productName: state.product.name,
@@ -215,6 +210,7 @@ export default function ConfiguratorPage({
             setDesignId(saved.id);
             setDesignTitle(saved.title);
             setDesignStatus(saved.status);
+            setTitleDirty(false);
             saveLocalDesign();
             finishLogoEditing();
             setPrintEditorExpanded(false);
@@ -250,14 +246,6 @@ export default function ConfiguratorPage({
         setMobilePanelOpen(true);
     };
 
-    const changeWorkspaceTab = (tab) => {
-        setWorkspaceTab(tab);
-        const url = new URL(window.location.href);
-        if (tab === "configurator") url.searchParams.delete("tab");
-        else url.searchParams.set("tab", tab);
-        window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-    };
-
     const openDesign = (id) => {
         window.location.assign(
             `${window.location.pathname}?design=${encodeURIComponent(id)}`,
@@ -268,32 +256,21 @@ export default function ConfiguratorPage({
         window.location.assign(window.location.pathname);
     };
 
-    const activeToolLabel =
-        activeTool === "adjust"
-            ? "Image settings"
-            : CONFIGURATOR_TOOLS.find((tool) => tool.id === activeTool)?.label;
+    const activeToolLabel = CONFIGURATOR_TOOLS.find(
+        (tool) => tool.id === activeTool,
+    )?.label;
 
-    const workspaceTabs = embedded ? (
-        <StorefrontWorkspaceTabs
-            activeTab={workspaceTab}
-            onTabChange={changeWorkspaceTab}
-            accountUrl={storefront?.shopifyAccountUrl}
-        />
-    ) : null;
-
-    if (embedded && workspaceTab !== "configurator") {
+    if (embedded && designLibraryOpen) {
         return (
             <>
                 <Toaster position="top-center" />
-                <div className="shirt-configurator-shell flex h-dvh min-h-[520px] w-full max-w-none flex-col overflow-hidden bg-slate-100 text-slate-950">
-                    {workspaceTabs}
-                    <EmbeddedDesignLibrary
-                        status={workspaceTab === "final" ? "FINAL" : "DRAFT"}
-                        catalog={catalog}
-                        onOpenDesign={openDesign}
-                        onCreateDesign={createNewDesign}
-                    />
-                </div>
+                <EmbeddedDesignLibrary
+                    catalog={catalog}
+                    customer={storefront?.customer}
+                    storefront={storefront}
+                    onOpenDesign={openDesign}
+                    onCreateDesign={createNewDesign}
+                />
             </>
         );
     }
@@ -306,36 +283,32 @@ export default function ConfiguratorPage({
                     title="Choose a 3D garment"
                 />
                 <Toaster position="top-center" />
-                <div className="shirt-configurator-shell flex h-dvh min-h-[520px] w-full max-w-none flex-col overflow-hidden">
-                    {workspaceTabs}
-                    <div className="min-h-0 flex-1 overflow-y-auto">
-                        <ProductSelectionScreen
-                            adminPreview={adminPreview}
-                            embedded={embedded}
-                            accountUrl={
-                                storefront?.shopifyAccountUrl ??
-                                storefront?.dashboardUrl ??
-                                "/account"
-                            }
-                            onSelect={(productId) => {
-                                const selectedProduct =
-                                    selectProduct(productId);
-                                if (!selectedProduct) return;
-                                setActiveTool(
-                                    selectedProduct.capabilities.solidColors
-                                        ? "colors"
-                                        : selectedProduct.capabilities
-                                                .patterns ||
-                                            selectedProduct.capabilities.logos
-                                          ? "image"
-                                          : "product",
-                                );
-                                setMobilePanelOpen(false);
-                                setCatalogOpen(false);
-                            }}
-                        />
-                    </div>
-                </div>
+                <ProductSelectionScreen
+                    adminPreview={adminPreview}
+                    embedded={embedded}
+                    accountUrl={storefront?.dashboardUrl ?? "/account"}
+                    onOpenDesigns={
+                        embedded ? () => setDesignLibraryOpen(true) : undefined
+                    }
+                    onSelect={(productId) => {
+                        const selectedProduct = selectProduct(productId);
+                        if (!selectedProduct) return;
+                        setActiveTool(
+                            selectedProduct.capabilities.solidColors
+                                ? "colors"
+                                : selectedProduct.capabilities.patterns ||
+                                    selectedProduct.capabilities.logos
+                                  ? "image"
+                                  : "product",
+                        );
+                        if (!designId) {
+                            setDesignTitle(`${selectedProduct.name} design`);
+                            setTitleDirty(false);
+                        }
+                        setMobilePanelOpen(false);
+                        setCatalogOpen(false);
+                    }}
+                />
             </>
         );
     }
@@ -349,20 +322,24 @@ export default function ConfiguratorPage({
             <Toaster position="top-center" />
             <div className="shirt-configurator-shell flex h-dvh min-h-[520px] w-full max-w-none flex-col overflow-hidden bg-slate-100 text-slate-950">
                 <ConfiguratorHeader
-                    onReset={() => setResetDialogOpen(true)}
                     onChangeProduct={() => setCatalogOpen(true)}
                     onSave={() => saveDesign()}
                     onFinalize={() => saveDesign("FINAL")}
                     saving={saving}
                     adminPreview={adminPreview}
                     embedded={embedded}
-                    accountUrl={
-                        storefront?.shopifyAccountUrl ??
-                        storefront?.dashboardUrl ??
-                        "/account"
+                    accountUrl={storefront?.dashboardUrl ?? "/account"}
+                    onOpenDesigns={
+                        embedded ? () => setDesignLibraryOpen(true) : undefined
                     }
+                    designTitle={designTitle}
+                    designStatus={designStatus}
+                    titleDirty={titleDirty}
+                    onDesignTitleChange={(title) => {
+                        setDesignTitle(title);
+                        setTitleDirty(true);
+                    }}
                 />
-                {workspaceTabs}
 
                 {adminPreview && (
                     <div
@@ -390,13 +367,24 @@ export default function ConfiguratorPage({
                     </div>
                 )}
 
-                <main className="flex min-h-0 flex-1">
+                <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
                     <ConfiguratorSidebar
                         activeTool={activeTool}
                         onToolChange={setActiveTool}
+                        designTitle={designTitle}
+                        titleDirty={titleDirty}
+                        adminPreview={adminPreview}
+                        onDesignTitleChange={(title) => {
+                            setDesignTitle(title);
+                            setTitleDirty(true);
+                        }}
                     />
 
-                    <section className="relative min-w-0 flex-1 overflow-hidden">
+                    <section
+                        className={`relative min-w-0 overflow-hidden lg:h-auto lg:flex-1 ${
+                            mobilePanelOpen ? "h-1/2 flex-none" : "flex-1"
+                        }`}
+                    >
                         <Suspense fallback={<ViewerLoadingState />}>
                             <ShirtViewer />
                         </Suspense>
@@ -487,12 +475,24 @@ export default function ConfiguratorPage({
                         </div>
                     </section>
 
-                    {product.capabilities.logos && <ConfigurationPanel />}
-                </main>
+                    <ConfiguratorActionsPanel
+                        onSave={() => saveDesign()}
+                        onFinalize={() => saveDesign("FINAL")}
+                        onChangeProduct={() => setCatalogOpen(true)}
+                        onOpenDesigns={
+                            embedded
+                                ? () => setDesignLibraryOpen(true)
+                                : undefined
+                        }
+                        saving={saving}
+                        adminPreview={adminPreview}
+                        embedded={embedded}
+                        accountUrl={storefront?.dashboardUrl ?? "/account"}
+                        designStatus={designStatus}
+                    />
 
-                {mobilePanelOpen && (
-                    <section className="fixed inset-x-0 bottom-[68px] z-50 max-h-[68dvh] overflow-y-auto rounded-t-3xl border-t border-slate-200 bg-white p-4 shadow-[0_-20px_50px_rgba(15,23,42,0.18)] lg:hidden">
-                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+                    {mobilePanelOpen && (
+                        <section className="h-1/2 min-h-0 flex-none overflow-y-auto border-t border-slate-200 bg-white p-4 lg:hidden">
                         <div className="mb-4 flex items-center justify-between">
                             <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                                 {activeToolLabel}
@@ -507,28 +507,35 @@ export default function ConfiguratorPage({
                             </button>
                         </div>
 
-                        {activeTool === "adjust" ? (
-                            <ConfigurationPanel embedded />
-                        ) : (
-                            <ToolPanelContent tool={activeTool} />
-                        )}
+                        <ToolPanelContent tool={activeTool} />
 
                         {product.capabilities.logos &&
-                            (activeTool === "image" ||
-                                activeTool === "layers") && (
-                                <div className="mt-5 border-t border-slate-100 pt-5">
-                                    <Suspense fallback={<CanvasLoadingState />}>
-                                        <DesignCanvas />
-                                    </Suspense>
+                            activeTool === "image" &&
+                            selectedObjectId && (
+                                <div className="mt-5 space-y-5 border-t border-slate-100 pt-5">
+                                    <div className="rounded-2xl border border-blue-100 bg-slate-50 p-3">
+                                        <div className="mb-3">
+                                            <p className="text-xs font-black text-slate-900">
+                                                Adjust selected logo
+                                            </p>
+                                            <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                                                Drag, resize, or rotate the logo while the product updates above.
+                                            </p>
+                                        </div>
+                                        <Suspense fallback={<CanvasLoadingState />}>
+                                            <DesignCanvas />
+                                        </Suspense>
+                                    </div>
+                                    <ConfigurationPanel embedded />
                                 </div>
                             )}
-                    </section>
-                )}
+                        </section>
+                    )}
+                </main>
 
                 <MobileConfiguratorToolbar
                     activeTool={mobilePanelOpen ? activeTool : null}
                     onToolChange={handleToolChange}
-                    hasSelection={Boolean(selectedObjectId)}
                 />
 
                 <CustomizationChatbot
@@ -538,11 +545,6 @@ export default function ConfiguratorPage({
                 />
             </div>
 
-            <ResetDesignDialog
-                show={resetDialogOpen}
-                onClose={() => setResetDialogOpen(false)}
-                onConfirm={resetDesign}
-            />
         </>
     );
 }

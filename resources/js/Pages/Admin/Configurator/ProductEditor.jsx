@@ -426,6 +426,8 @@ export default function ProductEditor({ product, audiences = [], categories = []
         const options = {
             forceFormData: true,
             preserveScroll: true,
+            preserveState: 'errors',
+            replace: editing,
             onError: (errors) => {
                 const errorCount = Object.keys(errors).length;
                 toast.error(errorCount === 1 ? 'Please fix the highlighted item.' : `Please fix ${errorCount} highlighted items.`);

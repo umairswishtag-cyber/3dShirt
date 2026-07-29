@@ -22,9 +22,15 @@ class ConfiguratorProductController extends Controller
 
     public function index(Request $request): Response
     {
+        $canCreateProducts = ! $request->user()->isPlatformAdmin();
+
         return Inertia::render('Admin/Configurator/ProductsIndex', [
+            'canCreateProducts' => $canCreateProducts,
+            'createProductUrl' => $canCreateProducts
+                ? route('admin.configurator.products.create')
+                : null,
             'products' => ConfiguratorProduct::query()
-                ->when(! $request->user()->isPlatformAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
+                ->when($canCreateProducts, fn ($query) => $query->where('user_id', $request->user()->id))
                 ->withCount([
                     'patterns',
                     'patterns as active_patterns_count' => fn ($query) => $query->where('is_active', true),
@@ -81,7 +87,8 @@ class ConfiguratorProductController extends Controller
             default => 'Draft saved. It remains hidden from the storefront.',
         };
 
-        return back()->with('success', $message);
+        return redirect()->route('admin.configurator.products.edit', $updated)
+            ->with('success', $message);
     }
 
     public function destroy(Request $request, ConfiguratorProduct $product): RedirectResponse

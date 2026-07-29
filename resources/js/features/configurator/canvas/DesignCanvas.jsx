@@ -33,7 +33,13 @@ function useCanvasImage(source) {
     return image;
 }
 
-function DesignImage({ object, canvasSize, isSelected, flipEditorY }) {
+function DesignImage({
+    object,
+    canvasSize,
+    isSelected,
+    flipEditorY,
+    printBounds,
+}) {
     const image = useCanvasImage(object.source);
     const imageRef = useRef(null);
     const transformerRef = useRef(null);
@@ -58,6 +64,30 @@ function DesignImage({ object, canvasSize, isSelected, flipEditorY }) {
             konvaNodeToDesignPatch(event.target, canvasSize, flipEditorY),
             false,
         );
+    };
+    const constrainTransformerBox = (oldBox, newBox) => {
+        const minimumSize = Math.max(20, canvasSize * 0.06);
+        const right = newBox.x + newBox.width;
+        const bottom = newBox.y + newBox.height;
+        const printRight = printBounds.x + printBounds.width;
+        const printBottom = printBounds.y + printBounds.height;
+
+        if (
+            !Number.isFinite(newBox.x) ||
+            !Number.isFinite(newBox.y) ||
+            !Number.isFinite(newBox.width) ||
+            !Number.isFinite(newBox.height) ||
+            newBox.width < minimumSize ||
+            newBox.height < minimumSize ||
+            newBox.x < printBounds.x ||
+            newBox.y < printBounds.y ||
+            right > printRight ||
+            bottom > printBottom
+        ) {
+            return oldBox;
+        }
+
+        return newBox;
     };
 
     return (
@@ -87,18 +117,20 @@ function DesignImage({ object, canvasSize, isSelected, flipEditorY }) {
                 <Transformer
                     ref={transformerRef}
                     rotateEnabled
-                    flipEnabled
+                    flipEnabled={false}
                     keepRatio
+                    enabledAnchors={[
+                        'top-left',
+                        'top-right',
+                        'bottom-left',
+                        'bottom-right',
+                    ]}
                     anchorFill="#ffffff"
                     anchorStroke="#2563eb"
                     borderStroke="#2563eb"
-                    anchorSize={10}
+                    anchorSize={12}
                     padding={4}
-                    boundBoxFunc={(oldBox, newBox) =>
-                        Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20
-                            ? oldBox
-                            : newBox
-                    }
+                    boundBoxFunc={constrainTransformerBox}
                 />
             )}
         </>
@@ -185,6 +217,7 @@ export default function DesignCanvas({ compact = false }) {
                                 canvasSize={canvasSize}
                                 isSelected={object.id === selectedObjectId}
                                 flipEditorY={flipEditorY}
+                                printBounds={bounds}
                             />
                         ))}
                     </Layer>

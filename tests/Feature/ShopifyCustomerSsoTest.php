@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\ConfiguratorProduct;
 use App\Models\User;
 use App\Services\Shopify\ShopifyCustomerIdentityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,6 +51,7 @@ class ShopifyCustomerSsoTest extends TestCase
             ->assertJsonPath('storefront.key', 'abc-store.myshopify.com')
             ->assertJsonPath('storefront.configuratorUrl', '/pages/configurator')
             ->assertJsonPath('customer.name', 'Shopify Buyer')
+            ->assertJsonPath('initialProductId', null)
             ->assertJsonPath('catalog', []);
 
         $this->assertDatabaseHas('customers', [
@@ -57,6 +59,24 @@ class ShopifyCustomerSsoTest extends TestCase
             'email' => 'buyer@example.com',
             'provider_subject' => 'abc-store.myshopify.com:123456789',
         ]);
+    }
+
+    public function test_native_embed_opens_its_only_published_product_directly(): void
+    {
+        ConfiguratorProduct::query()->create([
+            'user_id' => $this->store->id,
+            'name' => 'Only Shopify Cap',
+            'slug' => 'only-shopify-cap',
+            'gender' => 'unisex',
+            'category' => 'caps',
+            'model_url' => '/models/only-shopify-cap.glb',
+            'is_published' => true,
+        ]);
+
+        $this->getJson($this->proxyUrl('123456789', '/bootstrap'))
+            ->assertOk()
+            ->assertJsonCount(1, 'catalog')
+            ->assertJsonPath('initialProductId', 'only-shopify-cap');
     }
 
     public function test_native_embed_graphql_authenticates_each_request_through_the_proxy(): void

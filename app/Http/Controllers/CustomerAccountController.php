@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Configurator\ConfiguratorCatalogService;
+use App\Services\Storefront\StorefrontContext;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\Storefront\StorefrontContext;
 
 class CustomerAccountController extends Controller
 {
-    public function __construct(private readonly StorefrontContext $storefront) {}
+    public function __construct(
+        private readonly StorefrontContext $storefront,
+        private readonly ConfiguratorCatalogService $catalog,
+    ) {}
 
     public function login(Request $request): Response
     {
@@ -37,6 +41,7 @@ class CustomerAccountController extends Controller
 
         return Inertia::render('Customer/Dashboard', [
             'storefront' => $this->storefront->links($store),
+            'catalog' => $this->catalog->publishedCatalog($store),
         ]);
     }
 }

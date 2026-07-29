@@ -56,7 +56,6 @@ export function constrainDesignObject(object, area) {
 export function fitDesignObjectInsideArea(object, area) {
     if (!area?.bounds) return object;
 
-    const currentScale = Math.min(Math.abs(object.scaleX ?? 1), Math.abs(object.scaleY ?? 1));
     const maximumScale = Math.min(
         ((area.bounds.width - SAFE_PADDING * 4) * 0.9) / Math.max(object.width ?? 0, 0.001),
         ((area.bounds.height - SAFE_PADDING * 4) * 0.9) / Math.max(object.height ?? 0, 0.001),
@@ -66,7 +65,9 @@ export function fitDesignObjectInsideArea(object, area) {
         ...object,
         x: area.bounds.x + area.bounds.width / 2,
         y: area.bounds.y + area.bounds.height / 2,
-        scaleX: Math.min(currentScale, maximumScale),
-        scaleY: Math.min(currentScale, maximumScale),
+        // "Fit" is also the recovery path for artwork distorted by an older
+        // editor version, so restore a uniform, useful size.
+        scaleX: maximumScale,
+        scaleY: maximumScale,
     }, area);
 }

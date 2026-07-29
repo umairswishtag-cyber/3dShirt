@@ -76,8 +76,6 @@ function placementFromDrag(frame, worldPoint) {
     const delta = current.clone().sub(frame.start);
     const signedWidth = delta.dot(frame.horizontal);
     const signedHeight = delta.dot(frame.vertical);
-    const horizontal = frame.horizontal.clone().multiplyScalar(Math.sign(signedWidth) || 1);
-    const vertical = frame.vertical.clone().multiplyScalar(Math.sign(signedHeight) || 1);
     const width = Math.abs(signedWidth);
     const height = Math.abs(signedHeight);
     const origin = frame.start.clone()
@@ -87,8 +85,10 @@ function placementFromDrag(frame, worldPoint) {
     return {
         type: 'surface',
         origin: cleanVector(origin),
-        uAxis: cleanVector(horizontal),
-        vAxis: cleanVector(vertical),
+        // Always save camera right/up. Placement orientation must not depend
+        // on which corner the administrator started dragging from.
+        uAxis: cleanVector(frame.horizontal),
+        vAxis: cleanVector(frame.vertical),
         normal: cleanVector(frame.normal),
         width: clean(width),
         height: clean(height),

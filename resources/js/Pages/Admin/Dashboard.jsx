@@ -12,6 +12,7 @@ const summaryCards = [
 
 const actions = [
     {
+        requiresProductOwnership: true,
         href: () => route('admin.configurator.products.create'),
         eyebrow: 'Build catalog',
         title: 'Create a 3D product',
@@ -46,7 +47,13 @@ const actionStyles = {
     violet: { eyebrow: 'text-violet-600', icon: 'bg-violet-50 text-violet-600', button: 'bg-gradient-to-r from-violet-600 to-purple-500 text-white shadow-violet-600/20 hover:shadow-violet-600/30', art: 'text-violet-500' },
 };
 
-export default function Dashboard({ summary, recentProducts }) {
+export default function Dashboard({ summary, recentProducts, canCreateProducts = false, createProductUrl = null }) {
+    const availableActions = actions
+        .filter((action) => canCreateProducts || !action.requiresProductOwnership)
+        .map((action) => action.requiresProductOwnership
+            ? { ...action, href: () => createProductUrl }
+            : action);
+
     return (
         <AdminShell
             title="Dashboard"
@@ -64,8 +71,8 @@ export default function Dashboard({ summary, recentProducts }) {
                 ))}
             </section>
 
-            <section className="mt-6 grid gap-4 lg:grid-cols-3">
-                {actions.map((action) => {
+            <section className={`mt-6 grid gap-4 ${availableActions.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
+                {availableActions.map((action) => {
                     const style = actionStyles[action.tone];
                     return (
                     <Link
@@ -99,7 +106,7 @@ export default function Dashboard({ summary, recentProducts }) {
                     </Link>
                 </div>
                 <div className="divide-y divide-slate-100 px-3 sm:px-4">
-                    {recentProducts.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><UiIcon name="plus" /></span><p className="mt-4 text-sm font-bold">No products yet</p><p className="mt-1 text-xs text-slate-500">Create your first 3D garment to get started.</p></div>}
+                    {recentProducts.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><UiIcon name="products" /></span><p className="mt-4 text-sm font-bold">No products yet</p><p className="mt-1 text-xs text-slate-500">{canCreateProducts ? 'Create your first 3D garment to get started.' : 'No store products are currently available.'}</p></div>}
                     {recentProducts.map((product) => (
                         <div key={product.id} className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-2 py-3.5 transition hover:bg-slate-50 sm:px-3">
                             <div className="flex min-w-0 items-center gap-3">

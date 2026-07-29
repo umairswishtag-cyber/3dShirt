@@ -1,7 +1,6 @@
 import { Suspense, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import {
-    ContactShadows,
     Html,
     OrbitControls,
     PerspectiveCamera,
@@ -49,14 +48,6 @@ function Scene() {
             >
                 <ShirtModel />
             </Suspense>
-            <ContactShadows
-                position={[0, 0, 0]}
-                opacity={0.24}
-                scale={5}
-                blur={2.5}
-                far={4}
-                frames={1}
-            />
             <OrbitControls
                 ref={controlsRef}
                 makeDefault
@@ -74,9 +65,13 @@ function Scene() {
     );
 }
 
-export default function ShirtViewer() {
+export default function ShirtViewer({ compact = false }) {
     const cameraView = useConfiguratorStore((state) => state.cameraView);
     const setCameraView = useConfiguratorStore((state) => state.setCameraView);
+    const pastLength = useConfiguratorStore((state) => state.past.length);
+    const futureLength = useConfiguratorStore((state) => state.future.length);
+    const undo = useConfiguratorStore((state) => state.undo);
+    const redo = useConfiguratorStore((state) => state.redo);
 
     if (!supportsWebGL()) {
         return (
@@ -93,17 +88,16 @@ export default function ShirtViewer() {
 
     return (
         <ViewerErrorBoundary>
-            <div className="relative h-full min-h-80 w-full bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#eef2f7_50%,#dbe3ed_100%)]">
+            <div className={`relative h-full w-full bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#eef2f7_50%,#dbe3ed_100%)] ${compact ? 'min-h-0' : 'min-h-80'}`}>
                 <Canvas
                     frameloop="demand"
                     dpr={[1, 1.5]}
-                    shadows
                     gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
                 >
                     <Scene />
                 </Canvas>
 
-                <div className="absolute right-3 top-3 flex flex-col gap-1 rounded-xl border border-white/70 bg-white/90 p-1 shadow-lg backdrop-blur md:right-5 md:top-5">
+                {!compact && <div className="absolute right-3 top-3 flex flex-col gap-1 rounded-xl border border-white/70 bg-white/90 p-1 shadow-lg backdrop-blur md:right-5 md:top-5">
                     {Object.entries(CAMERA_VIEWS).map(([viewId, view]) => (
                         <button
                             key={viewId}
@@ -127,11 +121,28 @@ export default function ShirtViewer() {
                     >
                         Reset
                     </button>
-                </div>
+                    <div className="my-0.5 hidden h-px bg-slate-200 lg:block" />
+                    <button
+                        type="button"
+                        onClick={undo}
+                        disabled={pastLength === 0}
+                        className="hidden min-h-9 rounded-lg px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent lg:block"
+                    >
+                        Undo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={redo}
+                        disabled={futureLength === 0}
+                        className="hidden min-h-9 rounded-lg px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent lg:block"
+                    >
+                        Redo
+                    </button>
+                </div>}
 
-                <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/70 bg-slate-900/75 px-3 py-1.5 text-[11px] font-medium text-white shadow backdrop-blur lg:bottom-auto lg:left-5 lg:top-5 lg:translate-x-0">
+                {!compact && <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/70 bg-slate-900/75 px-3 py-1.5 text-[11px] font-medium text-white shadow backdrop-blur lg:bottom-auto lg:left-5 lg:top-5 lg:translate-x-0">
                     Drag to rotate · scroll or pinch to zoom
-                </div>
+                </div>}
             </div>
         </ViewerErrorBoundary>
     );

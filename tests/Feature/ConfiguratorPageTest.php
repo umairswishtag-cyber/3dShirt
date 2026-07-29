@@ -31,8 +31,75 @@ class ConfiguratorPageTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Configurator/ConfiguratorPage')
+            ->where('initialProductId', null)
             ->has('catalog')
         );
+    }
+
+    public function test_new_design_opens_the_only_published_product_directly(): void
+    {
+        $store = User::factory()->create([
+            'name' => 'single-product-store.myshopify.com',
+            'storefront_key' => 'single-product-store.myshopify.com',
+        ]);
+        $customer = Customer::query()->create([
+            'user_id' => $store->id,
+            'name' => 'Single Product Customer',
+            'email' => 'single-product@example.com',
+            'password' => 'password123',
+        ]);
+        ConfiguratorProduct::query()->create([
+            'user_id' => $store->id,
+            'name' => 'Only Cap',
+            'slug' => 'only-cap',
+            'gender' => 'unisex',
+            'category' => 'caps',
+            'model_url' => '/models/only-cap.glb',
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($customer, 'customer')
+            ->get(route('store.configurator', ['store' => $store->storefront_key]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Configurator/ConfiguratorPage')
+                ->has('catalog', 1)
+                ->where('initialProductId', 'only-cap')
+            );
+    }
+
+    public function test_new_design_keeps_the_product_chooser_when_multiple_products_are_published(): void
+    {
+        $store = User::factory()->create([
+            'name' => 'multiple-product-store.myshopify.com',
+            'storefront_key' => 'multiple-product-store.myshopify.com',
+        ]);
+        $customer = Customer::query()->create([
+            'user_id' => $store->id,
+            'name' => 'Multiple Product Customer',
+            'email' => 'multiple-products@example.com',
+            'password' => 'password123',
+        ]);
+        foreach (['first-cap', 'second-cap'] as $slug) {
+            ConfiguratorProduct::query()->create([
+                'user_id' => $store->id,
+                'name' => str($slug)->headline()->toString(),
+                'slug' => $slug,
+                'gender' => 'unisex',
+                'category' => 'caps',
+                'model_url' => "/models/{$slug}.glb",
+                'is_published' => true,
+            ]);
+        }
+
+        $this->actingAs($customer, 'customer')
+            ->get(route('store.configurator', ['store' => $store->storefront_key]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Configurator/ConfiguratorPage')
+                ->has('catalog', 2)
+                ->where('initialProductId', null)
+            );
     }
 
     public function test_admin_can_preview_the_storefront_without_a_customer_login(): void

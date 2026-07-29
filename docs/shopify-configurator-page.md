@@ -143,14 +143,20 @@ Do not expose Vite's development URL to Shopify. If the browser requests
 7. Save a design, refresh, and load it again.
 8. Confirm the browser DOM contains a Shadow Root and no configurator iframe.
 
-The native storefront workspace includes these tabs:
+The native storefront keeps the original design-studio navigation:
 
-- **Configurator** creates or edits a design.
-- **Saved Designs** lists designs saved with `DRAFT` status.
-- **Final Products** lists designs saved with `FINAL` status.
+- **My saved designs** opens the customer workspace.
+- **Create new design** returns to the published garment catalog.
+- Saved drafts and finished designs appear together in the customer workspace
+  with their current status.
 
-These records are app-owned data, so they appear inside the configurator
-workspace rather than Shopify's standard customer-account page.
+These records are app-owned data, so the customer workspace is rendered by the
+configurator instead of Shopify's standard customer-account page.
+
+Saved-design cards do not mount a 3D canvas by default. They show a lightweight
+Draft or Finished cover, and **View product** loads only that saved document and
+one compact 3D viewer. Selecting another card replaces the active preview, so a
+large design library still has at most one WebGL canvas.
 
 ## Troubleshooting
 

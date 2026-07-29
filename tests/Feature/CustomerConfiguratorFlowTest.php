@@ -46,6 +46,27 @@ class CustomerConfiguratorFlowTest extends TestCase
         $this->get('/')->assertRedirect(route('store.customer.dashboard', ['store' => $this->store->storefront_key]));
     }
 
+    public function test_customer_dashboard_receives_the_published_catalog_for_on_demand_previews(): void
+    {
+        $this->actingAs($this->customer('preview-dashboard@example.com'), 'customer');
+        ConfiguratorProduct::query()->create([
+            'user_id' => $this->store->id,
+            'name' => 'Preview Shirt',
+            'slug' => 'preview-shirt',
+            'gender' => 'unisex',
+            'category' => 'shirts',
+            'model_url' => '/models/preview-shirt.glb',
+            'is_published' => true,
+        ]);
+
+        $this->get(route('store.customer.dashboard', ['store' => $this->store->storefront_key]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Customer/Dashboard')
+                ->where('catalog.0.id', 'preview-shirt')
+                ->where('catalog.0.name', 'Preview Shirt'));
+    }
+
     public function test_guest_must_sign_in_before_opening_configurator(): void
     {
         $response = $this->get('/configurator');
@@ -130,6 +151,24 @@ class CustomerConfiguratorFlowTest extends TestCase
         ]])->assertOk()->assertJsonPath('data.saveMyDesign.status', 'FINAL');
 
         $this->assertNotNull(CustomerDesign::query()->firstOrFail()->finalized_at);
+        $this->graphQL(<<<'GRAPHQL'
+            mutation Rename($input: SaveCustomerDesignInput!) {
+                saveMyDesign(input: $input) { id title status }
+            }
+        GRAPHQL, ['input' => [
+            'id' => $designId,
+            'title' => 'Renamed finished shirt',
+            'status' => 'FINAL',
+            'productId' => $product->slug,
+            'productName' => $product->name,
+            'document' => $document,
+        ]])
+            ->assertOk()
+            ->assertJsonPath('data.saveMyDesign.title', 'Renamed finished shirt');
+        $this->assertDatabaseHas('customer_designs', [
+            'public_id' => $designId,
+            'title' => 'Renamed finished shirt',
+        ]);
         $this->graphQL('mutation Delete($id: ID!) { deleteMyDesign(id: $id) }', ['id' => $designId])
             ->assertOk()
             ->assertJsonPath('data.deleteMyDesign', true);

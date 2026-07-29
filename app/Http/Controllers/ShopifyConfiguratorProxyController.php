@@ -28,9 +28,13 @@ class ShopifyConfiguratorProxyController extends Controller
 
         return response()->json([
             'catalog' => $catalog,
+            'initialProductId' => count($catalog) === 1
+                ? $catalog[0]['id']
+                : null,
             'storefront' => $links,
             'customer' => [
                 'name' => $request->attributes->get('shopify.customer')?->name,
+                'email' => $request->attributes->get('shopify.customer')?->email,
             ],
         ], 200, ['Cache-Control' => 'no-store, private']);
     }

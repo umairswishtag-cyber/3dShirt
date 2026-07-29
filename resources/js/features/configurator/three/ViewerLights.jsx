@@ -7,9 +7,6 @@ export default function ViewerLights() {
             <directionalLight
                 position={[3.5, 5, 4]}
                 intensity={2.2}
-                castShadow
-                shadow-mapSize-width={1024}
-                shadow-mapSize-height={1024}
             />
             <directionalLight position={[-4, 2, -3]} intensity={1.1} />
             <Environment resolution={128}>
@@ -29,4 +26,3 @@ export default function ViewerLights() {
         </>
     );
 }
-

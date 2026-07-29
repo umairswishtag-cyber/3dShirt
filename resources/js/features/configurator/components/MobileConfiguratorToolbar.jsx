@@ -1,16 +1,13 @@
 import { CONFIGURATOR_TOOLS } from './ConfiguratorSidebar';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 
-export default function MobileConfiguratorToolbar({ activeTool, onToolChange, hasSelection }) {
+export default function MobileConfiguratorToolbar({ activeTool, onToolChange }) {
     const capabilities = useConfiguratorStore((state) => state.product.capabilities);
-    const tools = [
-        ...CONFIGURATOR_TOOLS.filter((tool) => {
-            if (tool.id === 'colors') return capabilities.solidColors;
-            if (tool.id === 'image') return capabilities.patterns || capabilities.logos;
-            return true;
-        }),
-        { id: 'adjust', label: 'Adjust', shortLabel: 'Adjust', disabled: !hasSelection },
-    ];
+    const tools = CONFIGURATOR_TOOLS.filter((tool) => {
+        if (tool.id === 'colors') return capabilities.solidColors;
+        if (tool.id === 'image') return capabilities.patterns || capabilities.logos;
+        return true;
+    });
 
     return (
         <nav
@@ -24,7 +21,7 @@ export default function MobileConfiguratorToolbar({ activeTool, onToolChange, ha
                     type="button"
                     disabled={tool.disabled}
                     onClick={() => onToolChange(tool.id)}
-                    className={`flex min-w-0 flex-col items-center justify-center rounded-lg text-[10px] font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30 ${
+                    className={`flex min-w-0 flex-col items-center justify-center rounded-lg text-[16px] font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-30 ${
                         activeTool === tool.id
                             ? 'text-blue-700'
                             : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'

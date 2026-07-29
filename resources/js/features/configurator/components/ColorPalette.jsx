@@ -30,7 +30,7 @@ export default function ColorPalette() {
                     </p>
                     <span className="font-mono text-xs text-slate-500">{color}</span>
                 </div>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-10 gap-1.5 lg:grid-cols-5 lg:gap-2">
                     {palette.map((swatch) => (
                         <button
                             key={swatch.value}

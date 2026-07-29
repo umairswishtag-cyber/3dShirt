@@ -70,8 +70,18 @@ export function ToolPanelContent({ tool }) {
     );
 }
 
-export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
+export default function ConfiguratorSidebar({
+    activeTool,
+    onToolChange,
+    designTitle = '',
+    titleDirty = false,
+    adminPreview = false,
+    onDesignTitleChange,
+}) {
     const product = useConfiguratorStore((state) => state.product);
+    const designIsDirty = useConfiguratorStore((state) => state.isDirty);
+    const lastSavedAt = useConfiguratorStore((state) => state.lastSavedAt);
+    const isDirty = designIsDirty || titleDirty;
     const activeToolConfig = CONFIGURATOR_TOOLS.find((tool) => tool.id === activeTool);
     const visibleTools = CONFIGURATOR_TOOLS.filter((tool) => {
         if (tool.id === 'colors') return product.capabilities.solidColors;
@@ -101,11 +111,37 @@ export default function ConfiguratorSidebar({ activeTool, onToolChange }) {
                     </button>
                 ))}
             </nav>
-            <section className="min-w-0 flex-1 overflow-y-auto p-4">
-                <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                    {activeToolConfig?.label}
-                </p>
-                <ToolPanelContent tool={activeTool} />
+            <section className="flex min-w-0 flex-1 flex-col">
+                <div className="shrink-0 border-b border-slate-100 p-4">
+                    <input
+                        type="text"
+                        value={designTitle}
+                        maxLength={160}
+                        disabled={adminPreview}
+                        onChange={(event) => onDesignTitleChange?.(event.target.value)}
+                        placeholder={`${product.name} design`}
+                        aria-label="Design name"
+                        title="Change the name shown in My designs"
+                        className="h-8 w-full truncate rounded-lg border border-transparent bg-transparent px-1 text-sm font-black text-slate-950 transition hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-100"
+                    />
+                    <div className="mt-1 flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-500">
+                        <span className={`h-1.5 w-1.5 rounded-full ${isDirty ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                        <span className="truncate">
+                            {isDirty
+                                ? 'Unsaved changes'
+                                : lastSavedAt
+                                  ? `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                  : product.name}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                    <p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                        {activeToolConfig?.label}
+                    </p>
+                    <ToolPanelContent tool={activeTool} />
+                </div>
             </section>
         </aside>
     );

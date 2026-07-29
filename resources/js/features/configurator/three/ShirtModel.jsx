@@ -14,8 +14,10 @@ function cloneModelScene(scene) {
         node.material = Array.isArray(node.material)
             ? node.material.map((material) => material.clone())
             : node.material.clone();
-        node.castShadow = true;
-        node.receiveShadow = true;
+        // Product parts must not cast shadows onto each other. On caps and
+        // layered garments self-shadowing creates a dark band from top angles.
+        node.castShadow = false;
+        node.receiveShadow = false;
     });
 
     return clone;
@@ -93,8 +95,11 @@ function addSurfacePlacementUvs(geometry, placement, logoBounds) {
         relative.copy(point).sub(origin);
         const u = relative.dot(horizontal) / Math.max(placement.width, 0.000001) + 0.5;
         const v = relative.dot(vertical) / Math.max(placement.height, 0.000001) + 0.5;
+
+        // Canvas pixels start at the upper-left while WebGL UVs start at the
+        // lower-left. Invert V so the 3D artwork matches the 2D editor.
         uvs[index * 2] = bounds.x + u * bounds.width;
-        uvs[index * 2 + 1] = bounds.y + v * bounds.height;
+        uvs[index * 2 + 1] = bounds.y + (1 - v) * bounds.height;
     }
 
     geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));

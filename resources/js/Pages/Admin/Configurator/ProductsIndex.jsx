@@ -3,7 +3,7 @@ import UiIcon from '@/Components/UiIcon';
 import GarmentIllustration from '@/Components/GarmentIllustration';
 import AdminShell from './AdminShell';
 
-export default function ProductsIndex({ products }) {
+export default function ProductsIndex({ products, canCreateProducts = false, createProductUrl = null }) {
     const remove = (product) => {
         if (!window.confirm(`Delete ${product.name} and all of its uploaded patterns?`)) return;
         router.delete(route('admin.configurator.products.destroy', product.id));
@@ -13,11 +13,11 @@ export default function ProductsIndex({ products }) {
         <AdminShell
             title="Storefront garments"
             subtitle="Build and maintain every customizable product available in your 3D storefront."
-            actions={(
-                <Link href={route('admin.configurator.products.create')} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl">
+            actions={canCreateProducts ? (
+                <Link href={createProductUrl} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl">
                     <UiIcon name="plus" className="h-4 w-4" /> Add new product
                 </Link>
-            )}
+            ) : null}
         >
             <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm leading-6 text-indigo-950">
                 <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 shadow-sm"><UiIcon name="sparkles" className="h-4 w-4" /></span>
@@ -28,8 +28,8 @@ export default function ProductsIndex({ products }) {
                 <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-14 text-center shadow-sm">
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><UiIcon name="shirt" className="h-8 w-8" /></span>
                     <p className="mt-5 text-lg font-bold">No configurator products yet</p>
-                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">Upload the first GLB as a draft, configure its capabilities, then publish it.</p>
-                    <Link href={route('admin.configurator.products.create')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white"><UiIcon name="plus" className="h-4 w-4" />Create first product</Link>
+                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{canCreateProducts ? 'Upload the first GLB as a draft, configure its capabilities, then publish it.' : 'No store has created a configurable product yet.'}</p>
+                    {canCreateProducts && <Link href={createProductUrl} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white"><UiIcon name="plus" className="h-4 w-4" />Create first product</Link>}
                 </div>
             ) : (
                 <div className="grid gap-4 lg:grid-cols-2">

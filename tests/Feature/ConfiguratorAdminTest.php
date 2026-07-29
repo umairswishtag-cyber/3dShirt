@@ -28,8 +28,54 @@ class ConfiguratorAdminTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Admin/Dashboard')
+                ->where('canCreateProducts', true)
                 ->where('summary.products', 0)
                 ->has('recentProducts')
+            );
+    }
+
+    public function test_platform_admin_never_receives_product_creation_actions(): void
+    {
+        $platformAdmin = User::factory()->create(['is_platform_admin' => true]);
+
+        $this->actingAs($platformAdmin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Dashboard')
+                ->where('canCreateProducts', false)
+                ->where('createProductUrl', null)
+            );
+
+        $this->get(route('admin.configurator.products.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Configurator/ProductsIndex')
+                ->where('canCreateProducts', false)
+                ->where('createProductUrl', null)
+            );
+
+        $this->get(route('admin.configurator.products.create'))->assertForbidden();
+    }
+
+    public function test_store_admin_product_creation_action_opens_the_new_product_form(): void
+    {
+        $storeAdmin = User::factory()->create();
+
+        $this->actingAs($storeAdmin)
+            ->get(route('admin.configurator.products.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Configurator/ProductsIndex')
+                ->where('canCreateProducts', true)
+                ->where('createProductUrl', route('admin.configurator.products.create'))
+            );
+
+        $this->get(route('admin.configurator.products.create'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Configurator/ProductEditor')
+                ->where('product', null)
             );
     }
 
@@ -101,6 +147,57 @@ class ConfiguratorAdminTest extends TestCase
         $this->getJson('/api/configurator/catalog')
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_saved_pattern_and_logo_areas_are_rehydrated_when_returning_to_the_editor(): void
+    {
+        $user = User::factory()->create();
+        $product = ConfiguratorProduct::create([
+            ...$this->validProductData(),
+            'user_id' => $user->id,
+            'slug' => 'returning-editor-product',
+            'model_url' => '/models/returning-editor-product.glb',
+            'is_published' => false,
+        ]);
+        $area = [
+            ...$this->frontPrintArea(),
+            'label' => 'Pattern 1',
+            'cameraView' => 'front',
+            'logoBounds' => ['x' => 0.05, 'y' => 0.2, 'width' => 0.9, 'height' => 0.6],
+            'logoPlacement' => [
+                'type' => 'surface',
+                'origin' => [0.1, 0.2, 0.3],
+                'uAxis' => [1, 0, 0],
+                'vAxis' => [0, 1, 0],
+                'normal' => [0, 0, 1],
+                'width' => 0.9,
+                'height' => 0.6,
+            ],
+        ];
+
+        $this->actingAs($user)
+            ->put(route('admin.configurator.products.update', $product), [
+                ...$this->validProductData(),
+                'supports_patterns' => true,
+                'supports_logos' => true,
+                'is_published' => false,
+                'print_areas' => ['patternArea1' => $area],
+                'pattern_zones' => ['patternArea1'],
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.configurator.products.edit', $product));
+
+        $this->get(route('admin.configurator.products.index'))->assertOk();
+
+        $this->get(route('admin.configurator.products.edit', $product))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Admin/Configurator/ProductEditor')
+                ->where('product.print_areas.patternArea1.label', 'Pattern 1')
+                ->where('product.print_areas.patternArea1.logoPlacement.type', 'surface')
+                ->where('product.print_areas.patternArea1.logoBounds.width', 0.9)
+                ->where('product.pattern_zones', ['patternArea1'])
+            );
     }
 
     public function test_admin_can_move_a_misclassified_audience_to_categories_without_losing_products(): void

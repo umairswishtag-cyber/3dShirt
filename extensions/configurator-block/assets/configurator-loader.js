@@ -3,7 +3,7 @@
   window.__shirtConfiguratorBundleLoading = true;
 
   const script = document.createElement('script');
-  script.src = 'https://umair.xoarhigh.info/build/shopify/configurator-embed.js?v=13';
+  script.src = 'https://umair.xoarhigh.info/build/shopify/configurator-embed.js?v=21';
   script.defer = true;
   script.dataset.shirtConfiguratorBundle = '';
   script.addEventListener('error', () => {
