@@ -293,6 +293,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
     const editing = Boolean(product);
     const [modelInspection, setModelInspection] = useState({ status: 'loading', meshCount: 0, uvMeshCount: 0, meshes: [] });
     const [patternInputKey, setPatternInputKey] = useState(0);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const form = useForm({
         name: product?.name ?? '', category: product?.category ?? categories[0]?.slug ?? '', gender: product?.gender ?? audiences.find((item) => item.slug === 'unisex')?.slug ?? audiences[0]?.slug ?? '', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
         model: null, thumbnail: null, mesh_zones: JSON.stringify(product?.mesh_zones ?? {}, null, 2), print_areas: JSON.stringify(product?.print_areas ?? {}, null, 2),
@@ -300,6 +301,17 @@ export default function ProductEditor({ product, audiences = [], categories = []
         supports_colors: product?.supports_colors ?? true, supports_patterns: product?.supports_patterns ?? false, supports_logos: product?.supports_logos ?? false, is_published: product?.is_published ?? false, sort_order: product?.sort_order ?? 0,
         pattern_name: '', pattern_svg: null, pattern_is_active: true,
     });
+
+    useEffect(() => {
+        const keepSessionAlive = () => {
+            window.axios.get(route('admin.session.keep-alive'), {
+                headers: { Accept: 'application/json' },
+            }).catch(() => {});
+        };
+        const interval = window.setInterval(keepSessionAlive, 10 * 60 * 1000);
+
+        return () => window.clearInterval(interval);
+    }, []);
 
     const handleInspection = useCallback((inspection) => setModelInspection(inspection), []);
     const handleArtworkAreasChange = (value, requestedPatternAreaIds = null) => {
@@ -428,6 +440,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
             preserveScroll: true,
             preserveState: 'errors',
             replace: editing,
+            headers: csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {},
             onError: (errors) => {
                 const errorCount = Object.keys(errors).length;
                 toast.error(errorCount === 1 ? 'Please fix the highlighted item.' : `Please fix ${errorCount} highlighted items.`);

@@ -108,6 +108,8 @@ if (! config('shopify-app.appbridge_enabled')) {
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/admin', AdminDashboardController::class)->name('admin.dashboard');
+    Route::get('/admin/session/keep-alive', fn () => response()->noContent())
+        ->name('admin.session.keep-alive');
     Route::get('/admin/chatbot', [ChatbotAccessController::class, 'index'])->name('admin.chatbot.index');
     Route::post('/admin/chatbot/request', [ChatbotAccessController::class, 'requestAccess'])->name('admin.chatbot.request');
     Route::patch('/admin/chatbot/users/{user}', [ChatbotAccessController::class, 'update'])->name('admin.chatbot.update');
