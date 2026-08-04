@@ -40,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'authenticate',
             'authenticate/*',
             'shopify/app-proxy/configurator/graphql',
+            'shopify/app-proxy/configurator/production-assets/*',
             'webhook/*',
         ]);
 

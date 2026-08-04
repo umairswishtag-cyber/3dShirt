@@ -100,20 +100,28 @@ function configFrom(element) {
 }
 
 function discover() {
-    document.querySelectorAll('[data-shirt-configurator-root]').forEach((host) => {
+    const dedicatedHosts = document.querySelectorAll('[data-shirt-configurator-root]');
+
+    dedicatedHosts.forEach((host) => {
         mountConfigurator(host, configFrom(host));
     });
+
+    if (dedicatedHosts.length > 0) return;
 
     document.querySelectorAll('[data-shirt-configurator-embed]').forEach((embed) => {
         if (embed.dataset.initialized === 'true') return;
         embed.dataset.initialized = 'true';
-        const target = document.getElementById(embed.dataset.targetId);
+        const target = document.getElementById(embed.dataset.targetId) || embed.parentElement;
         if (!target) return;
 
         const host = document.createElement('div');
         host.className = 'shirt-configurator';
         host.dataset.shirtConfiguratorRoot = '';
-        target.appendChild(host);
+        if (target === embed.parentElement) {
+            target.insertBefore(host, embed);
+        } else {
+            target.appendChild(host);
+        }
         mountConfigurator(host, configFrom(embed));
     });
 }

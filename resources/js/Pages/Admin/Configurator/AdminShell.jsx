@@ -11,6 +11,10 @@ export default function AdminShell({ title, subtitle = null, children, actions =
         if (flash.success) toast.success(flash.success, { icon: '✨' });
     }, [flash.success]);
 
+    useEffect(() => {
+        if (flash.error) toast.error(flash.error);
+    }, [flash.error]);
+
     const navClass = (active) => `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition ${active ? 'border-indigo-200 bg-indigo-50 text-indigo-700 shadow-[0_4px_14px_rgba(79,70,229,0.08)]' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`;
 
     return (
@@ -27,6 +31,8 @@ export default function AdminShell({ title, subtitle = null, children, actions =
                         <nav aria-label="Admin navigation" className="flex min-w-0 items-center gap-0.5 sm:gap-1">
                             <Link aria-current={url === '/admin' ? 'page' : undefined} href={route('admin.dashboard')} className={navClass(url === '/admin')}><UiIcon name="dashboard" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Dashboard</span></Link>
                             <Link aria-current={url.startsWith('/admin/configurator/products') ? 'page' : undefined} href={route('admin.configurator.products.index')} className={navClass(url.startsWith('/admin/configurator/products'))}><UiIcon name="products" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Products</span></Link>
+                            <Link aria-current={url.startsWith('/admin/production-requests') ? 'page' : undefined} href={route('admin.production-requests.index')} className={navClass(url.startsWith('/admin/production-requests'))}><UiIcon name="sparkles" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Requests</span></Link>
+                            <Link aria-current={url.startsWith('/admin/orders') ? 'page' : undefined} href={route('admin.orders.index')} className={navClass(url.startsWith('/admin/orders'))}><UiIcon name="orders" className="h-[18px] w-[18px]" /><span className="hidden md:inline">Orders</span></Link>
                             <Link aria-current={url.startsWith('/admin/customers') ? 'page' : undefined} href={route('admin.customers.index')} className={navClass(url.startsWith('/admin/customers'))}><UiIcon name="users" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Customers</span></Link>
                             <Link aria-current={url.startsWith('/admin/configurator/catalog-options') ? 'page' : undefined} href={route('admin.configurator.taxonomies.index')} className={navClass(url.startsWith('/admin/configurator/catalog-options'))}><UiIcon name="settings" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Catalog options</span></Link>
                             <Link aria-current={url.startsWith('/admin/chatbot') ? 'page' : undefined} href={route('admin.chatbot.index')} className={navClass(url.startsWith('/admin/chatbot'))}><UiIcon name="chat" className="h-[18px] w-[18px]" /><span className="hidden lg:inline">Chatbot</span></Link>

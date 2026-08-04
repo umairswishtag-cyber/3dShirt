@@ -31,6 +31,10 @@ class StoreConfiguratorProductRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:160'],
+            'shopify_status' => ['required', Rule::in(['active', 'draft', 'unlisted'])],
+            'price' => ['required', 'numeric', 'min:0', 'max:999999999.99', 'decimal:0,2'],
+            'inventory_quantity' => ['required', 'integer', 'min:0', 'max:2147483647'],
+            'tags' => ['nullable', 'string', 'max:1000'],
             'gender' => ['required', Rule::exists('configurator_taxonomies', 'slug')->where('type', 'audience')],
             'category' => ['required', Rule::exists('configurator_taxonomies', 'slug')->where('type', 'category')],
             'description' => ['nullable', 'string', 'max:1000'],

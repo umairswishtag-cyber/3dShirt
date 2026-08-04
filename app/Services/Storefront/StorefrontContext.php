@@ -9,6 +9,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class StorefrontContext
 {
     public const ATTRIBUTE = 'storefront.store';
+
     public const SESSION_KEY = 'storefront.store_id';
 
     public function resolve(Request $request, ?string $key = null): User
@@ -65,6 +66,7 @@ class StorefrontContext
     public function links(User $store): array
     {
         $parameters = ['store' => $store->storefront_key];
+        $shopifyStoreUrl = 'https://'.$store->name;
 
         return [
             'key' => $store->storefront_key,
@@ -73,8 +75,11 @@ class StorefrontContext
             'registerUrl' => route('store.customer.register', $parameters, false),
             'configuratorUrl' => route('store.configurator', $parameters, false),
             'dashboardUrl' => route('store.customer.dashboard', $parameters, false),
-            'shopifyAccountUrl' => 'https://'.$store->name.'/account',
-            'shopifyLoginUrl' => 'https://'.$store->name.'/customer_authentication/login?return_to=%2Fpages%2Fconfigurator',
+            'requestsUrl' => route('store.customer.dashboard', $parameters, false).'#production-requests',
+            'shopifyStoreUrl' => $shopifyStoreUrl,
+            'shopifyConfiguratorUrl' => $shopifyStoreUrl.'/pages/configurator',
+            'shopifyAccountUrl' => $shopifyStoreUrl.'/account',
+            'shopifyLoginUrl' => $shopifyStoreUrl.'/customer_authentication/login?return_to=%2Fpages%2Fconfigurator',
         ];
     }
 }

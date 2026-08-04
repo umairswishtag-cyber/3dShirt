@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\ConfiguratorProduct;
 use App\Models\Customer;
 use App\Models\CustomerDesign;
+use App\Models\DesignCartItem;
+use App\Models\Products\Product;
 use App\Models\User;
 use App\Services\Storefront\StorefrontContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -263,6 +265,116 @@ class CustomerConfiguratorFlowTest extends TestCase
             ->assertOk()
             ->assertJsonMissingPath('data.myDesign.id')
             ->assertJsonStructure(['errors']);
+    }
+
+    public function test_final_design_can_prepare_an_immutable_shopify_cart_item(): void
+    {
+        $customer = $this->customer('cart-owner@example.com');
+        $shopifyProduct = Product::query()->create([
+            'user_id' => $this->store->id,
+            'shopify_product_id' => 987654321,
+            'title' => 'Shopify Team Shirt',
+            'status' => 'active',
+        ]);
+        $variant = $shopifyProduct->productVarients()->create([
+            'shopify_product_varient_id' => 123456789,
+            'title' => 'Large',
+            'sku' => 'TEAM-L',
+            'price' => 25,
+            'inventory_quantity' => 10,
+        ]);
+        $product = ConfiguratorProduct::query()->create([
+            'user_id' => $this->store->id,
+            'shopify_product_id' => $shopifyProduct->shopify_product_id,
+            'name' => 'Team Shirt',
+            'slug' => 'team-shirt',
+            'gender' => 'unisex',
+            'category' => 'shirts',
+            'model_url' => '/models/team-shirt.glb',
+            'color_zones' => [['id' => 'body', 'label' => 'Body']],
+            'is_published' => true,
+        ]);
+        $document = [
+            'schemaVersion' => 1,
+            'productId' => $product->slug,
+            'shirtColors' => ['body' => '#2563EB'],
+            'selectedPatternId' => null,
+            'patternColors' => [],
+            'patternZones' => [],
+            'designObjects' => [[
+                'id' => 'logo-1',
+                'type' => 'image',
+                'name' => 'Team logo',
+                'areaId' => 'front',
+                'source' => '/storage/customer-designs/logo.png',
+                'x' => 0.5,
+                'y' => 0.5,
+            ]],
+        ];
+        $design = CustomerDesign::query()->create([
+            'customer_id' => $customer->id,
+            'configurator_product_id' => $product->id,
+            'product_slug' => $product->slug,
+            'product_name' => $product->name,
+            'title' => 'Blue team shirt',
+            'status' => 'draft',
+            'document' => json_encode($document, JSON_THROW_ON_ERROR),
+        ]);
+        $this->actingAs($customer, 'customer');
+
+        $this->graphQL(<<<'GRAPHQL'
+            mutation PrepareDraft($input: PrepareDesignCartItemInput!) {
+                prepareDesignCartItem(input: $input) { id }
+            }
+        GRAPHQL, ['input' => [
+            'designId' => $design->public_id,
+            'variantId' => (string) $variant->shopify_product_varient_id,
+            'quantity' => 2,
+        ]])
+            ->assertOk()
+            ->assertJsonStructure(['errors'])
+            ->assertJsonFragment(['message' => 'Publish the design before requesting a quotation.']);
+
+        $design->update(['status' => 'final', 'finalized_at' => now()]);
+
+        $response = $this->graphQL(<<<'GRAPHQL'
+            mutation Prepare($input: PrepareDesignCartItemInput!) {
+                prepareDesignCartItem(input: $input) {
+                    id
+                    variantId
+                    quantity
+                    uploadUrl
+                    requestUrl
+                    properties { key value }
+                }
+            }
+        GRAPHQL, ['input' => [
+            'designId' => $design->public_id,
+            'variantId' => (string) $variant->shopify_product_varient_id,
+            'quantity' => 2,
+        ]])->assertOk()->assertJsonMissingPath('errors');
+
+        $jobId = $response->json('data.prepareDesignCartItem.id');
+        $this->assertSame('123456789', $response->json('data.prepareDesignCartItem.variantId'));
+        $this->assertSame(2, $response->json('data.prepareDesignCartItem.quantity'));
+        $this->assertStringEndsWith($jobId, $response->json('data.prepareDesignCartItem.uploadUrl'));
+        $this->assertSame('/apps/configurator?request_id='.$jobId, $response->json('data.prepareDesignCartItem.requestUrl'));
+        $this->assertDatabaseHas('design_cart_items', [
+            'public_id' => $jobId,
+            'customer_design_id' => $design->id,
+            'shopify_variant_id' => $variant->shopify_product_varient_id,
+            'status' => 'prepared',
+        ]);
+
+        $job = DesignCartItem::query()->where('public_id', $jobId)->firstOrFail();
+        $this->assertSame('FINAL', $job->snapshot['design']['status']);
+        $this->assertSame($document, $job->snapshot['design']['document']);
+        $this->assertSame('Body: #2563EB', $job->summary['colors']);
+        $this->assertSame('1 logo (front)', $job->summary['artwork']);
+        $this->assertSame(
+            hash('sha256', json_encode($job->snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
+            $job->snapshot_sha256,
+        );
     }
 
     private function customer(string $email): Customer

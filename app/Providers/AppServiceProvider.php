@@ -69,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // \URL::forceScheme('https');
+        Vite::useHotFile(
+            $this->app->environment('production')
+                ? storage_path('framework/vite.hot.disabled')
+                : storage_path('framework/vite.hot')
+        );
         Vite::prefetch(concurrency: 3);
     }
 }

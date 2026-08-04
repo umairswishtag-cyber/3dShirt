@@ -16,6 +16,7 @@ function ActionButton({ children, className = "", ...props }) {
 export default function ConfiguratorActionsPanel({
     onSave,
     onFinalize,
+    onAddToCart,
     onChangeProduct,
     onOpenDesigns,
     saving = false,
@@ -23,6 +24,8 @@ export default function ConfiguratorActionsPanel({
     embedded = false,
     accountUrl = "/account",
     designStatus = "DRAFT",
+    cartAvailable = false,
+    carting = false,
 }) {
     const openDesigns = () => {
         if (onOpenDesigns && !adminPreview) {
@@ -56,7 +59,7 @@ export default function ConfiguratorActionsPanel({
                     <ActionButton
                         onClick={onFinalize}
                         disabled={saving || adminPreview}
-                        title="Mark this design as finished"
+                        title="Publish this design to your account"
                         className="bg-emerald-600 text-white hover:bg-emerald-700"
                     >
                         Publish
@@ -89,10 +92,35 @@ export default function ConfiguratorActionsPanel({
                         {adminPreview
                             ? "Admin preview"
                             : designStatus === "FINAL"
-                              ? "Finished"
+                              ? "Published"
                               : "Draft"}
                     </span>
                 </div>
+                {embedded && (
+                    <div className="mt-4">
+                        <ActionButton
+                            onClick={onAddToCart}
+                            disabled={saving || carting || adminPreview || !cartAvailable}
+                            title={
+                                cartAvailable
+                                    ? "Send this custom design for production review and quotation"
+                                    : "Connect this product to a Shopify variant before submitting a request"
+                            }
+                            className="w-full bg-slate-950 text-white shadow-sm hover:bg-slate-800"
+                        >
+                            {carting
+                                ? "Preparing print files…"
+                                : cartAvailable
+                                  ? "Request quotation"
+                                  : "Request setup required"}
+                        </ActionButton>
+                        {!cartAvailable && (
+                            <p className="mt-2 text-center text-[11px] leading-4 text-amber-700">
+                                This design product is not connected to a Shopify product yet.
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-5">

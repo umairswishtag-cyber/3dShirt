@@ -7,7 +7,6 @@ import {
     useBreakpoints, useIndexResourceState, useSetIndexFiltersMode
 } from '@shopify/polaris';
 import { useCallback, useEffect, useState } from 'react';
-import { DeleteIcon, EditIcon } from '@shopify/polaris-icons';
 
 
 
@@ -407,17 +406,27 @@ export default function Dashboard() {
         console.log("this comes from Handle Data Function => ", data)
         const newLogs =
             (Array.isArray(data) ? data : []).map(orderItem => {
-                const lineItems = Array.isArray(orderItem.line_item_order)
-                    ? orderItem.line_item_order.map(item =>
+                const orderLines = Array.isArray(orderItem.line_item_order)
+                    ? orderItem.line_item_order
+                    : Array.isArray(orderItem.order_line_items)
+                        ? orderItem.order_line_items
+                        : [];
+                const lineItems = orderLines.length
+                    ? orderLines.map(item =>
                         `${item.quantity}`
                     ).join(', ')
                     : "No items";
 
-                const orderName = Array.isArray(orderItem.line_item_order)
-                    ? orderItem.line_item_order.map(item =>
+                const orderName = orderLines.length
+                    ? orderLines.map(item =>
                         `${item.title}`
                     ).join(', ')
                     : "No name";
+                const productionJobs = orderLines.length
+                    ? orderLines
+                        .map(item => item.design_cart_item)
+                        .filter(Boolean)
+                    : [];
 
                 return {
                     id: orderItem.id || "No ID",
@@ -429,6 +438,7 @@ export default function Dashboard() {
                     fullfilment_status: orderItem.fulfillment_status || "unfulfilled",
                     total_price: orderItem.total_price || 0,
                     country: orderItem.shipping_address_order?.country || "N/A",
+                    productionJobs,
                 };
             })
         setLogs(newLogs);
@@ -445,7 +455,7 @@ export default function Dashboard() {
 
     const rowMarkup = logs.map(
         (
-            { id, order_no, customer_name, order_name, quantity, status, fullfilment_status, total_price, country },
+            { id, order_no, customer_name, order_name, quantity, status, fullfilment_status, total_price, country, productionJobs },
             index,
         ) => (
             <IndexTable.Row
@@ -467,7 +477,7 @@ export default function Dashboard() {
                 <IndexTable.Cell><Box paddingBlock={'500'}>{fullfilment_status}</Box> </IndexTable.Cell>
                 <IndexTable.Cell><Box paddingBlock={'500'}>{total_price}</Box> </IndexTable.Cell>
                 <IndexTable.Cell><Box paddingBlock={'500'}>{country}</Box> </IndexTable.Cell>
-                <IndexTable.Cell><Box paddingBlock={'500'}><InlineStack gap={'050'}><Button variant='plain' size='large' tone='success' icon={EditIcon} /><Button variant='plain' size='large' tone='critical' icon={DeleteIcon} /></InlineStack></Box> </IndexTable.Cell>
+                <IndexTable.Cell><Box paddingBlock={'500'}><InlineStack gap={'050'}>{productionJobs.map(job => <Button key={job.public_id} url={route('admin.production-jobs.show', job.public_id)} target="_blank" variant='plain' size='large' tone='success'>Print files</Button>)}</InlineStack></Box> </IndexTable.Cell>
 
             </IndexTable.Row>
         ),
@@ -580,4 +590,3 @@ function isEmpty(value) {
         return value === '' || value == null;
     }
 }
-

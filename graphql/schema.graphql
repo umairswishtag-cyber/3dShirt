@@ -66,6 +66,26 @@ input StoreCustomerDesignAssetInput {
     dataUrl: String!
 }
 
+input PrepareDesignCartItemInput {
+    designId: ID!
+    variantId: String!
+    quantity: Int! = 1
+}
+
+type CartItemProperty {
+    key: String!
+    value: String!
+}
+
+type PreparedDesignCartItem {
+    id: ID!
+    variantId: String!
+    quantity: Int!
+    properties: [CartItemProperty!]!
+    uploadUrl: String!
+    requestUrl: String!
+}
+
 type CustomerDesignAssetPayload {
     url: String!
 }
@@ -90,4 +110,6 @@ type Mutation {
         @field(resolver: "App\\GraphQL\\Mutations\\StoreMyDesignAsset")
     deleteMyDesign(id: ID!): Boolean!
         @field(resolver: "App\\GraphQL\\Mutations\\DeleteMyDesign")
+    prepareDesignCartItem(input: PrepareDesignCartItemInput!): PreparedDesignCartItem!
+        @field(resolver: "App\\GraphQL\\Mutations\\PrepareDesignCartItem")
 }

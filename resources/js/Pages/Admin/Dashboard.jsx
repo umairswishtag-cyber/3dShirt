@@ -101,7 +101,7 @@ export default function Dashboard({ summary, recentProducts, canCreateProducts =
                         <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-slate-600"><UiIcon name="products" className="h-5 w-5" /></span>
                         <div><h2 className="text-base font-bold">Recently updated</h2><p className="mt-0.5 text-xs text-slate-500">Continue working on your latest catalog items.</p></div>
                     </div>
-                    <Link href={route('dashboard')} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
+                    <Link href={route('admin.orders.index')} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
                         <UiIcon name="orders" className="h-4 w-4" /> Orders dashboard
                     </Link>
                 </div>

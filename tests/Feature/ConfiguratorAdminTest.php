@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Models\ConfiguratorProduct;
 use App\Models\ConfiguratorTaxonomy;
 use App\Models\User;
+use App\Services\Configurator\ShopifyCatalogSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Tests\TestCase;
 
 class ConfiguratorAdminTest extends TestCase
@@ -147,6 +149,46 @@ class ConfiguratorAdminTest extends TestCase
         $this->getJson('/api/configurator/catalog')
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_shopify_store_product_creation_syncs_commerce_fields(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['name' => 'catalog-test.myshopify.com']);
+        $shopify = Mockery::mock(ShopifyCatalogSyncService::class);
+        $shopify->shouldReceive('shouldSync')->once()->withArgs(fn (User $store) => $store->is($user))->andReturnTrue();
+        $shopify->shouldReceive('sync')->once()->andReturnUsing(function (ConfiguratorProduct $product, User $store) use ($user) {
+            $this->assertTrue($store->is($user));
+            $this->assertSame('active', $product->shopify_status);
+            $this->assertSame('49.95', $product->price);
+            $this->assertSame(25, $product->inventory_quantity);
+            $this->assertSame(['custom', '3d shirt'], $product->tags);
+
+            $product->forceFill([
+                'shopify_product_id' => 1001,
+                'shopify_variant_id' => 2002,
+                'shopify_inventory_item_id' => 3003,
+                'shopify_synced_at' => now(),
+            ])->save();
+
+            return $product;
+        });
+        $this->app->instance(ShopifyCatalogSyncService::class, $shopify);
+
+        $this->actingAs($user)->post(route('admin.configurator.products.store'), [
+            ...$this->validProductData(),
+            'model' => UploadedFile::fake()->create('catalog.glb', 256, 'model/gltf-binary'),
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('configurator_products', [
+            'user_id' => $user->id,
+            'shopify_product_id' => 1001,
+            'shopify_variant_id' => 2002,
+            'shopify_inventory_item_id' => 3003,
+            'shopify_status' => 'active',
+            'price' => 49.95,
+            'inventory_quantity' => 25,
+        ]);
     }
 
     public function test_saved_pattern_and_logo_areas_are_rehydrated_when_returning_to_the_editor(): void
@@ -720,6 +762,10 @@ class ConfiguratorAdminTest extends TestCase
     {
         return [
             'name' => 'Service Jacket',
+            'shopify_status' => 'active',
+            'price' => '49.95',
+            'inventory_quantity' => 25,
+            'tags' => 'custom, 3d shirt',
             'gender' => 'men',
             'category' => 'jackets',
             'description' => 'Admin-managed product',

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -45,6 +46,7 @@ class ShopifyCustomerSessionController extends Controller
 
         $customerEmail = (string) $request->query('customer_email', '');
         $customerName = trim((string) $request->query('customer_name', ''));
+        $requestId = (string) $request->query('request_id', '');
         $handoff = Crypt::encryptString(json_encode([
             'shop' => $store->storefront_key,
             'shopify_customer_id' => $shopifyCustomerId,
@@ -52,6 +54,7 @@ class ShopifyCustomerSessionController extends Controller
             'email' => filter_var($customerEmail, FILTER_VALIDATE_EMAIL)
                 ? strtolower($customerEmail)
                 : null,
+            'request_id' => Str::isUuid($requestId) ? $requestId : null,
         ], JSON_THROW_ON_ERROR));
         $relativeLaunchUrl = URL::temporarySignedRoute(
             'shopify.customer.session',
@@ -97,6 +100,19 @@ class ShopifyCustomerSessionController extends Controller
 
         Auth::guard('customer')->login($customer);
         $request->session()->regenerate();
+
+        $requestId = (string) ($payload['request_id'] ?? '');
+        if (Str::isUuid($requestId)) {
+            abort_unless(
+                $customer->productionRequests()->where('public_id', $requestId)->exists(),
+                404,
+            );
+
+            return redirect()->route('store.customer.requests.show', [
+                'store' => $resolvedStore->storefront_key,
+                'id' => $requestId,
+            ]);
+        }
 
         return redirect()->route('store.configurator', [
             'store' => $resolvedStore->storefront_key,

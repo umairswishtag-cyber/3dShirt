@@ -18,7 +18,7 @@ class HandleInertiaRequests extends Middleware
 
     public function __construct()
     {
-        if(!request()->get('shop')) {
+        if (! request()->get('shop')) {
             $this->rootView = 'non_embedded';
         }
     }
@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
             'customer' => Auth::guard('customer')->user(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [

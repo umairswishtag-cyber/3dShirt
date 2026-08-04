@@ -17,6 +17,7 @@ export default function ConfiguratorHeader({
     onChangeProduct,
     onSave,
     onFinalize,
+    onAddToCart,
     saving = false,
     adminPreview = false,
     embedded = false,
@@ -26,6 +27,8 @@ export default function ConfiguratorHeader({
     designStatus = 'DRAFT',
     titleDirty = false,
     onDesignTitleChange,
+    cartAvailable = false,
+    carting = false,
 }) {
     const product = useConfiguratorStore((state) => state.product);
     const designIsDirty = useConfiguratorStore((state) => state.isDirty);
@@ -89,7 +92,7 @@ export default function ConfiguratorHeader({
                             {adminPreview
                                 ? 'Admin preview'
                                 : designStatus === 'FINAL'
-                                  ? 'Finished'
+                                  ? 'Published'
                                   : 'Draft'}
                         </span>
                     </div>
@@ -113,7 +116,13 @@ export default function ConfiguratorHeader({
                 </div>
             </div>
 
-            <div className="mt-2 grid w-full grid-cols-[36px_36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)] gap-1.5 sm:gap-2">
+            <div
+                className={`mt-2 grid w-full gap-1.5 sm:gap-2 ${
+                    embedded
+                        ? "grid-cols-[36px_36px_repeat(4,minmax(0,1fr))]"
+                        : "grid-cols-[36px_36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)]"
+                }`}
+            >
                 <HeaderButton
                     onClick={undo}
                     disabled={pastLength === 0}
@@ -153,11 +162,29 @@ export default function ConfiguratorHeader({
                 <HeaderButton
                     onClick={onFinalize}
                     disabled={saving || adminPreview}
-                    title="Mark this design as finished"
+                    title="Publish this design to your account"
                     className="border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
                 >
-                    Finish
+                    Publish
                 </HeaderButton>
+                {embedded && (
+                    <HeaderButton
+                        onClick={onAddToCart}
+                        disabled={saving || carting || adminPreview || !cartAvailable}
+                        title={
+                            cartAvailable
+                                ? 'Send this custom design for production review and quotation'
+                                : 'Connect this product to a Shopify variant before submitting a request'
+                        }
+                        className="border-slate-950 bg-slate-950 text-white hover:bg-slate-800"
+                    >
+                        {carting
+                            ? "Preparing…"
+                            : cartAvailable
+                              ? "Request quote"
+                              : "Request unavailable"}
+                    </HeaderButton>
+                )}
                 <HeaderButton
                     onClick={openDesigns}
                     className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50"

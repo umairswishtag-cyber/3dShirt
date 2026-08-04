@@ -45,6 +45,11 @@ class Customer extends Authenticatable
         return $this->hasMany(CustomerDesign::class);
     }
 
+    public function productionRequests(): HasMany
+    {
+        return $this->hasMany(DesignCartItem::class);
+    }
+
     public function store(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

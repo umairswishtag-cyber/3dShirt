@@ -10,6 +10,16 @@ class ConfiguratorProduct extends Model
 {
     protected $fillable = [
         'user_id',
+        'shopify_product_id',
+        'shopify_variant_id',
+        'shopify_inventory_item_id',
+        'shopify_media_id',
+        'shopify_thumbnail_synced_path',
+        'shopify_status',
+        'price',
+        'inventory_quantity',
+        'tags',
+        'shopify_synced_at',
         'name',
         'slug',
         'gender',
@@ -37,6 +47,10 @@ class ConfiguratorProduct extends Model
     {
         return [
             'fit_height' => 'float',
+            'price' => 'decimal:2',
+            'inventory_quantity' => 'integer',
+            'tags' => 'array',
+            'shopify_synced_at' => 'datetime',
             'mesh_zones' => 'array',
             'print_areas' => 'array',
             'color_zones' => 'array',

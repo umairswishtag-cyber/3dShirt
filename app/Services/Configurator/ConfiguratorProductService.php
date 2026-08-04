@@ -14,11 +14,12 @@ class ConfiguratorProductService
     public function __construct(
         private readonly ConfiguratorAssetStorageService $storage,
         private readonly SvgPatternService $svgPatterns,
+        private readonly ShopifyCatalogSyncService $shopifyCatalog,
     ) {}
 
     public function create(array $data, ?int $userId): ConfiguratorProduct
     {
-        return DB::transaction(function () use ($data, $userId) {
+        $product = DB::transaction(function () use ($data, $userId) {
             $attributes = $this->productAttributes($data);
             $attributes['user_id'] = $userId;
             $attributes['slug'] = $this->uniqueSlug($data['name'], $userId);
@@ -37,17 +38,25 @@ class ConfiguratorProductService
 
             return $product;
         });
+
+        $this->syncShopifyCatalog($product);
+
+        return $product->refresh();
     }
 
     public function update(ConfiguratorProduct $product, array $data): ConfiguratorProduct
     {
-        return DB::transaction(function () use ($product, $data) {
+        $product = DB::transaction(function () use ($product, $data) {
             $attributes = $this->productAttributes($data);
             $this->applyUploads($attributes, $data, $product);
             $product->update($attributes);
 
             return $product->refresh();
         });
+
+        $this->syncShopifyCatalog($product);
+
+        return $product->refresh();
     }
 
     public function delete(ConfiguratorProduct $product): void
@@ -97,6 +106,15 @@ class ConfiguratorProductService
     private function productAttributes(array $data): array
     {
         return [
+            'shopify_status' => $data['shopify_status'] ?? 'draft',
+            'price' => $data['price'] ?? 0,
+            'inventory_quantity' => $data['inventory_quantity'] ?? 0,
+            'tags' => collect(explode(',', (string) ($data['tags'] ?? '')))
+                ->map(fn (string $tag) => trim($tag))
+                ->filter()
+                ->unique(fn (string $tag) => strtolower($tag))
+                ->values()
+                ->all(),
             'name' => $data['name'],
             'gender' => $data['gender'],
             'category' => $data['category'],
@@ -113,6 +131,14 @@ class ConfiguratorProductService
             'is_published' => Arr::get($data, 'is_published', false),
             'sort_order' => $data['sort_order'] ?? 0,
         ];
+    }
+
+    private function syncShopifyCatalog(ConfiguratorProduct $product): void
+    {
+        $store = $product->owner()->first();
+        if ($store && $this->shopifyCatalog->shouldSync($store)) {
+            $this->shopifyCatalog->sync($product, $store);
+        }
     }
 
     private function applyUploads(array &$attributes, array $data, ?ConfiguratorProduct $product = null): void

@@ -49,7 +49,11 @@ export default function ProductsIndex({ products, canCreateProducts = false, cre
                                     </div>
                                     <p className="mt-1.5 text-xs capitalize text-slate-500">{product.gender} · {product.category}</p>
                                     <p className="mt-3 line-clamp-2 text-sm leading-5 text-slate-600">{product.description || 'No description has been added yet.'}</p>
-                                    <span className="mt-3 inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200/70">{product.activePatternsCount}/{product.patternsCount} active patterns</span>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <span className="inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200/70">{product.activePatternsCount}/{product.patternsCount} active patterns</span>
+                                        <span className="inline-flex rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200/70">{product.price} · Qty {product.inventory_quantity}</span>
+                                        <span className="inline-flex rounded-lg bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold uppercase text-blue-700 ring-1 ring-blue-200/70">Shopify: {product.shopify_status}</span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-1.5 border-t border-slate-100 px-5 py-3 text-[10px] font-bold uppercase tracking-wide">

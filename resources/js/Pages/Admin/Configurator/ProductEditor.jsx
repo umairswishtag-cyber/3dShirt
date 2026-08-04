@@ -296,6 +296,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const form = useForm({
         name: product?.name ?? '', category: product?.category ?? categories[0]?.slug ?? '', gender: product?.gender ?? audiences.find((item) => item.slug === 'unisex')?.slug ?? audiences[0]?.slug ?? '', description: product?.description ?? '', fit_height: product?.fit_height ?? 2.45,
+        shopify_status: product?.shopify_status ?? 'draft', price: product?.price ?? '0.00', inventory_quantity: product?.inventory_quantity ?? 0, tags: Array.isArray(product?.tags) ? product.tags.join(', ') : '',
         model: null, thumbnail: null, mesh_zones: JSON.stringify(product?.mesh_zones ?? {}, null, 2), print_areas: JSON.stringify(product?.print_areas ?? {}, null, 2),
         color_zones: JSON.stringify(product?.color_zones ?? DEFAULT_COLOR_ZONES, null, 2), allowed_colors: JSON.stringify(product?.allowed_colors ?? DEFAULT_ALLOWED_COLORS, null, 2), pattern_zones: JSON.stringify(product?.pattern_zones ?? [], null, 2),
         supports_colors: product?.supports_colors ?? true, supports_patterns: product?.supports_patterns ?? false, supports_logos: product?.supports_logos ?? false, is_published: product?.is_published ?? false, sort_order: product?.sort_order ?? 0,
@@ -465,12 +466,12 @@ export default function ProductEditor({ product, audiences = [], categories = []
         <AdminShell compact title={editing ? `Configure ${product.name}` : 'Add new product'} subtitle="Start with what the product is, choose who it is for, then connect its 3D model and customization options.">
             <nav className="sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur" aria-label="Product editor sections">
                 <div className="flex flex-wrap gap-2">
-                    <a href="#product-details" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">Product</a>
-                    <a href="#product-assets" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">GLB & capabilities</a>
-                    <a href="#model-bindings" className="rounded-xl px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-100">Customization</a>
-                    {editing && <a href="#product-patterns" className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-black text-white hover:bg-purple-700">SVG patterns</a>}
+                    <a href="#product-details" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">Product</a>
+                    <a href="#product-assets" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">GLB & capabilities</a>
+                    <a href="#model-bindings" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">Customization</a>
+                    {editing && <a href="#product-patterns" className="rounded-xl bg-purple-600 px-4 py-2 text-md font-bold text-white hover:bg-purple-700">SVG patterns</a>}
                 </div>
-                {editing && product.is_published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-xl px-3 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-50">View Product on Storefront</Link>}
+                {editing && product.is_published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-xl px-3 py-2 text-md font-bold button text-emerald-700 hover:bg-emerald-50">View Product on Storefront</Link>}
             </nav>
 
             <ValidationSummary errors={form.errors} />
@@ -483,6 +484,26 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
                         <div className="grid gap-4 md:grid-cols-12">
                             <div className="md:col-span-6"><TextField label="Product name" value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} /></div>
+                            <div className="md:col-span-3"><TextField label="Price" type="number" min="0" step="0.01" value={form.data.price} onChange={(e) => form.setData('price', e.target.value)} help="Synced to Shopify" error={form.errors.price} /></div>
+                            <div className="md:col-span-3"><TextField label="Quantity" type="number" min="0" step="1" value={form.data.inventory_quantity} onChange={(e) => form.setData('inventory_quantity', e.target.value)} help="Primary Shopify location" error={form.errors.inventory_quantity} /></div>
+                            <label className="block md:col-span-6">
+                                <span className="mb-1.5 block text-xs font-bold">Shopify status</span>
+                                <select value={form.data.shopify_status} onChange={(event) => form.setData('shopify_status', event.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="unlisted">Unlisted</option>
+                                </select>
+                                <span className="mt-1.5 block text-[11px] text-slate-500">Active is discoverable, Draft is hidden, and Unlisted is available only by direct link.</span>
+                                <FieldError message={form.errors.shopify_status} />
+                            </label>
+                            <div className="md:col-span-6"><TextField label="Tags" value={form.data.tags} onChange={(e) => form.setData('tags', e.target.value)} help="Separate tags with commas" error={form.errors.tags} /></div>
+                            {product?.shopify_product_id && (
+                                <div className="md:col-span-6 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-900">
+                                    <span className="font-black">Shopify product #{product.shopify_product_id}</span>
+                                    <span className="mt-0.5 block">{product.shopify_synced_at ? `Last synced ${new Date(product.shopify_synced_at).toLocaleString()}` : 'Connected to Shopify'}</span>
+                                </div>
+                            )}
+                            {form.errors.shopify && <div className="md:col-span-12"><FieldError message={form.errors.shopify} /></div>}
                             <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Product category <span className="font-medium text-slate-400">— what it is</span></span><select value={form.data.category} onChange={(e) => form.setData({ ...form.data, category: e.target.value, print_areas: '{}', pattern_zones: '[]' })} className="h-11 w-full rounded-xl border-slate-300 text-sm">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Examples: shirts, hats, caps, footwear, cups. Changing this resets artwork areas.</span><FieldError message={form.errors.category} /></label>
                             <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Customer group <span className="font-medium text-slate-400">— who it is for</span></span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Use Unisex for products without a gender-specific fit. <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Manage catalog structure</a>.</span><FieldError message={form.errors.gender} /></label>
                             <div className="md:col-span-6"><TextField label="Display order" type="number" min="0" value={form.data.sort_order} onChange={(e) => form.setData('sort_order', Number(e.target.value))} error={form.errors.sort_order} /></div>

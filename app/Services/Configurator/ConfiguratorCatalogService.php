@@ -5,8 +5,9 @@ namespace App\Services\Configurator;
 use App\Models\ConfiguratorPattern;
 use App\Models\ConfiguratorProduct;
 use App\Models\ConfiguratorTaxonomy;
-use Illuminate\Support\Str;
+use App\Models\Products\Product as ShopifyProduct;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class ConfiguratorCatalogService
 {
@@ -20,7 +21,7 @@ class ConfiguratorCatalogService
     /** @return array<int, array<string, mixed>> */
     public function publishedCatalog(?User $store = null): array
     {
-        return ConfiguratorProduct::query()
+        $products = ConfiguratorProduct::query()
             ->when($store, fn ($query) => $query->where('user_id', $store->id))
             ->when(! $store, fn ($query) => $query->whereRaw('1 = 0'))
             ->where('is_published', true)
@@ -31,15 +32,30 @@ class ConfiguratorCatalogService
             ])
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get()
-            ->map(fn (ConfiguratorProduct $product) => $this->storefrontProduct($product))
+            ->get();
+        $shopifyProducts = $store
+            ? ShopifyProduct::query()
+                ->where('user_id', $store->id)
+                ->whereIn('shopify_product_id', $products->pluck('shopify_product_id')->filter())
+                ->with('productVarients')
+                ->get()
+                ->keyBy(fn (ShopifyProduct $product) => (string) $product->shopify_product_id)
+            : collect();
+
+        return $products
+            ->map(fn (ConfiguratorProduct $product) => $this->storefrontProduct(
+                $product,
+                $shopifyProducts->get((string) $product->shopify_product_id),
+            ))
             ->values()
             ->all();
     }
 
     /** @return array<string, mixed> */
-    public function storefrontProduct(ConfiguratorProduct $product): array
-    {
+    public function storefrontProduct(
+        ConfiguratorProduct $product,
+        ?ShopifyProduct $shopifyProduct = null,
+    ): array {
         $zones = collect($product->color_zones ?? [])->map(function ($zone) {
             if (is_string($zone)) {
                 return ['id' => $zone, 'label' => $zone, 'defaultColor' => '#F8FAFC'];
@@ -78,6 +94,7 @@ class ConfiguratorCatalogService
                 'patterns' => $product->supports_patterns,
                 'logos' => $product->supports_logos,
             ],
+            'commerce' => $this->commerceData($product, $shopifyProduct),
             'assistant' => $product->owner?->chatbotSetting?->storefrontConfig()
                 ?? ['enabled' => false],
             'patterns' => $product->patterns
@@ -89,6 +106,41 @@ class ConfiguratorCatalogService
                 ])
                 ->values()
                 ->all(),
+        ];
+    }
+
+    private function commerceData(ConfiguratorProduct $product, ?ShopifyProduct $shopifyProduct): ?array
+    {
+        if ($shopifyProduct) {
+            return [
+                'shopifyProductId' => (string) $shopifyProduct->shopify_product_id,
+                'variants' => $shopifyProduct->productVarients
+                    ->sortBy('title')
+                    ->map(fn ($variant) => [
+                        'id' => (string) $variant->shopify_product_varient_id,
+                        'title' => $variant->title ?: 'Default',
+                        'sku' => $variant->sku,
+                        'price' => (string) $variant->price,
+                        'inventoryQuantity' => $variant->inventory_quantity,
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        if (! $product->shopify_product_id || ! $product->shopify_variant_id) {
+            return null;
+        }
+
+        return [
+            'shopifyProductId' => (string) $product->shopify_product_id,
+            'variants' => [[
+                'id' => (string) $product->shopify_variant_id,
+                'title' => 'Default',
+                'sku' => null,
+                'price' => (string) $product->price,
+                'inventoryQuantity' => $product->inventory_quantity,
+            ]],
         ];
     }
 

@@ -23,11 +23,28 @@ import {
 } from "@/services/designAssetService";
 import CustomizationChatbot from "@/features/configurator/chatbot/CustomizationChatbot";
 import EmbeddedDesignLibrary from "@/features/configurator/components/EmbeddedDesignLibrary";
+import AddToCartDialog from "@/features/configurator/components/AddToCartDialog";
+import {
+    createProductionAssets,
+    uploadProductionAssets,
+} from "@/services/productionAssetService";
 
 const LOAD_DESIGN = `query LoadDesign($id: ID!) { myDesign(id: $id) { id title status document } }`;
 const SAVE_DESIGN = `
     mutation SaveDesign($input: SaveCustomerDesignInput!) {
         saveMyDesign(input: $input) { id title status updatedAt }
+    }
+`;
+const PREPARE_CART_ITEM = `
+    mutation PrepareDesignCartItem($input: PrepareDesignCartItemInput!) {
+        prepareDesignCartItem(input: $input) {
+            id
+            variantId
+            quantity
+            uploadUrl
+            requestUrl
+            properties { key value }
+        }
     }
 `;
 
@@ -104,6 +121,8 @@ export default function ConfiguratorPage({
     const [designStatus, setDesignStatus] = useState("DRAFT");
     const [titleDirty, setTitleDirty] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [cartDialogOpen, setCartDialogOpen] = useState(false);
+    const [carting, setCarting] = useState(false);
     const selectedObjectId = useConfiguratorStore(
         (state) => state.selectedObjectId,
     );
@@ -221,9 +240,10 @@ export default function ConfiguratorPage({
             );
             toast.success(
                 saved.status === "FINAL"
-                    ? "Design finished and saved to your account!"
+                    ? "Design published and saved to your account!"
                     : "Design saved to your account.",
             );
+            return saved;
         } catch (error) {
             toast.error(error.message);
             if (/sign in|unauthenticated/i.test(error.message)) {
@@ -236,8 +256,50 @@ export default function ConfiguratorPage({
                     window.location.assign(storefront?.loginUrl ?? "/login");
                 }, 1200);
             }
+            return null;
         } finally {
             setSaving(false);
+        }
+    };
+
+    const submitProductionRequest = async ({ variantId, quantity }) => {
+        setCarting(true);
+
+        try {
+            const saved = await saveDesign("FINAL");
+            if (!saved) return;
+
+            finishLogoEditing();
+            await new Promise((resolve) =>
+                window.requestAnimationFrame(() =>
+                    window.requestAnimationFrame(resolve),
+                ),
+            );
+
+            const preparedData = await graphqlRequest(PREPARE_CART_ITEM, {
+                input: {
+                    designId: saved.id,
+                    variantId,
+                    quantity,
+                },
+            });
+            const prepared = preparedData.prepareDesignCartItem;
+            const productionAssets = await createProductionAssets(
+                useConfiguratorStore.getState(),
+            );
+            await uploadProductionAssets(
+                prepared,
+                productionAssets,
+                storefront?.customer,
+            );
+
+            setCartDialogOpen(false);
+            toast.success("Your design was published and submitted for quotation.");
+            window.top.location.assign(prepared.requestUrl);
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setCarting(false);
         }
     };
 
@@ -325,6 +387,9 @@ export default function ConfiguratorPage({
                     onChangeProduct={() => setCatalogOpen(true)}
                     onSave={() => saveDesign()}
                     onFinalize={() => saveDesign("FINAL")}
+                    onAddToCart={() => setCartDialogOpen(true)}
+                    cartAvailable={embedded && Boolean(product.commerce?.variants?.length)}
+                    carting={carting}
                     saving={saving}
                     adminPreview={adminPreview}
                     embedded={embedded}
@@ -478,6 +543,9 @@ export default function ConfiguratorPage({
                     <ConfiguratorActionsPanel
                         onSave={() => saveDesign()}
                         onFinalize={() => saveDesign("FINAL")}
+                        onAddToCart={() => setCartDialogOpen(true)}
+                        cartAvailable={embedded && Boolean(product.commerce?.variants?.length)}
+                        carting={carting}
                         onChangeProduct={() => setCatalogOpen(true)}
                         onOpenDesigns={
                             embedded
@@ -542,6 +610,13 @@ export default function ConfiguratorPage({
                     config={adminPreview ? assistantPreview : product.assistant}
                     product={product}
                     adminPreview={adminPreview}
+                />
+                <AddToCartDialog
+                    open={cartDialogOpen}
+                    product={product}
+                    busy={carting || saving}
+                    onClose={() => setCartDialogOpen(false)}
+                    onConfirm={submitProductionRequest}
                 />
             </div>
 

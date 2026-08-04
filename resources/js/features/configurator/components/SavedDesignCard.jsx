@@ -45,7 +45,7 @@ export default function SavedDesignCard({
                             final ? "bg-emerald-500" : "bg-amber-500"
                         }`}
                     />
-                    {final ? "Finished" : "Draft"}
+                    {final ? "Published" : "Draft"}
                 </span>
             </div>
 
@@ -121,7 +121,7 @@ function StatusCover({ final }) {
                     />
                 </span>
                 <strong className="mt-3 block text-sm font-black uppercase tracking-[0.16em]">
-                    {final ? "Finished product" : "Draft design"}
+                    {final ? "Published design" : "Draft design"}
                 </strong>
                 <span className="mt-1 block text-[10px] font-semibold opacity-70">
                     Preview stays off until requested

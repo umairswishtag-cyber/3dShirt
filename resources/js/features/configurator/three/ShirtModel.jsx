@@ -1,9 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { Box3, CanvasTexture, Float32BufferAttribute, FrontSide, SRGBColorSpace, Vector3 } from 'three';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { registerModelExporter } from './modelExportRegistry';
 
 function cloneModelScene(scene) {
     const clone = scene.clone(true);
@@ -289,6 +291,7 @@ function BoundPrintSurface({ areaId, binding, geometries }) {
 }
 
 export default function ShirtModel() {
+    const exportGroupRef = useRef(null);
     const invalidate = useThree((state) => state.invalidate);
     const product = useConfiguratorStore((state) => state.product);
     const modelConfig = product.model;
@@ -358,6 +361,27 @@ export default function ShirtModel() {
         [printMeshes],
     );
 
+    useEffect(() => registerModelExporter(async () => {
+        if (!exportGroupRef.current) {
+            throw new Error('The configured model is not ready to export.');
+        }
+
+        const exportRoot = exportGroupRef.current.clone(true);
+        const guides = [];
+        exportRoot.traverse((node) => {
+            if (node.name === 'active_logo_zone_guide') guides.push(node);
+        });
+        guides.forEach((guide) => guide.parent?.remove(guide));
+        exportRoot.updateMatrixWorld(true);
+        const result = await new GLTFExporter().parseAsync(exportRoot, {
+            binary: true,
+            onlyVisible: true,
+            maxTextureSize: 2048,
+        });
+
+        return new Blob([result], { type: 'model/gltf-binary' });
+    }), []);
+
     useEffect(() => {
         modelScene.traverse((node) => {
             if (!node.isMesh) return;
@@ -382,7 +406,7 @@ export default function ShirtModel() {
     );
 
     return (
-        <group name="configurable_garment" scale={modelTransform.scale}>
+        <group ref={exportGroupRef} name="configurable_garment" scale={modelTransform.scale}>
             <group position={modelTransform.center.map((value) => -value)}>
                 <primitive object={modelScene} />
                 {Object.entries(modelConfig.printAreas).map(([areaId, binding]) => (

@@ -2,25 +2,30 @@
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ChatbotAccessController;
-use App\Http\Controllers\Admin\StoreCustomerController;
 use App\Http\Controllers\Admin\ConfiguratorPatternController;
 use App\Http\Controllers\Admin\ConfiguratorProductController;
 use App\Http\Controllers\Admin\ConfiguratorTaxonomyController;
+use App\Http\Controllers\Admin\DesignProductionJobController;
+use App\Http\Controllers\Admin\ProductionRequestController;
+use App\Http\Controllers\Admin\StoreCustomerController;
+use App\Http\Controllers\Admin\StoreOrderController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CustomerAccountController;
+use App\Http\Controllers\CustomerProductionRequestController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ShopifyCustomerSessionController;
+use App\Http\Controllers\DesignProductionAssetController;
 use App\Http\Controllers\ShopifyConfiguratorProxyController;
+use App\Http\Controllers\ShopifyCustomerSessionController;
 use App\Http\Controllers\StorefrontConfiguratorController;
+use App\Services\Storefront\StorefrontContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Osiset\ShopifyApp\Util;
-use App\Services\Storefront\StorefrontContext;
 use Nuwave\Lighthouse\Http\GraphQLController;
 use Nuwave\Lighthouse\Http\Middleware\AcceptJson;
 use Nuwave\Lighthouse\Http\Middleware\AttemptAuthentication;
 use Nuwave\Lighthouse\Http\Middleware\EnsureXHR;
+use Osiset\ShopifyApp\Util;
 
 Route::get('/shopify/app-proxy/configurator', [ShopifyCustomerSessionController::class, 'proxy'])
     ->name('shopify.app-proxy.configurator');
@@ -35,6 +40,9 @@ Route::prefix('/shopify/app-proxy/configurator')
         Route::post('/graphql', GraphQLController::class)
             ->middleware([EnsureXHR::class, AcceptJson::class, AttemptAuthentication::class])
             ->name('shopify.app-proxy.graphql');
+        Route::post('/production-assets/{id}', [DesignProductionAssetController::class, 'store'])
+            ->whereUuid('id')
+            ->name('shopify.app-proxy.production-assets.store');
     });
 Route::get(
     '/shopify/customer/session',
@@ -56,6 +64,10 @@ Route::prefix('store/{store}')->middleware('storefront')->group(function () {
     Route::middleware('customer.auth')->group(function () {
         Route::get('/configurator', [StorefrontConfiguratorController::class, 'show'])->name('store.configurator');
         Route::get('/account', [CustomerAccountController::class, 'dashboard'])->name('store.customer.dashboard');
+        Route::get('/account/requests/{id}', [CustomerProductionRequestController::class, 'show'])
+            ->whereUuid('id')->name('store.customer.requests.show');
+        Route::post('/account/requests/{id}/respond', [CustomerProductionRequestController::class, 'respond'])
+            ->whereUuid('id')->name('store.customer.requests.respond');
     });
 
     Route::get('/api/configurator/catalog', [StorefrontConfiguratorController::class, 'catalog'])
@@ -114,6 +126,31 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/chatbot/request', [ChatbotAccessController::class, 'requestAccess'])->name('admin.chatbot.request');
     Route::patch('/admin/chatbot/users/{user}', [ChatbotAccessController::class, 'update'])->name('admin.chatbot.update');
     Route::get('/admin/customers', [StoreCustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('/admin/orders', [StoreOrderController::class, 'index'])->name('admin.orders.index');
+    Route::post('/admin/orders/sync', [StoreOrderController::class, 'sync'])->name('admin.orders.sync');
+    Route::get('/admin/orders/{order}', [StoreOrderController::class, 'show'])->name('admin.orders.show');
+    Route::get('/admin/production-requests', [ProductionRequestController::class, 'index'])->name('admin.production-requests.index');
+    Route::get('/admin/production-requests/{id}', [ProductionRequestController::class, 'show'])->whereUuid('id')->name('admin.production-requests.show');
+    Route::post('/admin/production-requests/{id}/quote', [ProductionRequestController::class, 'quote'])->whereUuid('id')->name('admin.production-requests.quote');
+    Route::post('/admin/production-requests/{id}/action', [ProductionRequestController::class, 'action'])->whereUuid('id')->name('admin.production-requests.action');
+    Route::post('/admin/production-requests/{id}/invoice', [ProductionRequestController::class, 'invoice'])->whereUuid('id')->name('admin.production-requests.invoice');
+    Route::get('/admin/production-jobs/{id}', [DesignProductionJobController::class, 'show'])
+        ->whereUuid('id')
+        ->name('admin.production-jobs.show');
+    Route::get('/admin/production-jobs/{id}/model', [DesignProductionJobController::class, 'model'])
+        ->whereUuid('id')
+        ->name('admin.production-jobs.model');
+    Route::get('/admin/production-jobs/{id}/print-areas/{areaId}', [DesignProductionJobController::class, 'printArea'])
+        ->whereUuid('id')
+        ->where('areaId', '[A-Za-z][A-Za-z0-9_-]{0,63}')
+        ->name('admin.production-jobs.print-area');
+    Route::get('/admin/production-jobs/{id}/logos/{logoId}', [DesignProductionJobController::class, 'logo'])
+        ->whereUuid('id')
+        ->where('logoId', '[A-Za-z0-9_-]+')
+        ->name('admin.production-jobs.logo');
+    Route::get('/admin/production-jobs/{id}/pattern', [DesignProductionJobController::class, 'pattern'])
+        ->whereUuid('id')
+        ->name('admin.production-jobs.pattern');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/search', [DashboardController::class, 'orderSeacrhfilter'])->name('search');

@@ -92,6 +92,11 @@ class User extends Authenticatable implements IShopModel
         return $this->hasMany(Customer::class);
     }
 
+    public function productionRequests(): HasMany
+    {
+        return $this->hasManyThrough(DesignCartItem::class, Customer::class);
+    }
+
     public function isPlatformAdmin(): bool
     {
         if ($this->is_platform_admin) {

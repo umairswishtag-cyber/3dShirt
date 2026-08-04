@@ -9,6 +9,7 @@ class Order extends Model
 {
     public $fillable = [
         'shopify_order_id',
+        'shopify_created_at',
         'user_id',
         'contact_email',
         'email',
@@ -17,6 +18,7 @@ class Order extends Model
         'name',
         'note',
         'phone',
+        'currency',
         'subtotal_price',
         'tags',
         'total_discounts',
@@ -27,24 +29,36 @@ class Order extends Model
         'total_tax',
         'total_tip_received',
         'total_weight',
-        'order_customer_id'
+        'order_customer_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'shopify_created_at' => 'datetime',
+        ];
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
     public function orderLineItems()
     {
         return $this->hasMany(OrderLineItem::class);
     }
+
     public function orderCustomer()
     {
         return $this->belongsTo(OrderCustomer::class);
     }
+
     public function orderFulfillments()
     {
         return $this->hasMany(OrderFulfillment::class);
     }
+
     public function orderShippingAddress()
     {
         return $this->hasOne(OrderShippingAddress::class);

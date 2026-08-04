@@ -9,9 +9,9 @@ use App\Models\ConfiguratorTaxonomy;
 use App\Services\Configurator\ConfiguratorAssetStorageService;
 use App\Services\Configurator\ConfiguratorProductService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\Request;
 
 class ConfiguratorProductController extends Controller
 {
@@ -59,8 +59,8 @@ class ConfiguratorProductController extends Controller
 
         return redirect()->route('admin.configurator.products.edit', $product)
             ->with('success', $product->is_published
-                ? 'Product created and published to the storefront.'
-                : 'Draft created. It remains hidden until you publish it.');
+                ? 'Product created and synced with Shopify.'
+                : 'Draft created and synced with Shopify. It remains hidden from the 3D storefront.');
     }
 
     public function edit(Request $request, ConfiguratorProduct $product): Response
@@ -81,10 +81,10 @@ class ConfiguratorProductController extends Controller
         $updated = $this->products->update($product, $request->validated());
 
         $message = match (true) {
-            ! $wasPublished && $updated->is_published => 'Product published. It is now available on the storefront.',
-            $wasPublished && ! $updated->is_published => 'Product unpublished. It is now hidden from the storefront.',
-            $updated->is_published => 'Live product changes saved to the storefront.',
-            default => 'Draft saved. It remains hidden from the storefront.',
+            ! $wasPublished && $updated->is_published => 'Product published and synced with Shopify.',
+            $wasPublished && ! $updated->is_published => 'Product hidden from the 3D storefront and synced with Shopify.',
+            $updated->is_published => 'Product changes saved and synced with Shopify.',
+            default => 'Draft saved and synced with Shopify.',
         };
 
         return redirect()->route('admin.configurator.products.edit', $updated)
@@ -104,7 +104,9 @@ class ConfiguratorProductController extends Controller
     {
         return [
             ...$product->only([
-                'id', 'name', 'slug', 'gender', 'category', 'description', 'fit_height',
+                'id', 'shopify_product_id', 'name', 'slug', 'gender', 'category', 'description', 'fit_height',
+                'shopify_variant_id', 'shopify_inventory_item_id', 'shopify_status', 'price',
+                'shopify_media_id', 'shopify_thumbnail_synced_path', 'inventory_quantity', 'tags', 'shopify_synced_at',
                 'mesh_zones', 'print_areas', 'color_zones', 'allowed_colors', 'pattern_zones',
                 'supports_colors', 'supports_patterns', 'supports_logos', 'is_published',
                 'sort_order', 'model_original_name', 'created_at', 'updated_at',
