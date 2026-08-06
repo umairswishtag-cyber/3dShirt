@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Configurator\ConfiguratorCatalogService;
+use App\Services\Production\ProductionRequestAlertService;
 use App\Services\Storefront\StorefrontContext;
 use App\Support\ProductionRequestData;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class CustomerAccountController extends Controller
     public function __construct(
         private readonly StorefrontContext $storefront,
         private readonly ConfiguratorCatalogService $catalog,
+        private readonly ProductionRequestAlertService $alerts,
     ) {}
 
     public function login(Request $request): Response
@@ -41,15 +43,19 @@ class CustomerAccountController extends Controller
         $store = $this->storefront->require($request);
         $customer = auth('customer')->user();
 
+        $productionRequests = $customer->productionRequests()
+            ->with('product:id,name')
+            ->latest('updated_at')
+            ->limit(12)
+            ->get();
+        $unread = $this->alerts->countsByRequest($customer, $productionRequests->pluck('id'));
+
         return Inertia::render('Customer/Dashboard', [
             'storefront' => $this->storefront->links($store),
             'catalog' => $this->catalog->publishedCatalog($store),
-            'productionRequests' => $customer->productionRequests()
-                ->with('product:id,name')
-                ->latest('updated_at')
-                ->limit(12)
-                ->get()
+            'productionRequests' => $productionRequests
                 ->map(fn ($item) => array_merge(ProductionRequestData::make($item), [
+                    'unreadMessages' => $unread->get($item->id, 0),
                     'url' => route('store.customer.requests.show', [
                         'store' => $store->storefront_key,
                         'id' => $item->public_id,

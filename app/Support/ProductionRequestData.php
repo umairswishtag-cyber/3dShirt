@@ -60,6 +60,7 @@ class ProductionRequestData
                 'toStatus' => $event->to_status,
                 'note' => $event->note,
                 'metadata' => $event->metadata,
+                'createsAlert' => $event->creates_alert,
                 'createdAt' => $event->created_at?->toIso8601String(),
             ])->values(),
         ]);

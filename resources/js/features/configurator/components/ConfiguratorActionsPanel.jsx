@@ -23,6 +23,8 @@ export default function ConfiguratorActionsPanel({
     adminPreview = false,
     embedded = false,
     accountUrl = "/account",
+    portalUrl = "/account#production-requests",
+    unreadMessageCount = 0,
     designStatus = "DRAFT",
     cartAvailable = false,
     carting = false,
@@ -38,6 +40,11 @@ export default function ConfiguratorActionsPanel({
             : accountUrl;
         if (embedded) window.location.assign(url);
         else router.visit(url);
+    };
+
+    const openPortal = () => {
+        if (embedded) window.top.location.assign(portalUrl);
+        else router.visit(portalUrl);
     };
 
     return (
@@ -72,6 +79,21 @@ export default function ConfiguratorActionsPanel({
                     </ActionButton>
                 </div>
 
+                {!adminPreview && (
+                    <button
+                        type="button"
+                        onClick={openPortal}
+                        className="mt-3 flex min-h-10 w-full items-center justify-between rounded-xl border border-violet-200 bg-violet-50 px-3 text-xs font-bold text-violet-700 hover:bg-violet-100"
+                    >
+                        <span>Orders & messages</span>
+                        {unreadMessageCount > 0 && (
+                            <span className="rounded-full bg-rose-600 px-2 py-1 text-[10px] font-black text-white">
+                                {unreadMessageCount} new
+                            </span>
+                        )}
+                    </button>
+                )}
+
                 <div className="mt-4 flex items-center gap-3 px-1">
                     <button
                         type="button"
@@ -81,13 +103,7 @@ export default function ConfiguratorActionsPanel({
                         Change product
                     </button>
                     <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
-                            adminPreview
-                                ? "bg-amber-50 text-amber-700"
-                                : designStatus === "FINAL"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-amber-50 text-amber-700"
-                        }`}
+                        className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${adminPreview ? "bg-amber-50 text-amber-700" : designStatus === "FINAL" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
                     >
                         {adminPreview
                             ? "Admin preview"
@@ -100,7 +116,12 @@ export default function ConfiguratorActionsPanel({
                     <div className="mt-4">
                         <ActionButton
                             onClick={onAddToCart}
-                            disabled={saving || carting || adminPreview || !cartAvailable}
+                            disabled={
+                                saving ||
+                                carting ||
+                                adminPreview ||
+                                !cartAvailable
+                            }
                             title={
                                 cartAvailable
                                     ? "Send this custom design for production review and quotation"
@@ -116,7 +137,8 @@ export default function ConfiguratorActionsPanel({
                         </ActionButton>
                         {!cartAvailable && (
                             <p className="mt-2 text-center text-[11px] leading-4 text-amber-700">
-                                This design product is not connected to a Shopify product yet.
+                                This design product is not connected to a
+                                Shopify product yet.
                             </p>
                         )}
                     </div>

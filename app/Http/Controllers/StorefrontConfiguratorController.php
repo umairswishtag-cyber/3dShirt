@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ConfiguratorProduct;
 use App\Models\User;
 use App\Services\Configurator\ConfiguratorCatalogService;
+use App\Services\Production\ProductionRequestAlertService;
+use App\Services\Storefront\StorefrontContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Services\Storefront\StorefrontContext;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,6 +17,7 @@ class StorefrontConfiguratorController extends Controller
     public function __construct(
         private readonly ConfiguratorCatalogService $catalog,
         private readonly StorefrontContext $storefront,
+        private readonly ProductionRequestAlertService $alerts,
     ) {}
 
     public function show(Request $request): Response
@@ -23,13 +25,16 @@ class StorefrontConfiguratorController extends Controller
         $store = $this->storefront->require($request);
         $catalog = $this->catalog->publishedCatalog($store);
 
+        $links = $this->storefront->links($store);
+        $links['unreadMessageCount'] = $this->alerts->summary(auth('customer')->user())['unreadCount'];
+
         return Inertia::render('Configurator/ConfiguratorPage', [
             'catalog' => $catalog,
             'adminPreview' => false,
             'initialProductId' => count($catalog) === 1
                 ? $catalog[0]['id']
                 : null,
-            'storefront' => $this->storefront->links($store),
+            'storefront' => $links,
         ]);
     }
 

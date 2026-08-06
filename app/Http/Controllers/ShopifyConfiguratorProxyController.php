@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Configurator\ConfiguratorCatalogService;
+use App\Services\Production\ProductionRequestAlertService;
 use App\Services\Storefront\StorefrontContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class ShopifyConfiguratorProxyController extends Controller
     public function __construct(
         private readonly ConfiguratorCatalogService $catalog,
         private readonly StorefrontContext $storefront,
+        private readonly ProductionRequestAlertService $alerts,
     ) {}
 
     public function bootstrap(Request $request): JsonResponse
@@ -25,6 +27,9 @@ class ShopifyConfiguratorProxyController extends Controller
             ->all();
         $links = $this->storefront->links($store);
         $links['configuratorUrl'] = '/pages/configurator';
+        $links['portalUrl'] = '/apps/configurator?portal=1';
+        $customer = $request->attributes->get('shopify.customer');
+        $links['unreadMessageCount'] = $this->alerts->summary($customer)['unreadCount'];
 
         return response()->json([
             'catalog' => $catalog,
@@ -33,8 +38,8 @@ class ShopifyConfiguratorProxyController extends Controller
                 : null,
             'storefront' => $links,
             'customer' => [
-                'name' => $request->attributes->get('shopify.customer')?->name,
-                'email' => $request->attributes->get('shopify.customer')?->email,
+                'name' => $customer?->name,
+                'email' => $customer?->email,
             ],
         ], 200, ['Cache-Control' => 'no-store, private']);
     }

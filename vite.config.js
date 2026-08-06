@@ -20,5 +20,10 @@ export default defineConfig({
             '@': resolve(__dirname, 'resources/js'),
         },
     },
+    // The Shopify storefront bundle is built into public/build/shopify.
+    // Preserve that nested output when rebuilding the admin application alone.
+    build: {
+        emptyOutDir: false,
+    },
 
 });

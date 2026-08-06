@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Services\Shopify\ShopifyAppProxyVerifier;
 use App\Services\Shopify\ShopifyCustomerIdentityService;
 use App\Services\Storefront\StorefrontContext;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Symfony\Component\HttpFoundation\Response;
 
 class ShopifyCustomerSessionController extends Controller
@@ -55,6 +55,7 @@ class ShopifyCustomerSessionController extends Controller
                 ? strtolower($customerEmail)
                 : null,
             'request_id' => Str::isUuid($requestId) ? $requestId : null,
+            'portal' => $request->boolean('portal'),
         ], JSON_THROW_ON_ERROR));
         $relativeLaunchUrl = URL::temporarySignedRoute(
             'shopify.customer.session',
@@ -111,6 +112,12 @@ class ShopifyCustomerSessionController extends Controller
             return redirect()->route('store.customer.requests.show', [
                 'store' => $resolvedStore->storefront_key,
                 'id' => $requestId,
+            ]);
+        }
+
+        if ((bool) ($payload['portal'] ?? false)) {
+            return redirect()->route('store.customer.dashboard', [
+                'store' => $resolvedStore->storefront_key,
             ]);
         }
 

@@ -115,4 +115,9 @@ class DesignCartItem extends Model
     {
         return $this->hasMany(ProductionRequestEvent::class)->oldest();
     }
+
+    public function eventReads(): HasMany
+    {
+        return $this->hasMany(ProductionRequestEventRead::class);
+    }
 }

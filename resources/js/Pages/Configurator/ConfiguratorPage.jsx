@@ -217,8 +217,7 @@ export default function ConfiguratorPage({
             const data = await graphqlRequest(SAVE_DESIGN, {
                 input: {
                     id: designId,
-                    title:
-                        designTitle.trim() || `${state.product.name} design`,
+                    title: designTitle.trim() || `${state.product.name} design`,
                     status: nextStatus,
                     productId: state.product.id,
                     productName: state.product.name,
@@ -294,7 +293,9 @@ export default function ConfiguratorPage({
             );
 
             setCartDialogOpen(false);
-            toast.success("Your design was published and submitted for quotation.");
+            toast.success(
+                "Your design was published and submitted for quotation.",
+            );
             window.top.location.assign(prepared.requestUrl);
         } catch (error) {
             toast.error(error.message);
@@ -349,6 +350,12 @@ export default function ConfiguratorPage({
                     adminPreview={adminPreview}
                     embedded={embedded}
                     accountUrl={storefront?.dashboardUrl ?? "/account"}
+                    portalUrl={
+                        storefront?.portalUrl ??
+                        storefront?.dashboardUrl ??
+                        "/account"
+                    }
+                    unreadMessageCount={storefront?.unreadMessageCount ?? 0}
                     onOpenDesigns={
                         embedded ? () => setDesignLibraryOpen(true) : undefined
                     }
@@ -388,12 +395,20 @@ export default function ConfiguratorPage({
                     onSave={() => saveDesign()}
                     onFinalize={() => saveDesign("FINAL")}
                     onAddToCart={() => setCartDialogOpen(true)}
-                    cartAvailable={embedded && Boolean(product.commerce?.variants?.length)}
+                    cartAvailable={
+                        embedded && Boolean(product.commerce?.variants?.length)
+                    }
                     carting={carting}
                     saving={saving}
                     adminPreview={adminPreview}
                     embedded={embedded}
                     accountUrl={storefront?.dashboardUrl ?? "/account"}
+                    portalUrl={
+                        storefront?.portalUrl ??
+                        storefront?.dashboardUrl ??
+                        "/account"
+                    }
+                    unreadMessageCount={storefront?.unreadMessageCount ?? 0}
                     onOpenDesigns={
                         embedded ? () => setDesignLibraryOpen(true) : undefined
                     }
@@ -446,9 +461,7 @@ export default function ConfiguratorPage({
                     />
 
                     <section
-                        className={`relative min-w-0 overflow-hidden lg:h-auto lg:flex-1 ${
-                            mobilePanelOpen ? "h-1/2 flex-none" : "flex-1"
-                        }`}
+                        className={`relative min-w-0 overflow-hidden lg:h-auto lg:flex-1 ${mobilePanelOpen ? "h-1/2 flex-none" : "flex-1"}`}
                     >
                         <Suspense fallback={<ViewerLoadingState />}>
                             <ShirtViewer />
@@ -544,7 +557,10 @@ export default function ConfiguratorPage({
                         onSave={() => saveDesign()}
                         onFinalize={() => saveDesign("FINAL")}
                         onAddToCart={() => setCartDialogOpen(true)}
-                        cartAvailable={embedded && Boolean(product.commerce?.variants?.length)}
+                        cartAvailable={
+                            embedded &&
+                            Boolean(product.commerce?.variants?.length)
+                        }
                         carting={carting}
                         onChangeProduct={() => setCatalogOpen(true)}
                         onOpenDesigns={
@@ -556,47 +572,59 @@ export default function ConfiguratorPage({
                         adminPreview={adminPreview}
                         embedded={embedded}
                         accountUrl={storefront?.dashboardUrl ?? "/account"}
+                        portalUrl={
+                            storefront?.portalUrl ??
+                            storefront?.dashboardUrl ??
+                            "/account"
+                        }
+                        unreadMessageCount={storefront?.unreadMessageCount ?? 0}
                         designStatus={designStatus}
                     />
 
                     {mobilePanelOpen && (
                         <section className="h-1/2 min-h-0 flex-none overflow-y-auto border-t border-slate-200 bg-white p-4 lg:hidden">
-                        <div className="mb-4 flex items-center justify-between">
-                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                                {activeToolLabel}
-                            </p>
-                            <button
-                                type="button"
-                                onClick={() => setMobilePanelOpen(false)}
-                                className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-lg font-medium text-slate-600"
-                                aria-label="Close panel"
-                            >
-                                ×
-                            </button>
-                        </div>
+                            <div className="mb-4 flex items-center justify-between">
+                                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                                    {activeToolLabel}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setMobilePanelOpen(false)}
+                                    className="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-lg font-medium text-slate-600"
+                                    aria-label="Close panel"
+                                >
+                                    ×
+                                </button>
+                            </div>
 
-                        <ToolPanelContent tool={activeTool} />
+                            <ToolPanelContent tool={activeTool} />
 
-                        {product.capabilities.logos &&
-                            activeTool === "image" &&
-                            selectedObjectId && (
-                                <div className="mt-5 space-y-5 border-t border-slate-100 pt-5">
-                                    <div className="rounded-2xl border border-blue-100 bg-slate-50 p-3">
-                                        <div className="mb-3">
-                                            <p className="text-xs font-black text-slate-900">
-                                                Adjust selected logo
-                                            </p>
-                                            <p className="mt-1 text-[11px] leading-4 text-slate-500">
-                                                Drag, resize, or rotate the logo while the product updates above.
-                                            </p>
+                            {product.capabilities.logos &&
+                                activeTool === "image" &&
+                                selectedObjectId && (
+                                    <div className="mt-5 space-y-5 border-t border-slate-100 pt-5">
+                                        <div className="rounded-2xl border border-blue-100 bg-slate-50 p-3">
+                                            <div className="mb-3">
+                                                <p className="text-xs font-black text-slate-900">
+                                                    Adjust selected logo
+                                                </p>
+                                                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                                                    Drag, resize, or rotate the
+                                                    logo while the product
+                                                    updates above.
+                                                </p>
+                                            </div>
+                                            <Suspense
+                                                fallback={
+                                                    <CanvasLoadingState />
+                                                }
+                                            >
+                                                <DesignCanvas />
+                                            </Suspense>
                                         </div>
-                                        <Suspense fallback={<CanvasLoadingState />}>
-                                            <DesignCanvas />
-                                        </Suspense>
+                                        <ConfigurationPanel embedded />
                                     </div>
-                                    <ConfigurationPanel embedded />
-                                </div>
-                            )}
+                                )}
                         </section>
                     )}
                 </main>
@@ -619,7 +647,6 @@ export default function ConfiguratorPage({
                     onConfirm={submitProductionRequest}
                 />
             </div>
-
         </>
     );
 }

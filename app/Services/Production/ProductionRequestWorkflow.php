@@ -19,7 +19,7 @@ class ProductionRequestWorkflow
         'prepared' => ['submitted', 'cancelled'],
         'submitted' => ['under_review', 'changes_requested', 'rejected', 'cancelled'],
         'under_review' => ['quoted', 'changes_requested', 'rejected', 'cancelled'],
-        'changes_requested' => ['submitted', 'under_review', 'quoted', 'cancelled'],
+        'changes_requested' => ['submitted', 'under_review', 'quoted', 'quote_approved', 'ready_for_print', 'cancelled'],
         'quoted' => ['quoted', 'quote_approved', 'changes_requested', 'rejected', 'cancelled'],
         'quote_approved' => ['payment_pending', 'paid', 'cancelled'],
         'payment_pending' => ['paid', 'cancelled'],
@@ -87,13 +87,14 @@ class ProductionRequestWorkflow
                 'to_status' => $to,
                 'note' => $note,
                 'metadata' => $this->eventMetadata($request, $event),
+                'creates_alert' => $actor !== null,
             ]);
 
             return $request->refresh();
         });
     }
 
-    public function record(DesignCartItem $request, string $event, ?Model $actor = null, ?string $note = null, array $metadata = []): void
+    public function record(DesignCartItem $request, string $event, ?Model $actor = null, ?string $note = null, array $metadata = [], bool $createsAlert = false): void
     {
         $request->events()->create([
             'actor_type' => $this->actorType($actor),
@@ -103,19 +104,24 @@ class ProductionRequestWorkflow
             'to_status' => $request->status,
             'note' => $note,
             'metadata' => $metadata ?: null,
+            'creates_alert' => $createsAlert && $actor !== null,
         ]);
     }
 
     private function actorType(?Model $actor): string
     {
-        if (! $actor) return 'system';
+        if (! $actor) {
+            return 'system';
+        }
 
         return class_basename($actor) === 'Customer' ? 'customer' : 'admin';
     }
 
     private function eventMetadata(DesignCartItem $request, string $event): ?array
     {
-        if ($event !== 'quote_sent') return null;
+        if ($event !== 'quote_sent') {
+            return null;
+        }
 
         return [
             'version' => $request->quote_version,

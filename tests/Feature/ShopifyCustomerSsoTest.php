@@ -53,6 +53,8 @@ class ShopifyCustomerSsoTest extends TestCase
             ->assertOk()
             ->assertJsonPath('storefront.key', 'abc-store.myshopify.com')
             ->assertJsonPath('storefront.configuratorUrl', '/pages/configurator')
+            ->assertJsonPath('storefront.portalUrl', '/apps/configurator?portal=1')
+            ->assertJsonPath('storefront.unreadMessageCount', 0)
             ->assertJsonPath('storefront.shopifyStoreUrl', 'https://abc-store.myshopify.com')
             ->assertJsonPath('storefront.shopifyConfiguratorUrl', 'https://abc-store.myshopify.com/pages/configurator')
             ->assertJsonPath('customer.name', 'Shopify Buyer')
@@ -319,6 +321,29 @@ class ShopifyCustomerSsoTest extends TestCase
             'id' => $productionRequest->public_id,
         ]));
         $this->assertAuthenticatedAs($customer, 'customer');
+    }
+
+    public function test_signed_portal_handoff_opens_the_customer_orders_and_messages_dashboard(): void
+    {
+        $handoff = Crypt::encryptString(json_encode([
+            'shop' => $this->store->storefront_key,
+            'shopify_customer_id' => '123456789',
+            'name' => 'Shopify Buyer',
+            'email' => 'buyer@example.com',
+            'request_id' => null,
+            'portal' => true,
+        ], JSON_THROW_ON_ERROR));
+        $url = URL::temporarySignedRoute(
+            'shopify.customer.session',
+            now()->addMinutes(2),
+            compact('handoff'),
+            absolute: false,
+        );
+
+        $this->get($url)->assertRedirect(route('store.customer.dashboard', [
+            'store' => $this->store->storefront_key,
+        ]));
+        $this->assertAuthenticated('customer');
     }
 
     public function test_shopify_profile_is_upserted_and_existing_email_account_is_linked(): void

@@ -9,12 +9,12 @@ class ProductionRequestEvent extends Model
 {
     protected $fillable = [
         'design_cart_item_id', 'actor_type', 'actor_id', 'event',
-        'from_status', 'to_status', 'note', 'metadata',
+        'from_status', 'to_status', 'note', 'metadata', 'creates_alert',
     ];
 
     protected function casts(): array
     {
-        return ['metadata' => 'array'];
+        return ['metadata' => 'array', 'creates_alert' => 'boolean'];
     }
 
     public function request(): BelongsTo

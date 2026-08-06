@@ -1,7 +1,7 @@
-import { router } from '@inertiajs/react';
-import { useConfiguratorStore } from '../stores/useConfiguratorStore';
+import { router } from "@inertiajs/react";
+import { useConfiguratorStore } from "../stores/useConfiguratorStore";
 
-function HeaderButton({ children, className = '', ...props }) {
+function HeaderButton({ children, className = "", ...props }) {
     return (
         <button
             type="button"
@@ -21,10 +21,12 @@ export default function ConfiguratorHeader({
     saving = false,
     adminPreview = false,
     embedded = false,
-    accountUrl = '/account',
+    accountUrl = "/account",
+    portalUrl = "/account#production-requests",
+    unreadMessageCount = 0,
     onOpenDesigns,
-    designTitle = '',
-    designStatus = 'DRAFT',
+    designTitle = "",
+    designStatus = "DRAFT",
     titleDirty = false,
     onDesignTitleChange,
     cartAvailable = false,
@@ -46,10 +48,15 @@ export default function ConfiguratorHeader({
         }
 
         const url = adminPreview
-            ? route('admin.configurator.products.index')
+            ? route("admin.configurator.products.index")
             : accountUrl;
         if (embedded) window.location.assign(url);
         else router.visit(url);
+    };
+
+    const openPortal = () => {
+        if (embedded) window.top.location.assign(portalUrl);
+        else router.visit(portalUrl);
     };
 
     return (
@@ -81,34 +88,28 @@ export default function ConfiguratorHeader({
                             Change
                         </button>
                         <span
-                            className={`hidden rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:inline ${
-                                adminPreview
-                                    ? 'bg-amber-50 text-amber-700'
-                                    : designStatus === 'FINAL'
-                                      ? 'bg-emerald-50 text-emerald-700'
-                                      : 'bg-amber-50 text-amber-700'
-                            }`}
+                            className={`hidden rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:inline ${adminPreview ? "bg-amber-50 text-amber-700" : designStatus === "FINAL" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
                         >
                             {adminPreview
-                                ? 'Admin preview'
-                                : designStatus === 'FINAL'
-                                  ? 'Published'
-                                  : 'Draft'}
+                                ? "Admin preview"
+                                : designStatus === "FINAL"
+                                  ? "Published"
+                                  : "Draft"}
                         </span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
                         <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                                isDirty ? 'bg-amber-500' : 'bg-emerald-500'
-                            }`}
+                            className={`h-1.5 w-1.5 rounded-full ${isDirty ? "bg-amber-500" : "bg-emerald-500"}`}
                         />
                         <span className="truncate">
                             {isDirty
-                                ? 'Unsaved changes'
+                                ? "Unsaved changes"
                                 : lastSavedAt
-                                  ? `Saved ${new Date(lastSavedAt).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
+                                  ? `Saved ${new Date(
+                                        lastSavedAt,
+                                    ).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
                                     })}`
                                   : product.name}
                         </span>
@@ -117,11 +118,7 @@ export default function ConfiguratorHeader({
             </div>
 
             <div
-                className={`mt-2 grid w-full gap-1.5 sm:gap-2 ${
-                    embedded
-                        ? "grid-cols-[36px_36px_repeat(4,minmax(0,1fr))]"
-                        : "grid-cols-[36px_36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)]"
-                }`}
+                className={`mt-2 grid w-full gap-1.5 sm:gap-2 ${embedded ? "grid-cols-[36px_36px_repeat(4,minmax(0,1fr))]" : "grid-cols-[36px_36px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.25fr)]"}`}
             >
                 <HeaderButton
                     onClick={undo}
@@ -146,16 +143,17 @@ export default function ConfiguratorHeader({
                     disabled={saving || adminPreview}
                     title={
                         adminPreview
-                            ? 'Saving is disabled in administrator preview mode'
-                            : 'Save this design to your account'
+                            ? "Saving is disabled in administrator preview mode"
+                            : "Save this design to your account"
                     }
                     className="border-blue-600 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
                 >
                     {saving ? (
-                        'Saving...'
+                        "Saving..."
                     ) : (
                         <>
-                            Save <span className="hidden sm:inline">design</span>
+                            Save{" "}
+                            <span className="hidden sm:inline">design</span>
                         </>
                     )}
                 </HeaderButton>
@@ -170,11 +168,13 @@ export default function ConfiguratorHeader({
                 {embedded && (
                     <HeaderButton
                         onClick={onAddToCart}
-                        disabled={saving || carting || adminPreview || !cartAvailable}
+                        disabled={
+                            saving || carting || adminPreview || !cartAvailable
+                        }
                         title={
                             cartAvailable
-                                ? 'Send this custom design for production review and quotation'
-                                : 'Connect this product to a Shopify variant before submitting a request'
+                                ? "Send this custom design for production review and quotation"
+                                : "Connect this product to a Shopify variant before submitting a request"
                         }
                         className="border-slate-950 bg-slate-950 text-white hover:bg-slate-800"
                     >
@@ -190,7 +190,7 @@ export default function ConfiguratorHeader({
                     className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 >
                     {adminPreview ? (
-                        'Exit preview'
+                        "Exit preview"
                     ) : (
                         <>
                             <span className="sm:hidden">Designs</span>
@@ -198,6 +198,21 @@ export default function ConfiguratorHeader({
                         </>
                     )}
                 </HeaderButton>
+                {!adminPreview && (
+                    <HeaderButton
+                        onClick={openPortal}
+                        className="relative col-span-full border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
+                    >
+                        Orders
+                        {unreadMessageCount > 0 && (
+                            <span className="ml-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[9px] font-black text-white">
+                                {unreadMessageCount > 99
+                                    ? "99+"
+                                    : unreadMessageCount}
+                            </span>
+                        )}
+                    </HeaderButton>
+                )}
             </div>
         </header>
     );

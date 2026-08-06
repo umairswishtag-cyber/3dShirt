@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Production\ProductionRequestAlertService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
@@ -38,11 +39,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $routeName = (string) $request->route()?->getName();
+        $alertReader = str_starts_with($routeName, 'store.customer.')
+            || str_starts_with($routeName, 'customer.')
+                ? Auth::guard('customer')->user()
+                : Auth::user();
+
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => Auth::user(),
             ],
             'customer' => Auth::guard('customer')->user(),
+            'chatAlerts' => fn () => app(ProductionRequestAlertService::class)->summary($alertReader),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

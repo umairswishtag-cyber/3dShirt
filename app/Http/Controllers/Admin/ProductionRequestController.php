@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DesignCartItem;
+use App\Services\Production\ProductionRequestAlertService;
 use App\Services\Production\ProductionRequestWorkflow;
 use App\Services\Shopify\ShopifyDraftOrderService;
 use App\Support\ProductionRequestData;
@@ -19,18 +20,26 @@ class ProductionRequestController extends Controller
     public function __construct(
         private readonly ProductionRequestWorkflow $workflow,
         private readonly ShopifyDraftOrderService $draftOrders,
+        private readonly ProductionRequestAlertService $alerts,
     ) {}
 
     public function index(Request $request): Response
     {
         $admin = $request->user();
         $query = $this->queryFor($admin)->with(['customer:id,name,email', 'product:id,name']);
-        if ($request->filled('status')) $query->where('status', $request->string('status'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
 
-        $requests = $query->latest('updated_at')->paginate(25)->withQueryString()
-            ->through(fn (DesignCartItem $item) => ProductionRequestData::make($item));
+        $requests = $query->latest('updated_at')->paginate(25)->withQueryString();
+        $unread = $this->alerts->countsByRequest($admin, $requests->getCollection()->pluck('id'));
+        $requests->through(fn (DesignCartItem $item) => array_merge(
+            ProductionRequestData::make($item),
+            ['unreadMessages' => $unread->get($item->id, 0)],
+        ));
 
         $base = $this->queryFor($admin);
+
         return Inertia::render('Admin/ProductionRequests/Index', [
             'requests' => $requests,
             'filters' => $request->only('status'),
@@ -47,10 +56,29 @@ class ProductionRequestController extends Controller
     public function show(Request $request, string $id): Response
     {
         $item = $this->findFor($request, $id);
+        $this->alerts->markRead($item, $request->user());
 
         return Inertia::render('Admin/ProductionRequests/Show', [
             'productionRequest' => ProductionRequestData::make($item, true),
         ]);
+    }
+
+    public function message(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->findFor($request, $id);
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:3000'],
+        ]);
+        $this->workflow->record(
+            $item,
+            'message_sent',
+            $request->user(),
+            trim($data['message']),
+            createsAlert: true,
+        );
+        $this->alerts->markRead($item, $request->user());
+
+        return back()->with('success', 'Message sent.');
     }
 
     public function quote(Request $request, string $id): RedirectResponse

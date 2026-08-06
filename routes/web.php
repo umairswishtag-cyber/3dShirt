@@ -68,6 +68,8 @@ Route::prefix('store/{store}')->middleware('storefront')->group(function () {
             ->whereUuid('id')->name('store.customer.requests.show');
         Route::post('/account/requests/{id}/respond', [CustomerProductionRequestController::class, 'respond'])
             ->whereUuid('id')->name('store.customer.requests.respond');
+        Route::post('/account/requests/{id}/messages', [CustomerProductionRequestController::class, 'message'])
+            ->whereUuid('id')->name('store.customer.requests.messages.store');
     });
 
     Route::get('/api/configurator/catalog', [StorefrontConfiguratorController::class, 'catalog'])
@@ -133,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/production-requests/{id}', [ProductionRequestController::class, 'show'])->whereUuid('id')->name('admin.production-requests.show');
     Route::post('/admin/production-requests/{id}/quote', [ProductionRequestController::class, 'quote'])->whereUuid('id')->name('admin.production-requests.quote');
     Route::post('/admin/production-requests/{id}/action', [ProductionRequestController::class, 'action'])->whereUuid('id')->name('admin.production-requests.action');
+    Route::post('/admin/production-requests/{id}/messages', [ProductionRequestController::class, 'message'])->whereUuid('id')->name('admin.production-requests.messages.store');
     Route::post('/admin/production-requests/{id}/invoice', [ProductionRequestController::class, 'invoice'])->whereUuid('id')->name('admin.production-requests.invoice');
     Route::get('/admin/production-jobs/{id}', [DesignProductionJobController::class, 'show'])
         ->whereUuid('id')

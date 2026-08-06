@@ -75,9 +75,11 @@ class StorefrontContext
             'registerUrl' => route('store.customer.register', $parameters, false),
             'configuratorUrl' => route('store.configurator', $parameters, false),
             'dashboardUrl' => route('store.customer.dashboard', $parameters, false),
+            'portalUrl' => route('store.customer.dashboard', $parameters, false).'#production-requests',
             'requestsUrl' => route('store.customer.dashboard', $parameters, false).'#production-requests',
             'shopifyStoreUrl' => $shopifyStoreUrl,
             'shopifyConfiguratorUrl' => $shopifyStoreUrl.'/pages/configurator',
+            'shopifyPortalUrl' => $shopifyStoreUrl.'/apps/configurator?portal=1',
             'shopifyAccountUrl' => $shopifyStoreUrl.'/account',
             'shopifyLoginUrl' => $shopifyStoreUrl.'/customer_authentication/login?return_to=%2Fpages%2Fconfigurator',
         ];
