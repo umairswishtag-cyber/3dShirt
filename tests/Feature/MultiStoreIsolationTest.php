@@ -4,11 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\ConfiguratorProduct;
 use App\Models\Customer;
+use App\Models\Orders\Order;
 use App\Models\User;
+use App\Repositories\Product\ProductRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Orders\Order;
-use App\Repositories\Product\ProductRepositoryInterface;
 use Tests\TestCase;
 
 class MultiStoreIsolationTest extends TestCase
@@ -63,12 +63,12 @@ class MultiStoreIsolationTest extends TestCase
     {
         [$abc, $xyz] = $this->stores();
 
-        $this->get(route('store.customer.register', ['store' => $abc->storefront_key]))->assertOk();
+        $this->get(route('store.customer.register', ['store' => $abc->storefront_key, 'local' => 1]))->assertOk();
         $this->registerCustomer('Shared Person', 'shared@example.com')->assertOk()
             ->assertJsonPath('data.customerRegister.customer.email', 'shared@example.com');
 
         Auth::guard('customer')->logout();
-        $this->get(route('store.customer.register', ['store' => $xyz->storefront_key]))->assertOk();
+        $this->get(route('store.customer.register', ['store' => $xyz->storefront_key, 'local' => 1]))->assertOk();
         $this->registerCustomer('Shared Person', 'shared@example.com')->assertOk()
             ->assertJsonPath('data.customerRegister.customer.email', 'shared@example.com');
 
@@ -83,7 +83,7 @@ class MultiStoreIsolationTest extends TestCase
         $foreignProduct = $this->product($xyz, 'xyz-shirt', 'XYZ Shirt');
         $customer = $this->customer($abc, 'abc@example.com', 'ABC Customer');
 
-        $this->get(route('store.customer.login', ['store' => $abc->storefront_key]));
+        $this->get(route('store.customer.login', ['store' => $abc->storefront_key, 'local' => 1]));
         $this->actingAs($customer, 'customer');
 
         $document = json_encode([

@@ -55,6 +55,10 @@ Route::get('/api/configurator/catalog', [StorefrontConfiguratorController::class
     ->middleware('storefront')
     ->name('configurator.catalog');
 
+Route::get('/csrf-token', fn (Request $request) => response()->json([
+    'token' => $request->session()->token(),
+], 200, ['Cache-Control' => 'no-store, private']))->name('csrf-token.refresh');
+
 Route::prefix('store/{store}')->middleware('storefront')->group(function () {
     Route::middleware('customer.guest')->group(function () {
         Route::get('/login', [CustomerAccountController::class, 'login'])->name('store.customer.login');
@@ -70,6 +74,8 @@ Route::prefix('store/{store}')->middleware('storefront')->group(function () {
             ->whereUuid('id')->name('store.customer.requests.respond');
         Route::post('/account/requests/{id}/messages', [CustomerProductionRequestController::class, 'message'])
             ->whereUuid('id')->name('store.customer.requests.messages.store');
+        Route::post('/production-assets/{id}', [DesignProductionAssetController::class, 'store'])
+            ->whereUuid('id')->name('store.production-assets.store');
     });
 
     Route::get('/api/configurator/catalog', [StorefrontConfiguratorController::class, 'catalog'])
@@ -87,6 +93,10 @@ Route::get('/', function (Request $request, StorefrontContext $storefront) {
     }
 
     $store = $storefront->resolve($request);
+
+    if ($storefront->isShopifyStore($store)) {
+        return redirect()->away($storefront->shopifyCustomerEntryUrl($store));
+    }
 
     return redirect()->route('store.customer.login', ['store' => $store->storefront_key]);
 })->name('home');

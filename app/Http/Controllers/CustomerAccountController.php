@@ -6,6 +6,7 @@ use App\Services\Configurator\ConfiguratorCatalogService;
 use App\Services\Production\ProductionRequestAlertService;
 use App\Services\Storefront\StorefrontContext;
 use App\Support\ProductionRequestData;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,9 +19,13 @@ class CustomerAccountController extends Controller
         private readonly ProductionRequestAlertService $alerts,
     ) {}
 
-    public function login(Request $request): Response
+    public function login(Request $request): Response|RedirectResponse
     {
         $store = $this->storefront->require($request);
+
+        if (! $request->boolean('local') && $this->storefront->isShopifyStore($store)) {
+            return redirect()->away($this->storefront->shopifyCustomerEntryUrl($store));
+        }
 
         return Inertia::render('Customer/Auth/Login', [
             'intendedUrl' => $request->session()->get('url.intended', route('store.configurator', ['store' => $store->storefront_key])),
@@ -28,9 +33,13 @@ class CustomerAccountController extends Controller
         ]);
     }
 
-    public function register(Request $request): Response
+    public function register(Request $request): Response|RedirectResponse
     {
         $store = $this->storefront->require($request);
+
+        if (! $request->boolean('local') && $this->storefront->isShopifyStore($store)) {
+            return redirect()->away($this->storefront->shopifyCustomerEntryUrl($store));
+        }
 
         return Inertia::render('Customer/Auth/Register', [
             'intendedUrl' => $request->session()->get('url.intended', route('store.configurator', ['store' => $store->storefront_key])),

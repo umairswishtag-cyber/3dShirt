@@ -1,3 +1,5 @@
+import { fetchWithCsrf } from './csrf';
+
 export class GraphQLRequestError extends Error {
     constructor(message, errors = []) {
         super(message);
@@ -17,20 +19,12 @@ export function setGraphqlEndpoint(endpoint) {
 }
 
 export async function graphqlRequest(query, variables = {}) {
-    const csrfToken = document.cookie
-        .split('; ')
-        .find((cookie) => cookie.startsWith('XSRF-TOKEN='))
-        ?.split('=')
-        .slice(1)
-        .join('=');
-    const response = await fetch(graphqlEndpoint, {
+    const response = await fetchWithCsrf(graphqlEndpoint, {
         method: 'POST',
-        credentials: 'same-origin',
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            ...(csrfToken ? { 'X-XSRF-TOKEN': decodeURIComponent(csrfToken) } : {}),
         },
         body: JSON.stringify({ query, variables }),
     });
@@ -43,7 +37,7 @@ export async function graphqlRequest(query, variables = {}) {
             .flat()
             .find(Boolean);
         const message = response.status === 419
-            ? 'Your session expired. Refresh the page and try again.'
+            ? 'Your session could not be restored. Refresh the page and try again.'
             : response.status === 413
               ? 'This design is too large to save. Remove one or more large images and try again.'
               : response.status === 401 || response.status === 403

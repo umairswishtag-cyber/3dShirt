@@ -1,5 +1,6 @@
 import { getDesignTextureCanvas, renderDesignArea } from '@/features/configurator/canvas/designTextureManager';
 import { exportConfiguredModel } from '@/features/configurator/three/modelExportRegistry';
+import { fetchWithCsrf } from '@/services/csrf';
 
 function canvasBlob(canvas) {
     return new Promise((resolve, reject) => {
@@ -51,9 +52,8 @@ export async function uploadProductionAssets(prepared, assets, customer = {}) {
         form.append('print_area_ids[]', areaId);
     });
 
-    const response = await fetch(`${uploadUrl.pathname}${uploadUrl.search}`, {
+    const response = await fetchWithCsrf(`${uploadUrl.pathname}${uploadUrl.search}`, {
         method: 'POST',
-        credentials: 'same-origin',
         headers: { Accept: 'application/json' },
         body: form,
     });

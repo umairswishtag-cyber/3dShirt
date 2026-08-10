@@ -4,6 +4,7 @@ namespace App\Services\Storefront;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StorefrontContext
@@ -66,13 +67,14 @@ class StorefrontContext
     public function links(User $store): array
     {
         $parameters = ['store' => $store->storefront_key];
+        $localAuthParameters = [...$parameters, 'local' => 1];
         $shopifyStoreUrl = 'https://'.$store->name;
 
         return [
             'key' => $store->storefront_key,
             'name' => $store->name,
-            'loginUrl' => route('store.customer.login', $parameters, false),
-            'registerUrl' => route('store.customer.register', $parameters, false),
+            'loginUrl' => route('store.customer.login', $localAuthParameters, false),
+            'registerUrl' => route('store.customer.register', $localAuthParameters, false),
             'configuratorUrl' => route('store.configurator', $parameters, false),
             'dashboardUrl' => route('store.customer.dashboard', $parameters, false),
             'portalUrl' => route('store.customer.dashboard', $parameters, false).'#production-requests',
@@ -83,5 +85,26 @@ class StorefrontContext
             'shopifyAccountUrl' => $shopifyStoreUrl.'/account',
             'shopifyLoginUrl' => $shopifyStoreUrl.'/customer_authentication/login?return_to=%2Fpages%2Fconfigurator',
         ];
+    }
+
+    public function isShopifyStore(User $store): bool
+    {
+        return Str::endsWith(strtolower((string) $store->name), '.myshopify.com');
+    }
+
+    public function shopifyCustomerEntryUrl(
+        User $store,
+        ?string $requestId = null,
+        bool $portal = false,
+    ): string {
+        $base = 'https://'.$store->name;
+
+        if ($requestId && Str::isUuid($requestId)) {
+            return $base.'/apps/configurator?'.http_build_query(['request_id' => $requestId]);
+        }
+
+        return $portal
+            ? $base.'/apps/configurator?portal=1'
+            : $base.'/pages/configurator';
     }
 }

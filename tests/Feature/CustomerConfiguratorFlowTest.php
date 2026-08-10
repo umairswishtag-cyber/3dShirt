@@ -10,6 +10,7 @@ use App\Models\Products\Product;
 use App\Models\User;
 use App\Services\Storefront\StorefrontContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -32,11 +33,15 @@ class CustomerConfiguratorFlowTest extends TestCase
 
     public function test_storefront_root_uses_customer_entry_routes(): void
     {
-        $this->get('/')->assertRedirect(route('store.customer.login', ['store' => $this->store->storefront_key]));
-        $this->get('/login')->assertOk()->assertInertia(
+        $shopifyConfigurator = 'https://abc-store.myshopify.com/pages/configurator';
+
+        $this->get('/')->assertRedirect($shopifyConfigurator);
+        $this->get('/login')->assertRedirect($shopifyConfigurator);
+        $this->get('/register')->assertRedirect($shopifyConfigurator);
+        $this->get('/login?local=1')->assertOk()->assertInertia(
             fn ($page) => $page->component('Customer/Auth/Login'),
         );
-        $this->get('/register')->assertOk()->assertInertia(
+        $this->get('/register?local=1')->assertOk()->assertInertia(
             fn ($page) => $page->component('Customer/Auth/Register'),
         );
     }
@@ -73,8 +78,15 @@ class CustomerConfiguratorFlowTest extends TestCase
     {
         $response = $this->get('/configurator');
 
-        $response->assertRedirect(route('store.customer.login', ['store' => $this->store->storefront_key]));
-        $this->assertStringEndsWith('/configurator', session('url.intended'));
+        $response->assertRedirect('https://abc-store.myshopify.com/pages/configurator');
+        $this->assertNull(session('url.intended'));
+    }
+
+    public function test_guest_opening_customer_portal_returns_through_shopify_sso(): void
+    {
+        $this->get(route('store.customer.dashboard', [
+            'store' => $this->store->storefront_key,
+        ]))->assertRedirect('https://abc-store.myshopify.com/apps/configurator?portal=1');
     }
 
     public function test_customer_can_register_through_graphql_and_open_configurator(): void
@@ -357,8 +369,14 @@ class CustomerConfiguratorFlowTest extends TestCase
         $jobId = $response->json('data.prepareDesignCartItem.id');
         $this->assertSame('123456789', $response->json('data.prepareDesignCartItem.variantId'));
         $this->assertSame(2, $response->json('data.prepareDesignCartItem.quantity'));
-        $this->assertStringEndsWith($jobId, $response->json('data.prepareDesignCartItem.uploadUrl'));
-        $this->assertSame('/apps/configurator?request_id='.$jobId, $response->json('data.prepareDesignCartItem.requestUrl'));
+        $this->assertSame(
+            '/store/'.$this->store->storefront_key.'/production-assets/'.$jobId,
+            $response->json('data.prepareDesignCartItem.uploadUrl'),
+        );
+        $this->assertSame(
+            '/store/'.$this->store->storefront_key.'/account/requests/'.$jobId,
+            $response->json('data.prepareDesignCartItem.requestUrl'),
+        );
         $this->assertDatabaseHas('design_cart_items', [
             'public_id' => $jobId,
             'customer_design_id' => $design->id,
@@ -375,6 +393,32 @@ class CustomerConfiguratorFlowTest extends TestCase
             hash('sha256', json_encode($job->snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
             $job->snapshot_sha256,
         );
+
+        Storage::fake('local');
+        $snapshot = $job->snapshot;
+        $snapshot['design']['document']['designObjects'] = [];
+        $snapshot['product']['printAreas'] = [];
+        $job->update(['snapshot' => $snapshot]);
+        $this->assertAuthenticatedAs($customer, 'customer');
+        $this->assertTrue(DesignCartItem::query()
+            ->where('public_id', $jobId)
+            ->where('customer_id', $customer->id)
+            ->exists());
+
+        $this->post(route('store.production-assets.store', [
+            'store' => $this->store->storefront_key,
+            'id' => $jobId,
+        ]), [
+            'final_model' => UploadedFile::fake()->createWithContent(
+                'final-model.glb',
+                'glTF'.str_repeat("\0", 1024),
+            ),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('status', 'submitted');
+
+        $this->assertSame('submitted', $job->refresh()->status);
+        Storage::disk('local')->assertExists($job->final_model_path);
     }
 
     private function customer(string $email): Customer

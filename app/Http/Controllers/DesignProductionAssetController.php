@@ -6,6 +6,7 @@ use App\Models\DesignCartItem;
 use App\Services\Production\ProductionRequestWorkflow;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -13,9 +14,11 @@ class DesignProductionAssetController extends Controller
 {
     public function __construct(private readonly ProductionRequestWorkflow $workflow) {}
 
-    public function store(Request $request, string $id): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $customer = $request->attributes->get('shopify.customer');
+        $id = (string) $request->route('id');
+        $customer = $request->attributes->get('shopify.customer')
+            ?? Auth::guard('customer')->user();
         $item = DesignCartItem::query()
             ->where('public_id', $id)
             ->where('customer_id', $customer?->id)
