@@ -26,7 +26,6 @@ class DatabaseSeeder extends Seeder
     }
 }
 
-
 // URL: http://127.0.0.1:8000/admin/login
 // Email: superadmin@example.com
 // Password: 2R-#M3TCgOtaw*wkO.7D
