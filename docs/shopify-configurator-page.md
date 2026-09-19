@@ -17,13 +17,13 @@ login.
 
 - Store: `umair-kdfnaegu.myshopify.com`
 - Page: `https://umair-kdfnaegu.myshopify.com/pages/configurator`
-- App host: `https://umair.xoarhigh.info`
+- App host: `https://app.a2zhnt.online/`
 - App proxy root: `https://umair-kdfnaegu.myshopify.com/apps/configurator`
 - Native bootstrap: `/apps/configurator/bootstrap`
 - Native GraphQL API: `/apps/configurator/graphql`
 - Protected configurator assets: `/apps/configurator/assets/...`
 - Production bundle:
-  `https://umair.xoarhigh.info/build/shopify/configurator-embed.js`
+  `https://app.a2zhnt.online/build/shopify/configurator-embed.js`
 
 ## Architecture
 
@@ -186,8 +186,8 @@ merchant has not customized the proxy URL in Shopify Admin.
 
 Open these URLs directly and confirm HTTP 200:
 
-- `https://umair.xoarhigh.info/build/shopify/configurator-embed.js`
-- `https://umair.xoarhigh.info/build/shopify/configurator-embed.css`
+- `https://app.a2zhnt.online/build/shopify/configurator-embed.js`
+- `https://app.a2zhnt.online/build/shopify/configurator-embed.css`
 
 Then rebuild with `npm run build:shopify-embed` and increment the `?v=` cache
 key before deploying the extension again.

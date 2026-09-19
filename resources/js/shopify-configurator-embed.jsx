@@ -4,6 +4,20 @@ import { setGraphqlEndpoint } from '@/services/graphqlClient';
 import '../css/configurator-embed.css';
 
 const mountedHosts = new WeakSet();
+const defaultTargetId = 'shirt-configurator';
+
+function defaultStylesheetUrl() {
+    const scriptUrl = document.currentScript?.src;
+
+    if (!scriptUrl) {
+        return 'https://app.a2zhnt.online/build/shopify/configurator-embed.css';
+    }
+
+    const url = new URL(scriptUrl, window.location.href);
+    url.pathname = url.pathname.replace(/\/configurator-embed\.js$/, '/configurator-embed.css');
+
+    return url.toString();
+}
 
 function proxyUrl(path, config) {
     const url = new URL(path, window.location.origin);
@@ -43,10 +57,10 @@ async function mountConfigurator(host, config) {
     const shadow = host.shadowRoot || host.attachShadow({ mode: 'open' });
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = config.stylesheetUrl;
+    stylesheet.href = config.stylesheetUrl || defaultStylesheetUrl();
     const appRoot = document.createElement('div');
     appRoot.className = 'shirt-configurator-loading';
-    appRoot.textContent = 'Loading your 3D configurator…';
+    appRoot.textContent = 'Loading your 3D configurator...';
     shadow.append(stylesheet, appRoot);
 
     const bootstrapUrl = proxyUrl('/apps/configurator/bootstrap', config);
@@ -95,7 +109,7 @@ function configFrom(element) {
         customerName: element.dataset.customerName || '',
         customerEmail: element.dataset.customerEmail || '',
         loginUrl: element.dataset.loginUrl || '/account/login',
-        stylesheetUrl: element.dataset.stylesheetUrl,
+        stylesheetUrl: element.dataset.stylesheetUrl || '',
     };
 }
 
@@ -107,6 +121,8 @@ function discover() {
     });
 
     if (dedicatedHosts.length > 0) return;
+
+    let embeddedMounts = 0;
 
     document.querySelectorAll('[data-shirt-configurator-embed]').forEach((embed) => {
         if (embed.dataset.initialized === 'true') return;
@@ -123,7 +139,17 @@ function discover() {
             target.appendChild(host);
         }
         mountConfigurator(host, configFrom(embed));
+        embeddedMounts += 1;
     });
+
+    if (embeddedMounts > 0) return;
+
+    const fallbackHost = document.getElementById(defaultTargetId);
+    if (fallbackHost) {
+        fallbackHost.classList.add('shirt-configurator');
+        fallbackHost.dataset.shirtConfiguratorRoot = '';
+        mountConfigurator(fallbackHost, configFrom(fallbackHost));
+    }
 }
 
 if (document.readyState === 'loading') {

@@ -88,7 +88,7 @@ export default function Show({ productionRequest: item }) {
             title={item.designName}
             subtitle={`Request ${item.id}`}
             actions={
-                <Link href={route('admin.production-requests.index')} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold">
+                <Link href={route('admin.production-requests.index')} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base font-bold">
                     Back to requests
                 </Link>
             }
@@ -100,7 +100,7 @@ export default function Show({ productionRequest: item }) {
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wider text-violet-600">Submitted production model</p>
                                 <h2 className="mt-2 text-xl font-black">Final customer GLB</h2>
-                                <p className="mt-1 text-sm text-slate-500">This frozen model is the exact file attached to the quotation request.</p>
+                                <p className="mt-1 text-base text-slate-500">This frozen model is the exact file attached to the quotation request.</p>
                             </div>
                             <span className={`rounded-full px-3 py-1.5 text-xs font-black uppercase ${item.designStatus === 'FINAL' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{item.designStatus === 'FINAL' ? 'Published' : 'Draft'}</span>
                         </div>
@@ -109,13 +109,13 @@ export default function Show({ productionRequest: item }) {
                                 <GlbModelPreview modelUrl={item.finalModelUrl} />
                                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                                     <p className="text-xs text-slate-500">Drag to inspect every side before reviewing or quoting.</p>
-                                    <a href={item.finalModelUrl} download className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800">
+                                    <a href={item.finalModelUrl} download className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base font-bold text-slate-800">
                                         Download final GLB
                                     </a>
                                 </div>
                             </>
                         ) : (
-                            <div className="mt-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-5 py-10 text-center text-sm font-semibold text-amber-800">The final GLB has not finished uploading yet. Refresh this request shortly.</div>
+                            <div className="mt-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-5 py-10 text-center text-base font-semibold text-amber-800">The final GLB has not finished uploading yet. Refresh this request shortly.</div>
                         )}
                     </section>
 
@@ -125,14 +125,14 @@ export default function Show({ productionRequest: item }) {
                                 <p className="text-xs font-bold uppercase tracking-wider text-violet-600">Current stage</p>
                                 <h2 className="mt-2 text-2xl font-black">{labels[item.status] ?? item.status}</h2>
                             </div>
-                            <span className="rounded-full bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-700">Payment: {item.paymentStatus.replaceAll('_', ' ')}</span>
+                            <span className="rounded-full bg-indigo-50 px-4 py-2 text-base font-black text-indigo-700">Payment: {item.paymentStatus.replaceAll('_', ' ')}</span>
                         </div>
                         <div className="mt-6 grid gap-4 sm:grid-cols-3">
                             <Info label="Customer" value={`${item.customer?.name} (${item.customer?.email})`} />
                             <Info label="Product" value={`${item.productName} × ${item.quantity}`} />
                             <Info label="Production files" value={item.assetsReady ? 'Ready' : 'Missing'} />
                         </div>
-                        <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                        <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-base text-slate-600">
                             <p>
                                 <strong>Colors:</strong> {item.summary?.colors}
                             </p>
@@ -144,11 +144,11 @@ export default function Show({ productionRequest: item }) {
                             </p>
                         </div>
                         <div className="mt-5 flex flex-wrap gap-3">
-                            <a href={item.productionManifestUrl} className="rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white">
+                            <a href={item.productionManifestUrl} className="rounded-xl bg-slate-950 px-4 py-2.5 text-base font-bold text-white">
                                 Open production assets
                             </a>
                             {actions.map((action) => (
-                                <button key={action} type="button" onClick={() => runAction(action)} className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white ${action === 'reject' ? 'bg-rose-600' : action === 'request_changes' ? 'bg-amber-600' : 'bg-indigo-600'}`}>
+                                <button key={action} type="button" onClick={() => runAction(action)} className={`rounded-xl px-4 py-2.5 text-base font-bold text-white ${action === 'reject' ? 'bg-rose-600' : action === 'request_changes' ? 'bg-amber-600' : 'bg-indigo-600'}`}>
                                     {actionLabels[action]}
                                 </button>
                             ))}
@@ -158,7 +158,7 @@ export default function Show({ productionRequest: item }) {
                     {['under_review', 'changes_requested', 'quoted'].includes(item.status) && (
                         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 className="text-xl font-black">Prepare quotation</h2>
-                            <p className="mt-1 text-sm text-slate-500">A new submission creates a versioned quote and records it in the timeline.</p>
+                            <p className="mt-1 text-base text-slate-500">A new submission creates a versioned quote and records it in the timeline.</p>
                             <form
                                 onSubmit={(event) => {
                                     event.preventDefault();
@@ -176,7 +176,7 @@ export default function Show({ productionRequest: item }) {
                                     <span className="text-xs font-bold">Scope and notes</span>
                                     <textarea value={quote.data.notes} onChange={(e) => quote.setData('notes', e.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300" rows="4" />
                                 </label>
-                                <button disabled={quote.processing} className="w-fit rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white">
+                                <button disabled={quote.processing} className="w-fit rounded-xl bg-violet-600 px-5 py-3 text-base font-bold text-white">
                                     {quote.processing ? 'Sending...' : item.status === 'quoted' ? 'Send revised quote' : 'Send quotation'}
                                 </button>
                             </form>
@@ -186,18 +186,18 @@ export default function Show({ productionRequest: item }) {
                     {item.status === 'quoted' && (
                         <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
                             <h2 className="font-black text-amber-950">Waiting for customer approval</h2>
-                            <p className="mt-2 text-sm text-amber-800">Do not collect payment or begin production until the customer approves this quote.</p>
+                            <p className="mt-2 text-base text-amber-800">Do not collect payment or begin production until the customer approves this quote.</p>
                         </section>
                     )}
                     {['quote_approved', 'payment_pending'].includes(item.status) && (
                         <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
                             <h2 className="font-black text-emerald-950">Payment collection</h2>
-                            <p className="mt-2 text-sm text-emerald-800">Create a secure Shopify checkout invoice, or record an externally cleared payment.</p>
+                            <p className="mt-2 text-base text-emerald-800">Create a secure Shopify checkout invoice, or record an externally cleared payment.</p>
                             <div className="mt-4 flex gap-3">
-                                <button onClick={() => router.post(route('admin.production-requests.invoice', item.id), {}, { preserveScroll: true })} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">
+                                <button onClick={() => router.post(route('admin.production-requests.invoice', item.id), {}, { preserveScroll: true })} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-base font-bold text-white">
                                     Create & email Shopify invoice
                                 </button>
-                                <button onClick={() => run('mark_paid')} className="rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-800">
+                                <button onClick={() => run('mark_paid')} className="rounded-xl border border-emerald-700 px-4 py-2.5 text-base font-bold text-emerald-800">
                                     Mark paid manually
                                 </button>
                             </div>
@@ -214,8 +214,8 @@ export default function Show({ productionRequest: item }) {
                         <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">Auto refresh</span>
                     </div>
                     <form onSubmit={sendReply} className="mt-5">
-                        <textarea value={reply.data.message} onChange={(event) => reply.setData('message', event.target.value)} rows="3" maxLength="3000" placeholder="Reply to the customer and other administrators..." className="w-full rounded-2xl border-slate-300 text-sm" />
-                        <button disabled={reply.processing || !reply.data.message.trim()} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                        <textarea value={reply.data.message} onChange={(event) => reply.setData('message', event.target.value)} rows="3" maxLength="3000" placeholder="Reply to the customer and other administrators..." className="w-full rounded-2xl border-slate-300 text-base" />
+                        <button disabled={reply.processing || !reply.data.message.trim()} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-50">
                             {reply.processing ? 'Sending...' : 'Send reply'}
                         </button>
                     </form>
@@ -223,11 +223,11 @@ export default function Show({ productionRequest: item }) {
                         {[...item.events].reverse().map((event) => (
                             <div key={event.id} className={`relative border-l-2 pl-5 ${event.event === 'message_sent' ? 'border-violet-400' : 'border-indigo-100'}`}>
                                 <span className={`absolute -left-[7px] top-1 h-3 w-3 rounded-full ${event.event === 'message_sent' ? 'bg-violet-600' : 'bg-indigo-500'}`} />
-                                <p className="text-sm font-black">{event.event === 'message_sent' ? `${event.actorType === 'customer' ? 'Customer' : 'Admin'} reply` : event.event.replaceAll('_', ' ')}</p>
+                                <p className="text-base font-black">{event.event === 'message_sent' ? `${event.actorType === 'customer' ? 'Customer' : 'Admin'} reply` : event.event.replaceAll('_', ' ')}</p>
                                 <p className="mt-1 text-xs text-slate-500">
                                     {event.actorType} · {new Date(event.createdAt).toLocaleString()}
                                 </p>
-                                {event.note && <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{event.note}</p>}
+                                {event.note && <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-base text-slate-700">{event.note}</p>}
                             </div>
                         ))}
                     </div>
@@ -241,7 +241,7 @@ function Info({ label, value }) {
     return (
         <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
-            <p className="mt-1 text-sm font-bold text-slate-800">{value}</p>
+            <p className="mt-1 text-base font-bold text-slate-800">{value}</p>
         </div>
     );
 }

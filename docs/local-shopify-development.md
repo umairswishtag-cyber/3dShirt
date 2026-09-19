@@ -101,7 +101,7 @@ php artisan test --filter=MultiStoreIsolationTest
 The current project uses the stable named tunnel `umair`, whose public URL is:
 
 ```text
-https://umair.xoarhigh.info
+https://app.a2zhnt.online/
 ```
 
 Restart it with `cloudflared tunnel run umair`. Its URL normally does not
@@ -128,13 +128,13 @@ npm run build
 ```
 
 Then make sure `public/hot` does not exist. Do not restart `npm run dev` while
-testing through `https://umair.xoarhigh.info`, because it recreates the marker.
+testing through `https://app.a2zhnt.online/`, because it recreates the marker.
 Rebuild after frontend changes instead.
 
 The generated page should load scripts from:
 
 ```text
-https://umair.xoarhigh.info/build/assets/
+https://app.a2zhnt.online/build/assets/
 ```
 
 It must not contain `localhost:5173`.

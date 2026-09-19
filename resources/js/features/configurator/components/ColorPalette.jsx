@@ -48,7 +48,7 @@ export default function ColorPalette() {
                         />
                     ))}
                 </div>
-                <label className="mt-4 flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:border-slate-300">
+                <label className="mt-4 flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base font-medium text-slate-700 hover:border-slate-300">
                     Custom color
                     <input
                         type="color"

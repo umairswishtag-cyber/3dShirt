@@ -20,7 +20,7 @@ function TextField({ label, error, help, ...props }) {
     return (
         <label className="block">
             <span className="mb-1.5 block text-xs font-bold text-slate-700">{label}</span>
-            <input {...props} className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-blue-500" />
+            <input {...props} className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base focus:border-blue-500 focus:ring-blue-500" />
             {help && <span className="mt-1 block text-[11px] leading-4 text-slate-500">{help}</span>}
             <FieldError message={error} />
         </label>
@@ -86,7 +86,7 @@ function ColorModelField({ zonesValue, mappingsValue, meshes, onZonesChange, onM
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h3 className="text-sm font-black">Colors and model parts</h3>
+                    <h3 className="text-base font-black">Colors and model parts</h3>
                     <p className="mt-0.5 text-[11px] text-slate-500">Create a color, then select every GLB part it should control.</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ function ValidationSummary({ errors }) {
 
     return (
         <div id="configuration-errors" role="alert" className="mb-6 scroll-mt-24 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-900">
-            <p className="text-sm font-black">Configuration was not saved</p>
+            <p className="text-base font-black">Configuration was not saved</p>
             <p className="mt-1 text-xs">Fix the following items and try again:</p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs font-semibold">
                 {messages.map((message) => <li key={message}>{message}</li>)}
@@ -254,7 +254,7 @@ function PatternManager({ product }) {
             </form>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {product.patterns.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 sm:col-span-2 xl:col-span-3">No patterns uploaded for this product.</p>}
+                {product.patterns.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-base text-slate-500 sm:col-span-2 xl:col-span-3">No patterns uploaded for this product.</p>}
                 {product.patterns.map((pattern) => {
                     const activeEdit = editing?.id === pattern.id ? editing : null;
                     const patternVisibility = visibility(pattern);
@@ -278,7 +278,7 @@ function PatternManager({ product }) {
                                         <div className="flex gap-2"><button type="button" onClick={() => savePattern(pattern)} className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white">Save pattern</button><button type="button" onClick={() => setEditing(null)} className="rounded-lg border px-3 py-2 text-xs font-bold">Cancel</button></div>
                                     </div>
                                 ) : (
-                                    <><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-sm font-bold">{pattern.name}</h3><span className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${patternVisibility.className}`}>{patternVisibility.label}</span></div><p className="mt-0.5 text-[10px] text-slate-500">{pattern.color_slots.length} editable colors</p><div className="mt-2 flex gap-1.5"><button type="button" onClick={() => setEditing({ ...pattern, color_slots: pattern.color_slots.map((slot) => ({ ...slot })) })} className="rounded-lg border px-2.5 py-1.5 text-[10px] font-bold">Edit colors</button><button type="button" onClick={() => window.confirm('Delete this pattern?') && router.delete(route('admin.configurator.patterns.destroy', [product.id, pattern.id]), { preserveScroll: true })} className="rounded-lg border border-red-200 px-2.5 py-1.5 text-[10px] font-bold text-red-600">Delete</button></div></>
+                                    <><div className="flex flex-wrap items-center gap-1.5"><h3 className="text-base font-bold">{pattern.name}</h3><span className={`rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${patternVisibility.className}`}>{patternVisibility.label}</span></div><p className="mt-0.5 text-[10px] text-slate-500">{pattern.color_slots.length} editable colors</p><div className="mt-2 flex gap-1.5"><button type="button" onClick={() => setEditing({ ...pattern, color_slots: pattern.color_slots.map((slot) => ({ ...slot })) })} className="rounded-lg border px-2.5 py-1.5 text-[10px] font-bold">Edit colors</button><button type="button" onClick={() => window.confirm('Delete this pattern?') && router.delete(route('admin.configurator.patterns.destroy', [product.id, pattern.id]), { preserveScroll: true })} className="rounded-lg border border-red-200 px-2.5 py-1.5 text-[10px] font-bold text-red-600">Delete</button></div></>
                                 )}
                             </div>
                         </article>
@@ -466,12 +466,12 @@ export default function ProductEditor({ product, audiences = [], categories = []
         <AdminShell compact title={editing ? `Configure ${product.name}` : 'Add new product'} subtitle="Start with what the product is, choose who it is for, then connect its 3D model and customization options.">
             <nav className="sticky top-3 z-20 mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur" aria-label="Product editor sections">
                 <div className="flex flex-wrap gap-2">
-                    <a href="#product-details" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">Product</a>
-                    <a href="#product-assets" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">GLB & capabilities</a>
-                    <a href="#model-bindings" className="rounded-xl px-4 py-2 text-md font-bold text-slate-700 hover:bg-slate-100">Customization</a>
-                    {editing && <a href="#product-patterns" className="rounded-xl bg-purple-600 px-4 py-2 text-md font-bold text-white hover:bg-purple-700">SVG patterns</a>}
+                    <a href="#product-details" className="rounded-xl px-4 py-2 text-base font-bold text-slate-700 hover:bg-slate-100">Product</a>
+                    <a href="#product-assets" className="rounded-xl px-4 py-2 text-base font-bold text-slate-700 hover:bg-slate-100">GLB & capabilities</a>
+                    <a href="#model-bindings" className="rounded-xl px-4 py-2 text-base font-bold text-slate-700 hover:bg-slate-100">Customization</a>
+                    {editing && <a href="#product-patterns" className="rounded-xl bg-purple-600 px-4 py-2 text-base font-bold text-white hover:bg-purple-700">SVG patterns</a>}
                 </div>
-                {editing && product.is_published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-xl px-3 py-2 text-md font-bold button text-emerald-700 hover:bg-emerald-50">View Product on Storefront</Link>}
+                {editing && product.is_published && <Link href={route('admin.configurator.preview', product.id)} className="rounded-xl px-3 py-2 text-base font-bold button text-emerald-700 hover:bg-emerald-50">View Product on Storefront</Link>}
             </nav>
 
             <ValidationSummary errors={form.errors} />
@@ -488,7 +488,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                             <div className="md:col-span-3"><TextField label="Quantity" type="number" min="0" step="1" value={form.data.inventory_quantity} onChange={(e) => form.setData('inventory_quantity', e.target.value)} help="Primary Shopify location" error={form.errors.inventory_quantity} /></div>
                             <label className="block md:col-span-6">
                                 <span className="mb-1.5 block text-xs font-bold">Shopify status</span>
-                                <select value={form.data.shopify_status} onChange={(event) => form.setData('shopify_status', event.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">
+                                <select value={form.data.shopify_status} onChange={(event) => form.setData('shopify_status', event.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-base">
                                     <option value="active">Active</option>
                                     <option value="draft">Draft</option>
                                     <option value="unlisted">Unlisted</option>
@@ -504,11 +504,11 @@ export default function ProductEditor({ product, audiences = [], categories = []
                                 </div>
                             )}
                             {form.errors.shopify && <div className="md:col-span-12"><FieldError message={form.errors.shopify} /></div>}
-                            <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Product category <span className="font-medium text-slate-400">— what it is</span></span><select value={form.data.category} onChange={(e) => form.setData({ ...form.data, category: e.target.value, print_areas: '{}', pattern_zones: '[]' })} className="h-11 w-full rounded-xl border-slate-300 text-sm">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Examples: shirts, hats, caps, footwear, cups. Changing this resets artwork areas.</span><FieldError message={form.errors.category} /></label>
-                            <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Customer group <span className="font-medium text-slate-400">— who it is for</span></span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-sm">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Use Unisex for products without a gender-specific fit. <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Manage catalog structure</a>.</span><FieldError message={form.errors.gender} /></label>
+                            <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Product category <span className="font-medium text-slate-400">— what it is</span></span><select value={form.data.category} onChange={(e) => form.setData({ ...form.data, category: e.target.value, print_areas: '{}', pattern_zones: '[]' })} className="h-11 w-full rounded-xl border-slate-300 text-base">{categories.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Examples: shirts, hats, caps, footwear, cups. Changing this resets artwork areas.</span><FieldError message={form.errors.category} /></label>
+                            <label className="block md:col-span-6"><span className="mb-1.5 block text-xs font-bold">Customer group <span className="font-medium text-slate-400">— who it is for</span></span><select value={form.data.gender} onChange={(e) => form.setData('gender', e.target.value)} className="h-11 w-full rounded-xl border-slate-300 text-base">{audiences.map((item) => <option key={item.slug} value={item.slug}>{item.label}</option>)}</select><span className="mt-1.5 block text-[11px] text-slate-500">Use Unisex for products without a gender-specific fit. <a href={route('admin.configurator.taxonomies.index')} className="font-bold text-blue-700 underline">Manage catalog structure</a>.</span><FieldError message={form.errors.gender} /></label>
                             <div className="md:col-span-6"><TextField label="Display order" type="number" min="0" value={form.data.sort_order} onChange={(e) => form.setData('sort_order', Number(e.target.value))} error={form.errors.sort_order} /></div>
                             {/* <div className="md:col-span-3"><TextField label="Viewer fit height" type="number" min="0.1" max="20" step="0.05" value={form.data.fit_height} onChange={(e) => form.setData('fit_height', Number(e.target.value))} error={form.errors.fit_height} /></div> */}
-                            <label className="flex min-h-0 flex-col md:col-span-12"><span className="mb-1.5 block text-xs font-bold">Description</span><textarea value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} rows="4" className="min-h-28 w-full flex-1 rounded-xl border-slate-300 text-sm" /><FieldError message={form.errors.description} /></label>
+                            <label className="flex min-h-0 flex-col md:col-span-12"><span className="mb-1.5 block text-xs font-bold">Description</span><textarea value={form.data.description} onChange={(e) => form.setData('description', e.target.value)} rows="4" className="min-h-28 w-full flex-1 rounded-xl border-slate-300 text-base" /><FieldError message={form.errors.description} /></label>
                         </div>
 
                         <div id="product-assets" className="scroll-mt-24 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
@@ -554,7 +554,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     {!editing && (
                         <div id="product-patterns" className={`mt-3 scroll-mt-24 rounded-xl border p-3 ${form.data.supports_patterns ? 'border-purple-200 bg-purple-50' : 'border-slate-200 bg-slate-50'}`}>
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h3 className="text-sm font-black text-slate-950">Initial SVG pattern</h3>
+                                <h3 className="text-base font-black text-slate-950">Initial SVG pattern</h3>
                                 <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black uppercase text-slate-500">Optional</span>
                             </div>
                             <p className="mt-1 text-xs leading-5 text-slate-600">Upload the first pattern with this model. Selecting an SVG enables pattern customization. After saving or publishing, you can manage additional patterns from the edit screen.</p>
@@ -589,7 +589,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     <p className="mt-1 text-xs leading-5 text-slate-500">Choose what customers can change. The 3D model is checked and connected automatically wherever possible.</p>
 
                     {!form.data.supports_colors && !form.data.supports_patterns && !form.data.supports_logos && (
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-base text-slate-600">
                             This product is displayed as supplied; customers cannot change colors or add artwork.
                         </div>
                     )}
@@ -647,15 +647,15 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     </p>
                     <div className="flex flex-wrap gap-2">
                         {editing && product.is_published && (
-                            <button type="button" disabled={form.processing} onClick={() => sendConfiguration(false)} className="rounded-xl border border-amber-300 bg-white px-4 py-3 text-sm font-black text-amber-800 disabled:opacity-50">
+                            <button type="button" disabled={form.processing} onClick={() => sendConfiguration(false)} className="rounded-xl border border-amber-300 bg-white px-4 py-3 text-base font-black text-amber-800 disabled:opacity-50">
                                 Unpublish
                             </button>
                         )}
-                        <button type="submit" disabled={form.processing} className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-800 disabled:opacity-50">
+                        <button type="submit" disabled={form.processing} className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-base font-black text-slate-800 disabled:opacity-50">
                             {form.processing ? 'Saving…' : editing && product.is_published ? 'Save live changes' : 'Save draft'}
                         </button>
                         {(!editing || !product.is_published) && (
-                            <button type="button" disabled={form.processing || publishBlockers.length > 0} onClick={() => sendConfiguration(true)} className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-40" title={publishBlockers.length > 0 ? 'Complete the publishing checklist first' : undefined}>
+                            <button type="button" disabled={form.processing || publishBlockers.length > 0} onClick={() => sendConfiguration(true)} className="rounded-xl bg-blue-600 px-5 py-3 text-base font-black text-white disabled:cursor-not-allowed disabled:opacity-40" title={publishBlockers.length > 0 ? 'Complete the publishing checklist first' : undefined}>
                                 {editing ? 'Publish to storefront' : 'Publish product'}
                             </button>
                         )}

@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Actions\InstallShopWithExpiringToken;
+use App\Services\Shopify\ShopifyTokenManager;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Osiset\ShopifyApp\Actions\InstallShop;
+use Osiset\ShopifyApp\Actions\VerifyThemeSupport;
+use Osiset\ShopifyApp\Contracts\Commands\Shop as ShopifyShopCommand;
+use Osiset\ShopifyApp\Contracts\Queries\Shop as ShopifyShopQuery;
 use App\Repositories\Order\OrderRepository;
 use App\Repositories\Product\ProductRepository;
 use App\Repositories\Order\OrderRepositoryInterface;
@@ -28,6 +34,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(InstallShop::class, fn ($app) => new InstallShopWithExpiringToken(
+            $app->make(ShopifyShopQuery::class),
+            $app->make(ShopifyShopCommand::class),
+            $app->make(VerifyThemeSupport::class),
+            $app->make(ShopifyTokenManager::class),
+        ));
+
         $this->app->bind(
                 ProductRepositoryInterface::class,
                 ProductRepository::class

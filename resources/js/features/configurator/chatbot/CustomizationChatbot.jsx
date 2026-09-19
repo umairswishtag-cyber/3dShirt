@@ -88,7 +88,7 @@ export default function CustomizationChatbot({ config, product, adminPreview = f
                         <div className="relative flex items-center gap-3">
                             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/25"><ChatIcon /></span>
                             <div className="min-w-0">
-                                <h2 className="truncate text-sm font-bold">Customization guide</h2>
+                                <h2 className="truncate text-base font-bold">Customization guide</h2>
                                 <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-indigo-100">
                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                                     Local help · No external service
@@ -141,10 +141,10 @@ export default function CustomizationChatbot({ config, product, adminPreview = f
                                     }
                                 }}
                                 placeholder="Ask about customizing…"
-                                className="max-h-24 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus:border-0 focus:ring-0"
+                                className="max-h-24 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-base text-slate-900 shadow-none outline-none placeholder:text-slate-400 focus:border-0 focus:ring-0"
                             />
                             <button type="submit" disabled={! input.trim()} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-600 text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300" aria-label="Send question">
-                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m4 4 17 8-17 8 3-8-3-8Z" /><path d="M7 12h14" /></svg>
+                                <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m4 4 17 8-17 8 3-8-3-8Z" /><path d="M7 12h14" /></svg>
                             </button>
                         </div>
                         <p className="mt-2 text-center text-[10px] text-slate-400">Customization guidance only · Messages are not stored</p>

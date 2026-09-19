@@ -48,8 +48,8 @@ class AuthenticationTest extends TestCase
         $response
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('ziggy.url', 'https://umair.xoarhigh.info')
-                ->where('ziggy.location', 'https://umair.xoarhigh.info/admin/login')
+                ->where('ziggy.url', 'https://app.a2zhnt.online/')
+                ->where('ziggy.location', 'https://app.a2zhnt.online/admin/login')
             )
             ->assertDontSee('http://umair.xoarhigh.info/admin/login', escape: false);
     }

@@ -298,7 +298,7 @@ export default function PrintAreaBindingSelector({ modelFile, modelUrl, colorZon
     return (
         <div className="xl:col-span-2">
             <div>
-                <p className="text-sm font-black text-slate-800">Pattern areas and logo zones</p>
+                <p className="text-base font-black text-slate-800">Pattern areas and logo zones</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">Settings stay in the left panel while the larger model canvas remains visible on the right.</p>
             </div>
 

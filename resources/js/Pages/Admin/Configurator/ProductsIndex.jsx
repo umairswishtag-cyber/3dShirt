@@ -14,12 +14,12 @@ export default function ProductsIndex({ products, canCreateProducts = false, cre
             title="Storefront garments"
             subtitle="Build and maintain every customizable product available in your 3D storefront."
             actions={canCreateProducts ? (
-                <Link href={createProductUrl} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl">
+                <Link href={createProductUrl} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-base font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl">
                     <UiIcon name="plus" className="h-4 w-4" /> Add new product
                 </Link>
             ) : null}
         >
-            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm leading-6 text-indigo-950">
+            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-base leading-6 text-indigo-950">
                 <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 shadow-sm"><UiIcon name="sparkles" className="h-4 w-4" /></span>
                 <p>Published products appear automatically in the storefront selector. Patterns remain assigned to their own GLB product, keeping every catalog item isolated.</p>
             </div>
@@ -28,8 +28,8 @@ export default function ProductsIndex({ products, canCreateProducts = false, cre
                 <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-14 text-center shadow-sm">
                     <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><UiIcon name="shirt" className="h-8 w-8" /></span>
                     <p className="mt-5 text-lg font-bold">No configurator products yet</p>
-                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{canCreateProducts ? 'Upload the first GLB as a draft, configure its capabilities, then publish it.' : 'No store has created a configurable product yet.'}</p>
-                    {canCreateProducts && <Link href={createProductUrl} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white"><UiIcon name="plus" className="h-4 w-4" />Create first product</Link>}
+                    <p className="mx-auto mt-2 max-w-md text-base text-slate-500">{canCreateProducts ? 'Upload the first GLB as a draft, configure its capabilities, then publish it.' : 'No store has created a configurable product yet.'}</p>
+                    {canCreateProducts && <Link href={createProductUrl} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-base font-bold text-white"><UiIcon name="plus" className="h-4 w-4" />Create first product</Link>}
                 </div>
             ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
@@ -48,7 +48,7 @@ export default function ProductsIndex({ products, canCreateProducts = false, cre
                                         </span>
                                     </div>
                                     <p className="mt-1.5 text-xs capitalize text-slate-500">{product.gender} · {product.category}</p>
-                                    <p className="mt-3 line-clamp-2 text-sm leading-5 text-slate-600">{product.description || 'No description has been added yet.'}</p>
+                                    <p className="mt-3 line-clamp-2 text-base leading-5 text-slate-600">{product.description || 'No description has been added yet.'}</p>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <span className="inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200/70">{product.activePatternsCount}/{product.patternsCount} active patterns</span>
                                         <span className="inline-flex rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200/70">{product.price} · Qty {product.inventory_quantity}</span>

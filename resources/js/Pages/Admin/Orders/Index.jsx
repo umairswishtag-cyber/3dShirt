@@ -41,7 +41,7 @@ export default function Index({ orders, summary, filters, platformView = false, 
                         onStart: () => setSyncing(true),
                         onFinish: () => setSyncing(false),
                     })}
-                    className="relative z-10 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="relative z-10 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-base font-bold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     <UiIcon name="refresh" className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} /> {syncing ? 'Syncing...' : 'Refresh'}
                 </button>
@@ -50,7 +50,7 @@ export default function Index({ orders, summary, filters, platformView = false, 
             {accessRestricted && (
                 <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700"><UiIcon name="lock" className="h-[18px] w-[18px]" /></span>
-                    <div><p className="text-sm font-black">Shopify order access is awaiting approval</p><p className="mt-1 text-xs leading-5 text-amber-800">Shopify reports {shopifyReportedCount} {shopifyReportedCount === 1 ? 'order' : 'orders'}, but it currently blocks this app from reading Order data. Approve protected customer data access in the Shopify Partner dashboard; automatic sync will then populate this page.</p></div>
+                    <div><p className="text-base font-black">Shopify order access is awaiting approval</p><p className="mt-1 text-xs leading-5 text-amber-800">Shopify reports {shopifyReportedCount} {shopifyReportedCount === 1 ? 'order' : 'orders'}, but it currently blocks this app from reading Order data. Approve protected customer data access in the Shopify Partner dashboard; automatic sync will then populate this page.</p></div>
                 </div>
             )}
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -69,16 +69,16 @@ export default function Index({ orders, summary, filters, platformView = false, 
                     <label className="relative block">
                         <span className="sr-only">Search orders</span>
                         <UiIcon name="search" className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                        <input value={values.query} onChange={(event) => setValues({ ...values, query: event.target.value })} placeholder="Search order, customer or email" className="h-11 w-full rounded-xl border-slate-200 pl-10 text-sm focus:border-indigo-400 focus:ring-indigo-400" />
+                        <input value={values.query} onChange={(event) => setValues({ ...values, query: event.target.value })} placeholder="Search order, customer or email" className="h-11 w-full rounded-xl border-slate-200 pl-10 text-base focus:border-indigo-400 focus:ring-indigo-400" />
                     </label>
                     <FilterSelect label="Payment" value={values.payment} onChange={(payment) => setValues({ ...values, payment })} options={['paid', 'pending', 'authorized', 'partially_paid', 'refunded', 'partially_refunded', 'unpaid']} />
                     <FilterSelect label="Fulfillment" value={values.fulfillment} onChange={(fulfillment) => setValues({ ...values, fulfillment })} options={['fulfilled', 'unfulfilled', 'partially_fulfilled', 'in_progress', 'on_hold', 'scheduled']} />
-                    <select aria-label="Order period" value={values.period} onChange={(event) => setValues({ ...values, period: event.target.value })} className="h-11 rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-indigo-400 focus:ring-indigo-400">
+                    <select aria-label="Order period" value={values.period} onChange={(event) => setValues({ ...values, period: event.target.value })} className="h-11 rounded-xl border-slate-200 text-base font-semibold text-slate-700 focus:border-indigo-400 focus:ring-indigo-400">
                         <option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option>
                     </select>
                     <div className="flex gap-2">
-                        <button className="h-11 rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-600/15 transition hover:bg-indigo-700">Filter</button>
-                        <button type="button" onClick={clear} className="h-11 rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-500 transition hover:bg-slate-50">Clear</button>
+                        <button className="h-11 rounded-xl bg-indigo-600 px-4 text-base font-bold text-white shadow-md shadow-indigo-600/15 transition hover:bg-indigo-700">Filter</button>
+                        <button type="button" onClick={clear} className="h-11 rounded-xl border border-slate-200 px-3 text-base font-bold text-slate-500 transition hover:bg-slate-50">Clear</button>
                     </div>
                 </div>
             </form>
@@ -105,13 +105,13 @@ function OrderRow({ order, platformView }) {
     return (
         <Link href={order.url} className="group block px-5 py-4 transition hover:bg-indigo-50/35 lg:grid lg:grid-cols-[minmax(130px,.75fr)_minmax(210px,1.25fr)_minmax(220px,1.2fr)_90px_120px_140px_28px] lg:items-center lg:gap-4">
             <div className="flex items-center justify-between gap-3 lg:block">
-                <div><p className="text-sm font-black text-slate-950 group-hover:text-indigo-700">{order.name}</p>{platformView && <p className="mt-1 max-w-[180px] truncate text-[11px] text-slate-500">{order.store}</p>}</div>
-                <p className="text-sm font-black text-slate-950 lg:hidden">{money(order.total, order.currency)}</p>
+                <div><p className="text-base font-black text-slate-950 group-hover:text-indigo-700">{order.name}</p>{platformView && <p className="mt-1 max-w-[180px] truncate text-[11px] text-slate-500">{order.store}</p>}</div>
+                <p className="text-base font-black text-slate-950 lg:hidden">{money(order.total, order.currency)}</p>
             </div>
-            <div className="mt-3 min-w-0 lg:mt-0"><p className="truncate text-sm font-bold text-slate-800">{order.customerName}</p><p className="mt-0.5 truncate text-xs text-slate-500">{order.customerEmail || 'No email provided'}</p></div>
+            <div className="mt-3 min-w-0 lg:mt-0"><p className="truncate text-base font-bold text-slate-800">{order.customerName}</p><p className="mt-0.5 truncate text-xs text-slate-500">{order.customerEmail || 'No email provided'}</p></div>
             <div className="mt-3 flex flex-wrap gap-2 lg:mt-0"><OrderStatusBadge status={order.paymentStatus} /><OrderStatusBadge status={order.fulfillmentStatus} /></div>
             <div className="mt-3 flex items-center justify-between text-xs text-slate-500 lg:mt-0 lg:block"><span>{order.itemQuantity} {order.itemQuantity === 1 ? 'item' : 'items'}</span>{order.customizedItemsCount > 0 && <span className="ml-2 rounded-full bg-violet-50 px-2 py-1 text-[10px] font-black text-violet-700">3D × {order.customizedItemsCount}</span>}</div>
-            <p className="hidden text-sm font-black text-slate-950 lg:block">{money(order.total, order.currency)}</p>
+            <p className="hidden text-base font-black text-slate-950 lg:block">{money(order.total, order.currency)}</p>
             <p className="mt-3 text-xs text-slate-500 lg:mt-0">{dateTime(order.createdAt)}</p>
             <UiIcon name="arrow" className="hidden h-4 w-4 text-slate-300 transition group-hover:translate-x-1 group-hover:text-indigo-600 lg:block" />
         </Link>
@@ -119,11 +119,11 @@ function OrderRow({ order, platformView }) {
 }
 
 function FilterSelect({ label, value, onChange, options }) {
-    return <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-xl border-slate-200 text-sm font-semibold text-slate-700 focus:border-indigo-400 focus:ring-indigo-400"><option value="">All {label.toLowerCase()} statuses</option>{options.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}</option>)}</select>;
+    return <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-xl border-slate-200 text-base font-semibold text-slate-700 focus:border-indigo-400 focus:ring-indigo-400"><option value="">All {label.toLowerCase()} statuses</option>{options.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}</option>)}</select>;
 }
 
 function EmptyOrders({ filtered }) {
-    return <div className="px-6 py-20 text-center"><span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-indigo-50 text-indigo-600"><UiIcon name="orders" className="h-8 w-8" /></span><h2 className="mt-5 text-lg font-bold text-slate-950">{filtered ? 'No matching orders' : 'No orders received yet'}</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">{filtered ? 'Try clearing one or more filters.' : 'Orders will appear here automatically after Shopify sends them to the app.'}</p></div>;
+    return <div className="px-6 py-20 text-center"><span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-indigo-50 text-indigo-600"><UiIcon name="orders" className="h-8 w-8" /></span><h2 className="mt-5 text-lg font-bold text-slate-950">{filtered ? 'No matching orders' : 'No orders received yet'}</h2><p className="mx-auto mt-2 max-w-md text-base leading-6 text-slate-500">{filtered ? 'Try clearing one or more filters.' : 'Orders will appear here automatically after Shopify sends them to the app.'}</p></div>;
 }
 
 function Pagination({ links }) {

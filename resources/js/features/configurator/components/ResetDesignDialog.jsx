@@ -5,7 +5,7 @@ export default function ResetDesignDialog({ show, onClose, onConfirm }) {
         <Modal show={show} maxWidth="md" onClose={onClose}>
             <div className="p-6">
                 <h2 className="text-lg font-bold text-slate-950">Reset this design?</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-base leading-6 text-slate-600">
                     All shirt colors and uploaded images will return to their defaults. Your saved local draft will also be removed.
                 </p>
                 <div className="mt-6 flex justify-end gap-2">
@@ -31,4 +31,3 @@ export default function ResetDesignDialog({ show, onClose, onConfirm }) {
         </Modal>
     );
 }
-

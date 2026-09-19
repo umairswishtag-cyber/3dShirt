@@ -95,7 +95,7 @@ export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], 
 }
 
 function PreviewState({ icon, title, description, loading = false, compact = false }) {
-    return <div className={`absolute inset-0 grid place-items-center text-center ${compact ? 'p-2' : 'p-6'}`}><div><span className={`mx-auto grid place-items-center bg-white text-indigo-600 shadow-md ${compact ? 'h-8 w-8 rounded-lg' : 'h-12 w-12 rounded-2xl'} ${loading ? 'animate-pulse' : ''}`}><UiIcon name={icon} className={compact ? 'h-4 w-4' : 'h-6 w-6'} /></span><p className={`${compact ? 'mt-1 text-[9px]' : 'mt-3 text-sm'} font-black text-slate-800`}>{title}</p>{!compact && <p className="mt-1 text-xs text-slate-500">{description}</p>}</div></div>;
+    return <div className={`absolute inset-0 grid place-items-center text-center ${compact ? 'p-2' : 'p-6'}`}><div><span className={`mx-auto grid place-items-center bg-white text-indigo-600 shadow-md ${compact ? 'h-8 w-8 rounded-lg' : 'h-12 w-12 rounded-2xl'} ${loading ? 'animate-pulse' : ''}`}><UiIcon name={icon} className={compact ? 'h-4 w-4' : 'h-6 w-6'} /></span><p className={`${compact ? 'mt-1 text-[9px]' : 'mt-3 text-base'} font-black text-slate-800`}>{title}</p>{!compact && <p className="mt-1 text-xs text-slate-500">{description}</p>}</div></div>;
 }
 
 function PreviewFailed({ compact = false }) {

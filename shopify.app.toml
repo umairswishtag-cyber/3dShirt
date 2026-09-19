@@ -1,6 +1,6 @@
-client_id = "8faf4c39541ff431e3c4046bcbda9a62"
+client_id = "57c4d43a7280876f83581148a9a30c87"
 name = "3D Shirt Configurator"
-application_url = "https://umair.xoarhigh.info"
+application_url = "https://app.a2zhnt.online/"
 embedded = false
 
 [build]
@@ -12,7 +12,7 @@ scopes = "read_products,write_products,read_publications,write_publications,read
 
 [auth]
 redirect_urls = [
-  "https://umair.xoarhigh.info/authenticate"
+  "https://app.a2zhnt.online/authenticate"
 ]
 
 [webhooks]

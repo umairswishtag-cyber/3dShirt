@@ -32,7 +32,7 @@ The two administrator roles should not share the same entry flow:
 
 | Role | Entry point | Authentication |
 | --- | --- | --- |
-| Platform Super Admin | `https://umair.xoarhigh.info/admin/login` | Application email and password |
+| Platform Super Admin | `https://app.a2zhnt.online/admin/login` | Application email and password |
 | Shopify Store Admin | **Shopify Admin > Apps > 3D Shirt Configurator** | Shopify OAuth and App Bridge session token |
 
 The Store Admin should not be asked to create or remember another password. When
@@ -96,7 +96,7 @@ It is not necessary to create a second Store Admin.
 
 The fallback local sign-in page is:
 
-`https://umair.xoarhigh.info/admin/login`
+`https://app.a2zhnt.online/admin/login`
 
 If the Store Admin's local password is unknown, reset the credentials on the
 existing shop record. Do not register a new user as a replacement, because the
@@ -107,7 +107,7 @@ customers or products.
 
 The Super Admin signs in at the same page:
 
-`https://umair.xoarhigh.info/admin/login`
+`https://app.a2zhnt.online/admin/login`
 
 The `is_platform_admin` flag determines the role after authentication. A
 Platform Super Admin can be created or an existing user can be promoted with:

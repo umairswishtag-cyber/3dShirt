@@ -120,7 +120,7 @@ function StatusCover({ final }) {
                         strokeWidth={2}
                     />
                 </span>
-                <strong className="mt-3 block text-sm font-black uppercase tracking-[0.16em]">
+                <strong className="mt-3 block text-base font-black uppercase tracking-[0.16em]">
                     {final ? "Published design" : "Draft design"}
                 </strong>
                 <span className="mt-1 block text-[10px] font-semibold opacity-70">

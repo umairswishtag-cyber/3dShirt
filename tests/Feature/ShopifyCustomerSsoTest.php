@@ -26,7 +26,7 @@ class ShopifyCustomerSsoTest extends TestCase
     {
         parent::setUp();
 
-        config()->set('app.url', 'https://umair.xoarhigh.info');
+        config()->set('app.url', 'https://app.a2zhnt.online/');
         config()->set('shopify-app.api_secret', 'proxy-test-secret');
         $this->store = User::factory()->create([
             'name' => 'abc-store.myshopify.com',
@@ -41,7 +41,7 @@ class ShopifyCustomerSsoTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('Opening your customer portal')
-            ->assertSee('https://umair.xoarhigh.info/shopify/customer/session?', false)
+            ->assertSee('https://app.a2zhnt.online/shopify/customer/session?', false)
             ->assertDontSee('abc-store.myshopify.com/shopify/customer/session?', false)
             ->assertSee('shopify/customer/session?', false)
             ->assertDontSee('buyer@example.com');

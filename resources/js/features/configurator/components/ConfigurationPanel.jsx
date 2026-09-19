@@ -13,7 +13,7 @@ function NumberField({ label, value, min, max, step = 1, onChange, suffix }) {
                     max={max}
                     step={step}
                     onChange={(event) => onChange(Number(event.target.value))}
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 pr-10 text-sm font-medium text-slate-900 focus:border-blue-500 focus:ring-blue-500"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 pr-10 text-base font-medium text-slate-900 focus:border-blue-500 focus:ring-blue-500"
                 />
                 {suffix && (
                     <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
@@ -73,7 +73,7 @@ export default function ConfigurationPanel({ embedded = false }) {
     const content = !object ? (
         <div className="space-y-5">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-bold capitalize text-slate-900">{activeDesignAreaId} design</p>
+                <p className="text-base font-bold capitalize text-slate-900">{activeDesignAreaId} design</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                     {areaObjectCount === 0
                         ? 'Add an image, then select it to edit its position and appearance.'
@@ -102,7 +102,7 @@ export default function ConfigurationPanel({ embedded = false }) {
                     <img src={object.source} alt="" className="max-h-full max-w-full object-contain" />
                 </div>
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{object.name}</p>
+                    <p className="truncate text-base font-bold text-slate-900">{object.name}</p>
                     <p className="text-xs capitalize text-slate-500">{object.areaId} image</p>
                 </div>
             </div>

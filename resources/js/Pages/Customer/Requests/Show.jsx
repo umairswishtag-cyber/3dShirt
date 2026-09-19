@@ -82,14 +82,14 @@ export default function Show({ productionRequest: item, storefront }) {
                             </span>
                         </a>
                         <nav className="flex flex-wrap items-center gap-2">
-                            <Link href={`${storefront.dashboardUrl}#production-requests`} className="relative rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-700">
+                            <Link href={`${storefront.dashboardUrl}#production-requests`} className="relative rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-base font-bold text-violet-700">
                                 Orders & messages
                                 {chatAlerts.unreadCount > 0 && <span className="ml-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-black text-white">{chatAlerts.unreadCount} new</span>}
                             </Link>
-                            <a href={storefront.shopifyConfiguratorUrl} target="_top" className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white">
+                            <a href={storefront.shopifyConfiguratorUrl} target="_top" className="rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-bold text-white">
                                 Create new design
                             </a>
-                            <a href={storefront.shopifyStoreUrl} target="_top" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold">
+                            <a href={storefront.shopifyStoreUrl} target="_top" className="rounded-xl border border-slate-200 px-4 py-2.5 text-base font-bold">
                                 Back to Shopify store
                             </a>
                         </nav>
@@ -99,7 +99,7 @@ export default function Show({ productionRequest: item, storefront }) {
                     <section className="rounded-[28px] bg-gradient-to-br from-indigo-600 to-violet-700 p-7 text-white shadow-xl shadow-indigo-600/15">
                         <p className="text-xs font-bold uppercase tracking-[.2em] text-indigo-100">Current stage</p>
                         <h1 className="mt-3 text-3xl font-black">{labels[item.status] ?? item.status}</h1>
-                        <p className="mt-2 text-sm text-indigo-100">
+                        <p className="mt-2 text-base text-indigo-100">
                             {item.designName} · {item.productName} · Quantity {item.quantity}
                         </p>
                     </section>
@@ -131,18 +131,18 @@ export default function Show({ productionRequest: item, storefront }) {
                                         </div>
                                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">{item.quantity} units</span>
                                     </div>
-                                    <div className="mt-5 divide-y divide-slate-100 text-sm">
+                                    <div className="mt-5 divide-y divide-slate-100 text-base">
                                         <Row label="Unit price" value={`${item.quote.currency} ${item.quote.unitPrice}`} />
                                         <Row label="Shipping" value={item.quote.shipping} />
                                         <Row label="Tax" value={item.quote.tax} />
                                         <Row label="Discount" value={`-${item.quote.discount}`} />
                                     </div>
-                                    {item.quote.notes && <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">{item.quote.notes}</div>}
+                                    {item.quote.notes && <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-base leading-6 text-slate-600">{item.quote.notes}</div>}
                                     {quoteDecisionPending && (
                                         <div className="mt-6">
                                             <p className="mb-3 text-xs leading-5 text-slate-500">Requesting a revision sends a message to the team. It does not approve or decline this quotation, so you can still make your final decision afterward.</p>
                                             <div className="flex flex-wrap gap-3">
-                                            <button onClick={() => respond('approve_quote')} className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white">
+                                            <button onClick={() => respond('approve_quote')} className="rounded-xl bg-emerald-600 px-5 py-3 text-base font-bold text-white">
                                                 Approve quotation
                                             </button>
                                             <button
@@ -150,18 +150,18 @@ export default function Show({ productionRequest: item, storefront }) {
                                                     const note = window.prompt('What should we change?');
                                                     if (note) respond('request_changes', note);
                                                 }}
-                                                className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-bold"
+                                                className="rounded-xl border border-slate-300 px-5 py-3 text-base font-bold"
                                             >
                                                 Request revision
                                             </button>
-                                            <button onClick={() => respond('decline')} className="px-4 py-3 text-sm font-bold text-rose-600">
+                                            <button onClick={() => respond('decline')} className="px-4 py-3 text-base font-bold text-rose-600">
                                                 Decline quotation
                                             </button>
                                             </div>
                                         </div>
                                     )}
                                     {item.status === 'payment_pending' && item.shopifyInvoiceUrl && (
-                                        <a href={item.shopifyInvoiceUrl} target="_top" className="mt-6 inline-flex rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white">
+                                        <a href={item.shopifyInvoiceUrl} target="_top" className="mt-6 inline-flex rounded-xl bg-emerald-600 px-5 py-3 text-base font-bold text-white">
                                             Pay securely with Shopify
                                         </a>
                                     )}
@@ -170,9 +170,9 @@ export default function Show({ productionRequest: item, storefront }) {
                             {proofDecisionPending && (
                                 <section className="rounded-3xl border border-indigo-200 bg-indigo-50 p-6">
                                     <h2 className="text-xl font-black text-indigo-950">Approve the production proof</h2>
-                                    <p className="mt-2 text-sm text-indigo-800">Confirm the reviewed design is ready to print, or tell the team what must change.</p>
+                                    <p className="mt-2 text-base text-indigo-800">Confirm the reviewed design is ready to print, or tell the team what must change.</p>
                                     <div className="mt-5 flex flex-wrap gap-3">
-                                        <button onClick={() => respond('approve_proof')} className="rounded-xl bg-indigo-700 px-5 py-3 text-sm font-bold text-white">
+                                        <button onClick={() => respond('approve_proof')} className="rounded-xl bg-indigo-700 px-5 py-3 text-base font-bold text-white">
                                             Approve for printing
                                         </button>
                                         <button
@@ -180,7 +180,7 @@ export default function Show({ productionRequest: item, storefront }) {
                                                 const note = window.prompt('What should we change?');
                                                 if (note) respond('request_changes', note);
                                             }}
-                                            className="rounded-xl border border-indigo-300 px-5 py-3 text-sm font-bold text-indigo-800"
+                                            className="rounded-xl border border-indigo-300 px-5 py-3 text-base font-bold text-indigo-800"
                                         >
                                             Request revision
                                         </button>
@@ -189,7 +189,7 @@ export default function Show({ productionRequest: item, storefront }) {
                             )}
                             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                                 <h2 className="text-xl font-black">Design summary</h2>
-                                <div className="mt-4 space-y-3 text-sm text-slate-600">
+                                <div className="mt-4 space-y-3 text-base text-slate-600">
                                     <p>
                                         <strong className="text-slate-900">Colors:</strong> {item.summary?.colors}
                                     </p>
@@ -211,17 +211,17 @@ export default function Show({ productionRequest: item, storefront }) {
                                 <label htmlFor="customer-request-message" className="text-xs font-bold uppercase tracking-wider text-violet-600">
                                     Reply to the team
                                 </label>
-                                <textarea id="customer-request-message" value={reply.data.message} onChange={(event) => reply.setData('message', event.target.value)} rows="3" maxLength="3000" placeholder="Ask a question or reply about this order..." className="mt-2 w-full rounded-2xl border-slate-300 text-sm" />
-                                <button disabled={reply.processing || !reply.data.message.trim()} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                                <textarea id="customer-request-message" value={reply.data.message} onChange={(event) => reply.setData('message', event.target.value)} rows="3" maxLength="3000" placeholder="Ask a question or reply about this order..." className="mt-2 w-full rounded-2xl border-slate-300 text-base" />
+                                <button disabled={reply.processing || !reply.data.message.trim()} className="mt-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-bold text-white disabled:opacity-50">
                                     {reply.processing ? 'Sending...' : 'Send reply'}
                                 </button>
                             </form>
                             <div className="mt-5 space-y-5">
                                 {[...item.events].reverse().map((event) => (
                                     <div key={event.id} className="border-l-2 border-indigo-100 pl-4">
-                                        <p className="text-sm font-black capitalize">{event.event === 'message_sent' ? `${event.actorType === 'customer' ? 'Your' : 'Admin'} reply` : event.event.replaceAll('_', ' ')}</p>
+                                        <p className="text-base font-black capitalize">{event.event === 'message_sent' ? `${event.actorType === 'customer' ? 'Your' : 'Admin'} reply` : event.event.replaceAll('_', ' ')}</p>
                                         <p className="mt-1 text-xs text-slate-500">{new Date(event.createdAt).toLocaleString()}</p>
-                                        {event.note && <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-sm text-slate-700">{event.note}</p>}
+                                        {event.note && <p className="mt-2 whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-base text-slate-700">{event.note}</p>}
                                     </div>
                                 ))}
                             </div>

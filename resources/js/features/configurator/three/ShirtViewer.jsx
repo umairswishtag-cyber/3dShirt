@@ -78,7 +78,7 @@ export default function ShirtViewer({ compact = false }) {
             <div className="grid h-full min-h-80 place-items-center bg-slate-100 p-6 text-center">
                 <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-6 shadow-sm">
                     <p className="font-bold text-slate-900">WebGL 2 is unavailable</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 text-base leading-6 text-slate-600">
                         Enable hardware acceleration or open the configurator in a current browser.
                     </p>
                 </div>

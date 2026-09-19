@@ -19,8 +19,8 @@ export default class ViewerErrorBoundary extends Component {
             return (
                 <div className="grid h-full min-h-80 place-items-center bg-slate-100 p-6 text-center">
                     <div className="max-w-sm rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
-                        <p className="text-sm font-bold text-slate-900">The shirt could not be displayed</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                        <p className="text-base font-bold text-slate-900">The shirt could not be displayed</p>
+                        <p className="mt-2 text-base leading-6 text-slate-600">
                             {this.state.error.message || 'Refresh the page or try another browser.'}
                         </p>
                     </div>
@@ -31,4 +31,3 @@ export default class ViewerErrorBoundary extends Component {
         return this.props.children;
     }
 }
-

@@ -22,13 +22,13 @@ export default function Index({ customers, platformView }) {
                     <div className="py-16 text-center">
                         <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><UiIcon name="users" className="h-7 w-7" /></span>
                         <h2 className="mt-4 text-base font-bold text-slate-950">No registered customers yet</h2>
-                        <p className="mt-1 text-sm text-slate-500">Customers will appear after registering through this store’s storefront URL.</p>
+                        <p className="mt-1 text-base text-slate-500">Customers will appear after registering through this store’s storefront URL.</p>
                     </div>
                 ) : customers.data.map((customer) => (
                     <article key={customer.id} className="grid grid-cols-[minmax(0,1fr)_100px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_130px]">
                         <div className="flex min-w-0 items-center gap-3">
-                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-violet-50 text-sm font-black text-violet-700">{customer.name.slice(0, 1).toUpperCase()}</span>
-                            <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-950">{customer.name}</p><p className="truncate text-xs text-slate-500">{customer.email}</p></div>
+                            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-violet-50 text-base font-black text-violet-700">{customer.name.slice(0, 1).toUpperCase()}</span>
+                            <div className="min-w-0"><p className="truncate text-base font-bold text-slate-950">{customer.name}</p><p className="truncate text-xs text-slate-500">{customer.email}</p></div>
                         </div>
                         <p className="hidden truncate text-xs text-slate-500 sm:block">{platformView ? customer.store?.name ?? 'Unknown store' : formatDate(customer.joinedAt)}</p>
                         <span className="w-fit rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">{customer.designsCount}</span>

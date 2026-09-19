@@ -23,7 +23,7 @@ export default function DesignAreaSelector({ compact = false }) {
                     type="button"
                     onClick={() => setActiveDesignArea(area.id)}
                     className={`rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        compact ? 'px-3 py-1.5 text-xs' : 'px-5 py-2 text-sm'
+                        compact ? 'px-3 py-1.5 text-xs' : 'px-5 py-2 text-base'
                     } ${
                         activeDesignAreaId === area.id
                             ? 'bg-slate-900 text-white shadow-sm'

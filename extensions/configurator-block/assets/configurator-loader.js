@@ -2,8 +2,15 @@
   if (window.__shirtConfiguratorBundleLoading) return;
   window.__shirtConfiguratorBundleLoading = true;
 
+  const cacheToken = Date.now().toString();
+  document.querySelectorAll('[data-stylesheet-url]').forEach((element) => {
+    const stylesheetUrl = new URL(element.dataset.stylesheetUrl);
+    stylesheetUrl.searchParams.set('v', cacheToken);
+    element.dataset.stylesheetUrl = stylesheetUrl.toString();
+  });
+
   const script = document.createElement('script');
-  script.src = 'https://umair.xoarhigh.info/build/shopify/configurator-embed.js?v=27';
+  script.src = `https://app.a2zhnt.online/build/shopify/configurator-embed.js?v=${cacheToken}`;
   script.defer = true;
   script.dataset.shirtConfiguratorBundle = '';
   script.addEventListener('error', () => {

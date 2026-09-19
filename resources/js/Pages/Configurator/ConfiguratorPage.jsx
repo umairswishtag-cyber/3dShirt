@@ -540,7 +540,7 @@ export default function ConfiguratorPage({
                                             finishLogoEditing();
                                             setPrintEditorExpanded(false);
                                         }}
-                                        className="mt-5 min-h-11 w-full rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800"
+                                        className="mt-5 min-h-11 w-full rounded-xl bg-slate-950 px-4 text-base font-bold text-white hover:bg-slate-800"
                                     >
                                         Done positioning
                                     </button>

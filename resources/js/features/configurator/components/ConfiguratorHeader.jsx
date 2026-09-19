@@ -62,7 +62,7 @@ export default function ConfiguratorHeader({
     return (
         <header className="relative z-30 shrink-0 border-b border-slate-200 bg-white px-3 py-2 shadow-sm sm:px-5 lg:hidden">
             <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-950 text-sm font-black text-white shadow-sm">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-950 text-base font-black text-white shadow-sm">
                     3D
                 </div>
                 <div className="min-w-0 flex-1">
@@ -78,7 +78,7 @@ export default function ConfiguratorHeader({
                             placeholder={`${product.name} design`}
                             aria-label="Design name"
                             title="Change the name shown in My designs"
-                            className="h-7 min-w-0 flex-1 truncate rounded-md border border-transparent bg-transparent px-1 text-sm font-bold text-slate-950 transition hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-100 sm:text-base"
+                            className="h-7 min-w-0 flex-1 truncate rounded-md border border-transparent bg-transparent px-1 text-base font-bold text-slate-950 transition hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-100 sm:text-base"
                         />
                         <button
                             type="button"

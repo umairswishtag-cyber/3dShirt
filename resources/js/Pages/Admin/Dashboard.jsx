@@ -86,8 +86,8 @@ export default function Dashboard({ summary, recentProducts, canCreateProducts =
                         </span>
                         <p className={`relative mt-5 text-[11px] font-bold uppercase tracking-[0.17em] ${style.eyebrow}`}>{action.eyebrow}</p>
                         <h2 className="relative mt-2 text-[26px] font-bold leading-tight tracking-[-0.025em]">{action.title}</h2>
-                        <p className="relative mt-2 max-w-sm text-sm leading-6 text-slate-500">{action.description}</p>
-                        <span className={`relative mt-auto inline-flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold shadow-md transition ${style.button}`}>
+                        <p className="relative mt-2 max-w-sm text-base leading-6 text-slate-500">{action.description}</p>
+                        <span className={`relative mt-auto inline-flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-base font-bold shadow-md transition ${style.button}`}>
                             {action.cta}<UiIcon name="arrow" className="h-4 w-4 transition group-hover:translate-x-1" />
                         </span>
                     </Link>
@@ -98,7 +98,7 @@ export default function Dashboard({ summary, recentProducts, canCreateProducts =
             <section className="mt-6 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.05)]">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
                     <div className="flex items-center gap-3">
-                        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-slate-600"><UiIcon name="products" className="h-5 w-5" /></span>
+                        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-slate-100 text-slate-600"><UiIcon name="products" className="h-10 w-10" /></span>
                         <div><h2 className="text-base font-bold">Recently updated</h2><p className="mt-0.5 text-xs text-slate-500">Continue working on your latest catalog items.</p></div>
                     </div>
                     <Link href={route('admin.orders.index')} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
@@ -106,12 +106,12 @@ export default function Dashboard({ summary, recentProducts, canCreateProducts =
                     </Link>
                 </div>
                 <div className="divide-y divide-slate-100 px-3 sm:px-4">
-                    {recentProducts.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><UiIcon name="products" /></span><p className="mt-4 text-sm font-bold">No products yet</p><p className="mt-1 text-xs text-slate-500">{canCreateProducts ? 'Create your first 3D garment to get started.' : 'No store products are currently available.'}</p></div>}
+                    {recentProducts.length === 0 && <div className="py-12 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600"><UiIcon name="products" /></span><p className="mt-4 text-base font-bold">No products yet</p><p className="mt-1 text-xs text-slate-500">{canCreateProducts ? 'Create your first 3D garment to get started.' : 'No store products are currently available.'}</p></div>}
                     {recentProducts.map((product) => (
                         <div key={product.id} className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl px-2 py-3.5 transition hover:bg-slate-50 sm:px-3">
                             <div className="flex min-w-0 items-center gap-3">
                                 <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50 ring-1 ring-slate-200/70"><GarmentIllustration type={product.category} className="h-12 w-16" /></span>
-                                <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{product.name}</p><p className="mt-1 text-xs capitalize text-slate-500">{product.gender} · {product.category}<span className="hidden sm:inline"> · Updated {formatDate(product.updated_at)}</span></p></div>
+                                <div className="min-w-0"><p className="truncate text-base font-bold text-slate-900">{product.name}</p><p className="mt-1 text-xs capitalize text-slate-500">{product.gender} · {product.category}<span className="hidden sm:inline"> · Updated {formatDate(product.updated_at)}</span></p></div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide ${product.is_published ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}><span className={`h-1.5 w-1.5 rounded-full ${product.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />{product.is_published ? 'Published' : 'Draft'}</span>

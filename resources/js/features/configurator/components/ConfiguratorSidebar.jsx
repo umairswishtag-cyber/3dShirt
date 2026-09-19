@@ -122,7 +122,7 @@ export default function ConfiguratorSidebar({
                         placeholder={`${product.name} design`}
                         aria-label="Design name"
                         title="Change the name shown in My designs"
-                        className="h-8 w-full truncate rounded-lg border border-transparent bg-transparent px-1 text-sm font-black text-slate-950 transition hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-100"
+                        className="h-8 w-full truncate rounded-lg border border-transparent bg-transparent px-1 text-base font-black text-slate-950 transition hover:border-slate-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-100"
                     />
                     <div className="mt-1 flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-500">
                         <span className={`h-1.5 w-1.5 rounded-full ${isDirty ? 'bg-amber-500' : 'bg-emerald-500'}`} />

@@ -48,7 +48,7 @@ function StoreAccessCard({ store, positions }) {
                 <div className="flex min-w-0 items-center gap-3">
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-50 font-bold text-indigo-700">{store.name?.slice(0, 1)?.toUpperCase() || 'S'}</span>
                     <div className="min-w-0">
-                        <h2 className="truncate text-sm font-bold text-slate-950">{store.name}</h2>
+                        <h2 className="truncate text-base font-bold text-slate-950">{store.name}</h2>
                         <p className="mt-0.5 truncate text-xs text-slate-500">{store.email}</p>
                     </div>
                 </div>
@@ -114,21 +114,21 @@ function MerchantStatus({ store, positions }) {
                 <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
                     {enabled ? 'Your customization guide is live' : pending ? 'Your request is awaiting review' : 'Request the customization guide'}
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+                <p className="mt-3 max-w-xl text-base leading-6 text-slate-500">
                     The assistant answers only customer-facing product customization questions. It uses no paid service, external data source, or third-party AI API.
                 </p>
 
                 {enabled ? (
                     <div className="mt-6 flex flex-wrap items-center gap-3">
-                        <span className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">Position: {positionLabel}</span>
-                        <a href={route('admin.configurator.preview')} className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Preview storefront</a>
+                        <span className="rounded-xl bg-emerald-50 px-4 py-3 text-base font-bold text-emerald-800">Position: {positionLabel}</span>
+                        <a href={route('admin.configurator.preview')} className="rounded-xl bg-slate-950 px-4 py-3 text-base font-bold text-white transition hover:bg-slate-800">Preview storefront</a>
                     </div>
                 ) : (
                     <button
                         type="button"
                         disabled={pending}
                         onClick={() => router.post(route('admin.chatbot.request'), {}, { preserveScroll: true })}
-                        className="mt-6 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+                        className="mt-6 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-base font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
                     >
                         {pending ? 'Activation requested' : 'Request activation'}
                     </button>
@@ -163,7 +163,7 @@ export default function Access({ canManageAccess, store, stores, summary, positi
                             ['Pending requests', summary.pending, 'mail'],
                         ].map(([label, value, icon]) => (
                             <article key={label} className="flex items-center gap-4 rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
-                                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><UiIcon name={icon} className="h-5 w-5" /></span>
+                                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600"><UiIcon name={icon} className="h-10 w-10" /></span>
                                 <div><p className="text-2xl font-bold text-slate-950">{value}</p><p className="text-xs font-semibold text-slate-500">{label}</p></div>
                             </article>
                         ))}
@@ -174,7 +174,7 @@ export default function Access({ canManageAccess, store, stores, summary, positi
                             {stores.map((item) => <StoreAccessCard key={item.id} store={item} positions={positions} />)}
                         </section>
                     ) : (
-                        <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-16 text-center text-sm text-slate-500">No stores are registered yet.</div>
+                        <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-16 text-center text-base text-slate-500">No stores are registered yet.</div>
                     )}
                 </>
             ) : (

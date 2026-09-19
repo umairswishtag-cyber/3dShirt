@@ -14,12 +14,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Osiset\ShopifyApp\Contracts\ShopModel as IShopModel;
+use Osiset\ShopifyApp\Contracts\ApiHelper as IApiHelper;
+use App\Services\Shopify\ShopifyTokenManager;
 
 class User extends Authenticatable implements IShopModel
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-    use ShopModel;
+    use ShopModel { apiHelper as private packageApiHelper; }
     use SoftDeletes;
 
     protected static function booted(): void
@@ -62,6 +64,7 @@ class User extends Authenticatable implements IShopModel
     protected $hidden = [
         'password',
         'remember_token',
+        'shopify_refresh_token',
     ];
 
     /**
@@ -74,7 +77,17 @@ class User extends Authenticatable implements IShopModel
         return [
             'email_verified_at' => 'datetime',
             'is_platform_admin' => 'boolean',
+            'shopify_refresh_token' => 'encrypted',
+            'shopify_token_expires_at' => 'datetime',
+            'shopify_refresh_token_expires_at' => 'datetime',
         ];
+    }
+
+    public function apiHelper(): IApiHelper
+    {
+        app(ShopifyTokenManager::class)->refreshIfNeeded($this);
+
+        return $this->packageApiHelper();
     }
 
     public function chatbotSetting(): HasOne

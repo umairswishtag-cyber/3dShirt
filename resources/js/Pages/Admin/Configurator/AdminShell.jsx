@@ -28,7 +28,7 @@ export default function AdminShell({ title, subtitle = null, children, actions =
         return () => window.clearInterval(timer);
     }, []);
 
-    const navClass = (active) => `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold transition ${active ? 'border-indigo-200 bg-indigo-50 text-indigo-700 shadow-[0_4px_14px_rgba(79,70,229,0.08)]' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`;
+    const navClass = (active) => `inline-flex h-11 items-center gap-2 rounded-xl border px-3.5 text-base font-semibold transition ${active ? 'border-indigo-200 bg-indigo-50 text-indigo-700 shadow-[0_4px_14px_rgba(79,70,229,0.08)]' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`;
 
     return (
         <>
@@ -95,11 +95,11 @@ export default function AdminShell({ title, subtitle = null, children, actions =
                                 <UiIcon name="chat" className="h-[18px] w-[18px]" />
                                 <span className="hidden lg:inline">Chatbot</span>
                             </Link>
-                            <Link href={route('admin.configurator.preview')} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3.5 text-sm font-semibold text-slate-600 transition hover:bg-violet-50 hover:text-violet-700">
+                            <Link href={route('admin.configurator.preview')} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3.5 text-base font-semibold text-slate-600 transition hover:bg-violet-50 hover:text-violet-700">
                                 <UiIcon name="storefront" className="h-[18px] w-[18px]" />
                                 <span className="hidden md:inline">Storefront</span>
                             </Link>
-                            <button type="button" onClick={() => router.post(route('logout'))} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-700" aria-label="Sign out">
+                            <button type="button" onClick={() => router.post(route('logout'))} className="inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3 text-base font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-700" aria-label="Sign out">
                                 <UiIcon name="logout" className="h-[18px] w-[18px]" />
                                 <span className="hidden xl:inline">Sign out</span>
                             </button>
@@ -112,7 +112,7 @@ export default function AdminShell({ title, subtitle = null, children, actions =
                         <div className="relative z-10">
                             <p className={`${compact ? 'mb-1' : 'mb-2'} text-[11px] font-bold uppercase tracking-[0.22em] text-violet-600`}>Admin workspace</p>
                             <h1 className="text-2xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[32px] sm:leading-[1.05]">{title}</h1>
-                            {subtitle && <p className={`${compact ? 'mt-2' : 'mt-3'} max-w-2xl text-sm leading-6 text-slate-500`}>{subtitle}</p>}
+                            {subtitle && <p className={`${compact ? 'mt-2' : 'mt-3'} max-w-2xl text-base leading-6 text-slate-500`}>{subtitle}</p>}
                         </div>
                         {hero && <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] items-center justify-center overflow-hidden md:flex">{hero}</div>}
                         {actions}

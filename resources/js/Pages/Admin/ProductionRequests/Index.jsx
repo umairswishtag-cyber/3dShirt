@@ -40,7 +40,7 @@ export default function Index({ requests, filters = {}, counts }) {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-                <select value={filters.status ?? ''} onChange={(event) => router.get(route('admin.production-requests.index'), { status: event.target.value }, { preserveState: true })} className="h-11 rounded-xl border-slate-300 text-sm font-semibold">
+                <select value={filters.status ?? ''} onChange={(event) => router.get(route('admin.production-requests.index'), { status: event.target.value }, { preserveState: true })} className="h-11 rounded-xl border-slate-300 text-base font-semibold">
                     <option value="">All statuses</option>
                     {Object.entries(labels).map(([value, label]) => (
                         <option key={value} value={value}>
@@ -48,7 +48,7 @@ export default function Index({ requests, filters = {}, counts }) {
                         </option>
                     ))}
                 </select>
-                <span className="text-sm text-slate-500">
+                <span className="text-base text-slate-500">
                     {requests.total} request{requests.total === 1 ? '' : 's'}
                 </span>
             </div>
@@ -57,7 +57,7 @@ export default function Index({ requests, filters = {}, counts }) {
                 {requests.data.length === 0 ? (
                     <div className="px-6 py-20 text-center">
                         <h2 className="text-xl font-black">No production requests yet</h2>
-                        <p className="mt-2 text-sm text-slate-500">New custom-design submissions will appear here immediately after their production files upload.</p>
+                        <p className="mt-2 text-base text-slate-500">New custom-design submissions will appear here immediately after their production files upload.</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-100">
@@ -70,12 +70,12 @@ export default function Index({ requests, filters = {}, counts }) {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold">{item.customer?.name}</p>
+                                    <p className="text-base font-semibold">{item.customer?.name}</p>
                                     <p className="text-xs text-slate-500">{item.customer?.email}</p>
                                 </div>
                                 <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${tone(item.status)}`}>{labels[item.status] ?? item.status}</span>
-                                <div className="text-sm font-bold">{item.quote ? `${item.quote.currency} ${item.quote.total}` : 'Not quoted'}</div>
-                                <span className="flex items-center justify-end gap-2 text-sm font-bold text-indigo-600">
+                                <div className="text-base font-bold">{item.quote ? `${item.quote.currency} ${item.quote.total}` : 'Not quoted'}</div>
+                                <span className="flex items-center justify-end gap-2 text-base font-bold text-indigo-600">
                                     {item.unreadMessages > 0 && <span className="rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-black text-white">{item.unreadMessages} new</span>}
                                     Manage →
                                 </span>

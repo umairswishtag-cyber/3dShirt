@@ -28,19 +28,19 @@ export default function AddToCartDialog({ open, product, busy = false, onClose, 
                 <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
                     <label className="block">
                         <span className="mb-1.5 block text-xs font-bold text-slate-800">Size / variant</span>
-                        <select value={variantId} onChange={(event) => setVariantId(event.target.value)} disabled={busy} className="h-11 w-full rounded-xl border-slate-300 text-sm">
+                        <select value={variantId} onChange={(event) => setVariantId(event.target.value)} disabled={busy} className="h-11 w-full rounded-xl border-slate-300 text-base">
                             {variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.title}{variant.sku ? ` - ${variant.sku}` : ''}</option>)}
                         </select>
                     </label>
                     <label className="block">
                         <span className="mb-1.5 block text-xs font-bold text-slate-800">Quantity</span>
-                        <input type="number" min="1" max="100" value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(100, Number(event.target.value) || 1)))} disabled={busy} className="h-11 w-full rounded-xl border-slate-300 text-sm" />
+                        <input type="number" min="1" max="100" value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(100, Number(event.target.value) || 1)))} disabled={busy} className="h-11 w-full rounded-xl border-slate-300 text-base" />
                     </label>
                 </div>
 
                 <div className="mt-6 flex gap-3">
-                    <button type="button" onClick={onClose} disabled={busy} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50">Cancel</button>
-                    <button type="button" disabled={busy || !variantId} onClick={() => onConfirm({ variantId, quantity })} className="min-h-11 flex-[1.5] rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50">
+                    <button type="button" onClick={onClose} disabled={busy} className="min-h-11 flex-1 rounded-xl border border-slate-200 px-4 text-base font-bold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button type="button" disabled={busy || !variantId} onClick={() => onConfirm({ variantId, quantity })} className="min-h-11 flex-[1.5] rounded-xl bg-slate-950 px-4 text-base font-bold text-white hover:bg-slate-800 disabled:opacity-50">
                         {busy ? 'Submitting files...' : 'Submit for review'}
                     </button>
                 </div>

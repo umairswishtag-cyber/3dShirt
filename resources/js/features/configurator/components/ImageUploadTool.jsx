@@ -133,7 +133,7 @@ export default function ImageUploadTool() {
                 <span className="mb-2 grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-2xl text-white shadow-sm">
                     +
                 </span>
-                <span className="text-sm font-semibold text-slate-800">
+                <span className="text-base font-semibold text-slate-800">
                     {isReading ? 'Preparing image…' : `Add ${area.label} logo`}
                 </span>
                 <span className="mt-1 text-xs text-slate-500">SVG, PNG, JPEG or WebP · max 2 MB · multiple logos allowed</span>

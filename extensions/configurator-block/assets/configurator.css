@@ -3,7 +3,7 @@
   width: 100vw;
   max-width: none;
   min-width: 0;
-  /* margin-inline: calc(50% - 50vw); */
+  margin-inline: calc(50% - 50vw);
   overflow: clip;
 }
 
