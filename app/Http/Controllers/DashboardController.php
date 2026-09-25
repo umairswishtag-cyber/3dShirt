@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\OrderSyncJob;
 use App\Repositories\Order\OrderRepositoryInterface;
 use Illuminate\Http\Request;
 
@@ -17,8 +16,6 @@ class DashboardController extends Controller
 
     public function index()
     {
-        OrderSyncJob::dispatch(auth()->user()->id);
-
         return $this->render('Dashboard');
     }
 

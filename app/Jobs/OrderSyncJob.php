@@ -19,8 +19,6 @@ class OrderSyncJob implements ShouldBeUnique, ShouldQueue
      */
     protected $userId;
 
-    public int $uniqueFor = 240;
-
     public function __construct($userId)
     {
         $this->userId = $userId;
@@ -33,6 +31,12 @@ class OrderSyncJob implements ShouldBeUnique, ShouldQueue
     {
         $this->getOrderRepository(app(OrderRepositoryInterface::class));
         $user = User::find($this->userId);
+        if (! $user) {
+            $this->logInfo('Order sync skipped because the user no longer exists. User ID: '.$this->userId);
+
+            return;
+        }
+
         if ($this->getOrdersFromShopify($user)) {
             $this->logInfo('Orders Synced successfully from Shopify for user ID: '.$this->userId);
         } else {

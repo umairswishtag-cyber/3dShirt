@@ -4,6 +4,7 @@ use App\Jobs\OrderSyncJob;
 use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -14,5 +15,6 @@ Schedule::call(function (): void {
     User::query()
         ->where('name', 'like', '%.myshopify.com')
         ->pluck('id')
+        ->reject(fn (int $userId) => Cache::has("shopify:orders-access-restricted:{$userId}"))
         ->each(fn (int $userId) => OrderSyncJob::dispatch($userId));
 })->name('sync-shopify-orders')->everyFiveMinutes()->withoutOverlapping();
