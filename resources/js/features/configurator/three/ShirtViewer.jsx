@@ -25,6 +25,7 @@ function supportsWebGL() {
 
 function Scene() {
     const controlsRef = useRef(null);
+    const interactionRef = useRef({ active: false, lastEnd: -Infinity });
     const cameraView = useConfiguratorStore((state) => state.cameraView);
     const cameraRequestId = useConfiguratorStore((state) => state.cameraRequestId);
 
@@ -46,10 +47,15 @@ function Scene() {
                     </Html>
                 }
             >
-                <ShirtModel />
+                <ShirtModel controlsRef={controlsRef} interactionRef={interactionRef} />
             </Suspense>
             <OrbitControls
                 ref={controlsRef}
+                onStart={() => { interactionRef.current.active = true; }}
+                onEnd={() => {
+                    interactionRef.current.active = false;
+                    interactionRef.current.lastEnd = performance.now();
+                }}
                 makeDefault
                 enableDamping
                 dampingFactor={0.08}

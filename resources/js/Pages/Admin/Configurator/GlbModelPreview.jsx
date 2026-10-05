@@ -1,15 +1,18 @@
-import { Component, useEffect, useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Box3 } from 'three';
 import { Bounds, Center, OrbitControls } from '@react-three/drei';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import UiIcon from '@/Components/UiIcon';
+import DressMotionController from '@/features/configurator/three/DressMotionController';
 import {
     applyModelPreviewColors,
     parseModelColorConfiguration,
     prepareModelPreviewMaterials,
 } from './modelPreviewMaterials';
 
-export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], meshZones = {}, compact = false }) {
+export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], meshZones = {}, compact = false, clothMotion = null }) {
+    const [motionTestRequest, setMotionTestRequest] = useState(0);
     const [state, setState] = useState({ status: modelFile || modelUrl ? 'loading' : 'empty', scene: null });
     const parsedColorZones = useMemo(() => {
         const parsed = parseModelColorConfiguration(colorZones, []);
@@ -51,7 +54,7 @@ export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], 
                     disposeScene(loadedScene);
                     return;
                 }
-                setState({ status: 'ready', scene: loadedScene });
+                setState({ status: 'ready', scene: loadedScene, bounds: new Box3().setFromObject(loadedScene) });
             } catch {
                 if (active) setState({ status: 'failed', scene: null });
             }
@@ -80,7 +83,7 @@ export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], 
                         <Bounds fit clip observe margin={1.22}>
                             <Center><primitive object={state.scene} /></Center>
                         </Bounds>
-                        <OrbitControls makeDefault autoRotate autoRotateSpeed={1.15} enablePan={false} minDistance={0.5} maxDistance={20} />
+                        <PreviewMotionControls scene={state.scene} bounds={state.bounds} settings={clothMotion} testRequest={motionTestRequest} />
                     </Canvas>
                 </PreviewErrorBoundary>
             )}
@@ -89,9 +92,62 @@ export default function GlbModelPreview({ modelFile, modelUrl, colorZones = [], 
             {state.status === 'loading' && <PreviewState compact={compact} loading icon="sparkles" title="Preparing 3D preview" description="Reading model geometry and materials…" />}
             {state.status === 'failed' && <PreviewFailed compact={compact} />}
 
+            {state.status === 'ready' && !compact && clothMotion?.enabled && <button type="button"
+                onClick={() => setMotionTestRequest((request) => request + 1)}
+                disabled={!Object.values(clothMotion.meshParts ?? {}).some((part) => ['upper', 'hem', 'sleeves'].includes(part)) || window.matchMedia('(prefers-reduced-motion: reduce)').matches}
+                className="absolute right-3 top-3 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white shadow-lg hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-400">
+                Test cloth movement
+            </button>}
+
             {state.status === 'ready' && <div className={`pointer-events-none absolute flex items-center justify-between gap-2 ${compact ? 'inset-x-2 bottom-2' : 'inset-x-3 bottom-3'}`}><span className={`inline-flex items-center gap-1 rounded-full bg-slate-950/80 font-black uppercase text-white shadow-lg backdrop-blur ${compact ? 'px-2 py-1 text-[7px]' : 'px-2.5 py-1.5 text-[9px] tracking-wider'}`}><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />3D preview</span>{!compact && <span className="rounded-full bg-white/90 px-2.5 py-1.5 text-[9px] font-bold text-slate-500 shadow-sm backdrop-blur">Drag to rotate · Scroll to zoom</span>}</div>}
         </div>
     );
+}
+
+function PreviewMotionControls({ scene, bounds, settings, testRequest }) {
+    const controls = useRef(null);
+    const previous = useRef(null);
+    const interaction = useRef({ active: false, lastEnd: -Infinity });
+    const testTurn = useRef(null);
+    const controller = useMemo(() => new DressMotionController(settings ?? {}), [settings]);
+    const enabled = settings?.enabled === true && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    useEffect(() => {
+        previous.current = null;
+        if (!enabled) return;
+        controller.init(scene, bounds);
+        return () => controller.dispose();
+    }, [bounds, controller, enabled, scene]);
+    useEffect(() => {
+        if (!enabled || !testRequest || !controls.current) return;
+        testTurn.current = { elapsed: 0, angle: controls.current.getAzimuthalAngle() };
+    }, [enabled, testRequest]);
+    useFrame((_, delta) => {
+        if (!enabled || !controls.current) return;
+        let testing = false;
+        if (testTurn.current) {
+            testing = true;
+            testTurn.current.elapsed += Math.min(delta, 0.1);
+            const t = Math.min(testTurn.current.elapsed / 1.2, 1);
+            // Use the same camera-velocity path as dragging, then return to the
+            // starting view so the loose fabric can be watched as it settles.
+            controls.current.setAzimuthalAngle(testTurn.current.angle + Math.sin(t * Math.PI * 2) * 0.38);
+            if (t === 1) {
+                testTurn.current = null;
+                interaction.current.lastEnd = performance.now();
+            }
+        }
+        const angle = controls.current.getAzimuthalAngle();
+        const change = angle - (previous.current ?? angle);
+        previous.current = angle;
+        const turning = testing || interaction.current.active || performance.now() - interaction.current.lastEnd < 600;
+        controller.setRotationVelocity(turning && delta > 0 && delta < 1
+            ? -Math.atan2(Math.sin(change), Math.cos(change)) / delta : 0);
+        controller.update(delta);
+    });
+    return <OrbitControls ref={controls} makeDefault autoRotate={!enabled} autoRotateSpeed={1.15}
+        enableDamping enablePan={false} minDistance={0.5} maxDistance={20}
+        onStart={() => { testTurn.current = null; interaction.current.active = true; }}
+        onEnd={() => { interaction.current.active = false; interaction.current.lastEnd = performance.now(); }} />;
 }
 
 function PreviewState({ icon, title, description, loading = false, compact = false }) {

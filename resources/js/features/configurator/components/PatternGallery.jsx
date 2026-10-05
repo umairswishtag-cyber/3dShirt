@@ -81,7 +81,15 @@ export default function PatternGallery() {
                     <button
                         key={pattern.id}
                         type="button"
-                        onClick={() => setPattern(pattern.id)}
+                        onClick={(event) => {
+                            const rect = event.currentTarget.querySelector('[data-pattern-cloth]').getBoundingClientRect();
+                            setPattern(pattern.id, {
+                                x: rect.left + rect.width / 2,
+                                y: rect.top + rect.height / 2,
+                                width: rect.width,
+                                height: rect.height,
+                            });
+                        }}
                         aria-pressed={selectedPatternId === pattern.id}
                         className={`overflow-hidden rounded-xl border bg-white text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             selectedPatternId === pattern.id
@@ -89,7 +97,7 @@ export default function PatternGallery() {
                                 : 'border-slate-200 hover:border-slate-400'
                         }`}
                     >
-                        <div className="aspect-[1.5] overflow-hidden bg-slate-100">
+                        <div data-pattern-cloth className="aspect-[1.5] overflow-hidden bg-slate-100">
                             <PatternThumbnail pattern={pattern} />
                         </div>
                         <span className="block truncate px-2 py-2 text-center text-[11px] font-semibold text-slate-700">

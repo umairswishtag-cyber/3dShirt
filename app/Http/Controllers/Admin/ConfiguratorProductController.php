@@ -48,6 +48,7 @@ class ConfiguratorProductController extends Controller
 
         return Inertia::render('Admin/Configurator/ProductEditor', [
             'product' => null,
+            'canConfigureClothMotion' => $request->user()->canConfigureClothMotion(),
             ...$this->taxonomyOptions(),
         ]);
     }
@@ -70,6 +71,7 @@ class ConfiguratorProductController extends Controller
 
         return Inertia::render('Admin/Configurator/ProductEditor', [
             'product' => $this->adminProduct($product),
+            'canConfigureClothMotion' => $request->user()->canConfigureClothMotion(),
             ...$this->taxonomyOptions(),
         ]);
     }
@@ -110,6 +112,7 @@ class ConfiguratorProductController extends Controller
                 'mesh_zones', 'print_areas', 'color_zones', 'allowed_colors', 'pattern_zones',
                 'supports_colors', 'supports_patterns', 'supports_logos', 'is_published',
                 'sort_order', 'model_original_name', 'created_at', 'updated_at',
+                'cloth_motion',
             ]),
             'modelUrl' => $this->storage->publicUrl($product->model_path, $product->model_url),
             'thumbnailUrl' => $this->storage->publicUrl($product->thumbnail_path, $product->thumbnail_url),

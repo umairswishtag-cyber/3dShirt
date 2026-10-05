@@ -91,6 +91,10 @@ export default function AdminShell({ title, subtitle = null, children, actions =
                                 <UiIcon name="settings" className="h-[18px] w-[18px]" />
                                 <span className="hidden lg:inline">Catalog options</span>
                             </Link>
+                            <Link aria-label="Cloth motion settings" aria-current={url.startsWith('/admin/configurator/motion-settings') ? 'page' : undefined} href={route('admin.configurator.motion.index')} className={navClass(url.startsWith('/admin/configurator/motion-settings'))}>
+                                <UiIcon name="settings" className="h-[18px] w-[18px]" />
+                                <span className="hidden lg:inline">Cloth motion</span>
+                            </Link>
                             <Link aria-current={url.startsWith('/admin/chatbot') ? 'page' : undefined} href={route('admin.chatbot.index')} className={navClass(url.startsWith('/admin/chatbot'))}>
                                 <UiIcon name="chat" className="h-[18px] w-[18px]" />
                                 <span className="hidden lg:inline">Chatbot</span>

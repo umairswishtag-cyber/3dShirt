@@ -66,6 +66,7 @@ export const PRODUCT_CATALOG = [
         category: 'dresses',
         model: {
             url: '/models/women/women.glb',
+            dressMotion: { enabled: true, upper: 0.15, hem: 1, sleeves: 0.5, meshParts: { Object_2: 'hem' } },
             fitHeight: 2.45,
             meshZones: { Object_2: 'body' },
             printAreas: {},

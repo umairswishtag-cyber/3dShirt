@@ -1,17 +1,21 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
-import { Box3, CanvasTexture, Float32BufferAttribute, FrontSide, SRGBColorSpace, Vector3 } from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Box3, CanvasTexture, Float32BufferAttribute, FrontSide, Matrix4, SRGBColorSpace, Vector3 } from 'three';
 import { useDesignTexture } from '../hooks/useDesignTexture';
 import { useConfiguratorStore } from '../stores/useConfiguratorStore';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { registerModelExporter } from './modelExportRegistry';
+import PatternApplyCloth from './PatternApplyCloth';
+import DressMotionController from './DressMotionController';
 
 function cloneModelScene(scene) {
     const clone = scene.clone(true);
 
     clone.traverse((node) => {
         if (!node.isMesh) return;
+
+        node.geometry = node.geometry.clone();
 
         node.material = Array.isArray(node.material)
             ? node.material.map((material) => material.clone())
@@ -155,22 +159,28 @@ function createOutwardPrintGeometry(sourceGeometry, binding, matrixWorld) {
     if (placement) addSurfacePlacementUvs(geometry, placement, binding.logoBounds);
     else if (projection) addProjectedUvs(geometry, projection);
 
-    // Lift the print less than a millimetre in model space so it follows the
-    // cloth without z-fighting or being depth-shifted through the other side.
-    const surfaceOffset = 0.0006;
-    for (let index = 0; index < position.count; index += 1) {
-        position.setXYZ(
-            index,
-            position.getX(index) + normal.getX(index) * surfaceOffset,
-            position.getY(index) + normal.getY(index) * surfaceOffset,
-            position.getZ(index) + normal.getZ(index) * surfaceOffset,
-        );
-    }
-    position.needsUpdate = true;
+    // Keep the exact source positions: an offset along the original normal can
+    // end up underneath a moving fold. Polygon offset handles depth separation.
     geometry.applyMatrix4(matrixWorld);
     geometry.computeBoundingSphere();
 
     return geometry;
+}
+
+function useDressMaterial(materialRef, motion, bounds, meshName, geometry) {
+    useEffect(() => {
+        const material = materialRef.current;
+        if (!motion || !bounds || !material) return;
+        // The overlay retains the source mesh positions in model space, so its
+        // bounds match that GLB part even when only some triangles are printed.
+        if (!geometry.boundingBox) geometry.computeBoundingBox();
+        motion.attachments?.bind(geometry, new Matrix4());
+        // These overlay geometries are already baked into model coordinates.
+        motion.bindMaterial(material, new Matrix4(), bounds.getCenter(new Vector3()),
+            bounds.max.y - bounds.min.y, bounds.min.y, motion.meshParts[meshName] ?? 'none',
+            motion.partBounds.get(meshName) ?? geometry.boundingBox, bounds.max.x - bounds.min.x);
+        return () => motion.unbindMaterial(material);
+    }, [materialRef, motion, bounds, meshName, geometry]);
 }
 
 function PrintSurface({
@@ -180,7 +190,16 @@ function PrintSurface({
     name,
     renderOrder,
     isArtworkLayer = false,
+    application = null,
+    motion = null,
+    motionBounds = null,
+    meshName = null,
 }) {
+    const materialRef = useRef(null);
+    useDressMaterial(materialRef, motion, motionBounds, meshName, geometry);
+    useFrame(() => {
+        if (materialRef.current && application) materialRef.current.opacity = application.opacity;
+    });
     useEffect(() => {
         configurePrintTexture(texture, uvBounds);
     }, [texture, uvBounds]);
@@ -188,6 +207,7 @@ function PrintSurface({
     return (
         <mesh name={name} geometry={geometry} renderOrder={renderOrder}>
             <meshBasicMaterial
+                ref={materialRef}
                 map={texture}
                 transparent
                 alphaTest={0.01}
@@ -203,7 +223,9 @@ function PrintSurface({
     );
 }
 
-function LogoZoneGuide({ geometry, logoBounds }) {
+function LogoZoneGuide({ geometry, logoBounds, motion, motionBounds, meshName }) {
+    const materialRef = useRef(null);
+    useDressMaterial(materialRef, motion, motionBounds, meshName, geometry);
     const texture = useMemo(() => {
         const size = 512;
         const canvas = document.createElement('canvas');
@@ -232,6 +254,7 @@ function LogoZoneGuide({ geometry, logoBounds }) {
     return (
         <mesh name="active_logo_zone_guide" geometry={geometry} renderOrder={20}>
             <meshBasicMaterial
+                ref={materialRef}
                 map={texture}
                 transparent
                 alphaTest={0.01}
@@ -247,7 +270,7 @@ function LogoZoneGuide({ geometry, logoBounds }) {
     );
 }
 
-function BoundPrintSurface({ areaId, binding, geometries }) {
+function BoundPrintSurface({ areaId, binding, geometries, application, motion, motionBounds }) {
     const patternTexture = useDesignTexture(areaId, 'pattern');
     const artworkTexture = useDesignTexture(areaId, 'logos');
     const hasPattern = useConfiguratorStore(
@@ -271,6 +294,10 @@ function BoundPrintSurface({ areaId, binding, geometries }) {
                     texture={patternTexture}
                     uvBounds={binding.uvBounds}
                     renderOrder={2}
+                    application={application}
+                    motion={motion}
+                    motionBounds={motionBounds}
+                    meshName={binding.meshName}
                 />
             )}
             {hasArtwork && geometries.artwork && (
@@ -281,23 +308,36 @@ function BoundPrintSurface({ areaId, binding, geometries }) {
                     uvBounds={binding.logoPlacement ? { min: [0, 0], max: [1, 1] } : binding.uvBounds}
                     renderOrder={10}
                     isArtworkLayer
+                    motion={motion}
+                    motionBounds={motionBounds}
+                    meshName={binding.meshName}
                 />
             )}
             {isActiveLogoArea && binding.logoPlacement && geometries.artwork && (
-                <LogoZoneGuide geometry={geometries.artwork} logoBounds={binding.logoBounds} />
+                <LogoZoneGuide geometry={geometries.artwork} logoBounds={binding.logoBounds}
+                    motion={motion} motionBounds={motionBounds} meshName={binding.meshName} />
             )}
         </>
     );
 }
 
-export default function ShirtModel() {
+export default function ShirtModel({ controlsRef, interactionRef }) {
     const exportGroupRef = useRef(null);
+    const application = useMemo(() => ({ opacity: 1 }), []);
+    const previousAzimuth = useRef(null);
     const invalidate = useThree((state) => state.invalidate);
     const product = useConfiguratorStore((state) => state.product);
     const modelConfig = product.model;
     const colors = useConfiguratorStore((state) => state.shirtColors);
     const { scene, nodes } = useGLTF(modelConfig.url);
     const modelScene = useMemo(() => cloneModelScene(scene), [scene]);
+    const motion = useMemo(() => new DressMotionController({
+        ...(typeof navigator !== 'undefined' && (navigator.hardwareConcurrency ?? 8) <= 4
+            ? { strength: 0.055, maxSway: 0.12 } : {}),
+        ...modelConfig.dressMotion,
+    }), [modelConfig]);
+    const motionEnabled = modelConfig.dressMotion?.enabled === true;
+    const animateDress = motionEnabled && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const printMeshes = useMemo(() => {
         scene.updateMatrixWorld(true);
@@ -348,8 +388,31 @@ export default function ShirtModel() {
         return {
             center: center.toArray(),
             scale: (modelConfig.fitHeight ?? 2.45) / safeHeight,
+            bounds,
         };
     }, [modelConfig.fitHeight, modelScene]);
+
+    useLayoutEffect(() => {
+        previousAzimuth.current = null;
+        if (!animateDress) return;
+        motion.init(modelScene, modelTransform.bounds);
+        invalidate();
+        return () => motion.dispose();
+    }, [animateDress, invalidate, modelScene, modelTransform, motion, printMeshes]);
+
+    useFrame((_, delta) => {
+        const azimuth = controlsRef?.current?.getAzimuthalAngle();
+        if (!motionEnabled || azimuth === undefined || motion.materials.length === 0) return;
+        const previous = previousAzimuth.current ?? azimuth;
+        previousAzimuth.current = azimuth;
+        // Wrap at +/- pi. Divide by real frame time before clamping the spring
+        // step; zoom/pan and camera preset transitions must not excite the dress.
+        const change = Math.atan2(Math.sin(azimuth - previous), Math.cos(azimuth - previous));
+        const interaction = interactionRef?.current;
+        const turning = interaction?.active || performance.now() - (interaction?.lastEnd ?? -Infinity) < 600;
+        motion.setRotationVelocity(turning && delta > 0 && delta < 1 ? -change / delta : 0);
+        if (motion.update(delta)) invalidate();
+    }, -0.5);
 
     useEffect(
         () => () => {
@@ -368,18 +431,28 @@ export default function ShirtModel() {
 
         const exportRoot = exportGroupRef.current.clone(true);
         const guides = [];
+        const exportMaterials = [];
         exportRoot.traverse((node) => {
             if (node.name === 'active_logo_zone_guide') guides.push(node);
+            // An export during the transfer always contains the final design.
+            if (node.isMesh && node.name.startsWith('pattern_')) {
+                node.material = node.material.clone();
+                node.material.opacity = 1;
+                exportMaterials.push(node.material);
+            }
         });
         guides.forEach((guide) => guide.parent?.remove(guide));
         exportRoot.updateMatrixWorld(true);
-        const result = await new GLTFExporter().parseAsync(exportRoot, {
-            binary: true,
-            onlyVisible: true,
-            maxTextureSize: 2048,
-        });
-
-        return new Blob([result], { type: 'model/gltf-binary' });
+        try {
+            const result = await new GLTFExporter().parseAsync(exportRoot, {
+                binary: true,
+                onlyVisible: true,
+                maxTextureSize: 2048,
+            });
+            return new Blob([result], { type: 'model/gltf-binary' });
+        } finally {
+            exportMaterials.forEach((material) => material.dispose());
+        }
     }), []);
 
     useEffect(() => {
@@ -398,6 +471,7 @@ export default function ShirtModel() {
             modelScene.traverse((node) => {
                 if (!node.isMesh) return;
 
+                node.geometry.dispose();
                 const materials = Array.isArray(node.material) ? node.material : [node.material];
                 materials.forEach((material) => material.dispose());
             });
@@ -406,18 +480,24 @@ export default function ShirtModel() {
     );
 
     return (
-        <group ref={exportGroupRef} name="configurable_garment" scale={modelTransform.scale}>
-            <group position={modelTransform.center.map((value) => -value)}>
-                <primitive object={modelScene} />
-                {Object.entries(modelConfig.printAreas).map(([areaId, binding]) => (
-                    <BoundPrintSurface
-                        key={areaId}
-                        areaId={areaId}
-                        binding={binding}
-                        geometries={printMeshes[areaId]}
-                    />
-                ))}
+        <>
+            <PatternApplyCloth application={application} controlsRef={controlsRef} />
+            <group ref={exportGroupRef} name="configurable_garment" scale={modelTransform.scale}>
+                <group position={modelTransform.center.map((value) => -value)}>
+                    <primitive object={modelScene} />
+                    {Object.entries(modelConfig.printAreas).map(([areaId, binding]) => (
+                        <BoundPrintSurface
+                            key={areaId}
+                            areaId={areaId}
+                            binding={binding}
+                            geometries={printMeshes[areaId]}
+                            application={application}
+                            motion={animateDress ? motion : null}
+                            motionBounds={modelTransform.bounds}
+                        />
+                    ))}
+                </group>
             </group>
-        </group>
+        </>
     );
 }

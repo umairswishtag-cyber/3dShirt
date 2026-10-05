@@ -169,6 +169,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/search', [DashboardController::class, 'orderSeacrhfilter'])->name('search');
 
     Route::prefix('admin/configurator')->name('admin.configurator.')->group(function () {
+        Route::get('motion-settings', [\App\Http\Controllers\Admin\ClothMotionSettingsController::class, 'index'])->name('motion.index');
+        Route::patch('motion-settings/users/{user}', [\App\Http\Controllers\Admin\ClothMotionSettingsController::class, 'updateAccess'])->name('motion.access');
         Route::get('catalog-options', [ConfiguratorTaxonomyController::class, 'index'])->name('taxonomies.index');
         Route::post('catalog-options', [ConfiguratorTaxonomyController::class, 'store'])->name('taxonomies.store');
         Route::patch('catalog-options/{taxonomy}/move', [ConfiguratorTaxonomyController::class, 'move'])->name('taxonomies.move');

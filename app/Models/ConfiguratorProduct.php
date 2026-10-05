@@ -31,6 +31,7 @@ class ConfiguratorProduct extends Model
         'thumbnail_path',
         'thumbnail_url',
         'fit_height',
+        'cloth_motion',
         'mesh_zones',
         'print_areas',
         'color_zones',
@@ -47,6 +48,7 @@ class ConfiguratorProduct extends Model
     {
         return [
             'fit_height' => 'float',
+            'cloth_motion' => 'array',
             'price' => 'decimal:2',
             'inventory_quantity' => 'integer',
             'tags' => 'array',

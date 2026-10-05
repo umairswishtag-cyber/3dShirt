@@ -81,6 +81,11 @@ class ConfiguratorCatalogService
             'model' => [
                 'url' => $this->storage->publicUrl($product->model_path, $product->model_url),
                 'fitHeight' => $product->fit_height,
+                'dressMotion' => [
+                    ...($product->cloth_motion ?? []),
+                    'enabled' => (bool) ($product->cloth_motion['enabled'] ?? false)
+                        && (bool) $product->owner?->canConfigureClothMotion(),
+                ],
                 'meshZones' => $product->mesh_zones ?? [],
                 'printAreas' => $product->print_areas ?? [],
             ],

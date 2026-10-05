@@ -43,7 +43,7 @@ function getPatternSource(pattern) {
     return patternSourcePromises.get(pattern.id);
 }
 
-function getPatternImage(pattern, colors) {
+export function getPatternImage(pattern, colors) {
     if (!pattern) return Promise.resolve(null);
 
     const cacheKey = `${pattern.id}:${pattern.colors

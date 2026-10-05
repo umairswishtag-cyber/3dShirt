@@ -106,6 +106,7 @@ class ConfiguratorProductService
     private function productAttributes(array $data): array
     {
         return [
+            ...(array_key_exists('cloth_motion', $data) ? ['cloth_motion' => $data['cloth_motion']] : []),
             'shopify_status' => $data['shopify_status'] ?? 'draft',
             'price' => $data['price'] ?? 0,
             'inventory_quantity' => $data['inventory_quantity'] ?? 0,

@@ -74,12 +74,18 @@ class User extends Authenticatable implements IShopModel
         return [
             'email_verified_at' => 'datetime',
             'is_platform_admin' => 'boolean',
+            'can_configure_cloth_motion' => 'boolean',
         ];
     }
 
     public function chatbotSetting(): HasOne
     {
         return $this->hasOne(ChatbotSetting::class);
+    }
+
+    public function canConfigureClothMotion(): bool
+    {
+        return $this->isPlatformAdmin() || $this->can_configure_cloth_motion;
     }
 
     public function configuratorProducts(): HasMany

@@ -16,7 +16,7 @@ class StoreConfiguratorProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $decoded = [];
-        foreach (['mesh_zones', 'print_areas', 'color_zones', 'allowed_colors', 'pattern_zones'] as $field) {
+        foreach (['mesh_zones', 'print_areas', 'color_zones', 'allowed_colors', 'pattern_zones', 'cloth_motion'] as $field) {
             $value = $this->input($field);
             if (is_string($value)) {
                 $decoded[$field] = json_decode($value, true);
@@ -39,6 +39,15 @@ class StoreConfiguratorProductRequest extends FormRequest
             'category' => ['required', Rule::exists('configurator_taxonomies', 'slug')->where('type', 'category')],
             'description' => ['nullable', 'string', 'max:1000'],
             'fit_height' => ['required', 'numeric', 'min:0.1', 'max:20'],
+            'cloth_motion' => [$this->user()?->canConfigureClothMotion() ? 'sometimes' : 'prohibited', 'array:enabled,upper,hem,sleeves,hemHeight,damping,meshParts'],
+            'cloth_motion.enabled' => ['required_with:cloth_motion', 'boolean'],
+            'cloth_motion.upper' => ['required_with:cloth_motion', 'numeric', 'between:0,1'],
+            'cloth_motion.hem' => ['required_with:cloth_motion', 'numeric', 'between:0,1'],
+            'cloth_motion.sleeves' => ['required_with:cloth_motion', 'numeric', 'between:0,1'],
+            'cloth_motion.hemHeight' => ['required_with:cloth_motion', 'numeric', 'between:0.15,0.65'],
+            'cloth_motion.damping' => ['required_with:cloth_motion', 'numeric', 'between:10,24'],
+            'cloth_motion.meshParts' => ['sometimes', 'array', 'max:100'],
+            'cloth_motion.meshParts.*' => ['in:upper,hem,sleeves,none'],
             'model' => [$creating ? 'required' : 'nullable', 'file', 'max:102400'],
             'thumbnail' => ['nullable', 'image', 'max:5120'],
             'pattern_name' => ['nullable', 'required_with:pattern_svg', 'string', 'max:120'],

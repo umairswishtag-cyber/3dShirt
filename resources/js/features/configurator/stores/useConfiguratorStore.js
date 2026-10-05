@@ -38,6 +38,7 @@ const createSnapshot = (state) => ({
 });
 
 const restoreSnapshot = (snapshot, product) => ({
+    patternApplyRequest: null,
     shirtColors: { ...snapshot.shirtColors },
     selectedPatternId: snapshot.selectedPatternId ?? null,
     patternColors: clone(snapshot.patternColors ?? createDefaultPatternColors()),
@@ -63,6 +64,8 @@ export const useConfiguratorStore = create((set, get) => ({
     cameraRequestId: 0,
     shirtColors: { ...DEFAULT_SHIRT_COLORS },
     selectedPatternId: null,
+    // Viewer-only animation request: deliberately excluded from saved designs/history.
+    patternApplyRequest: null,
     patternColors: createDefaultPatternColors(PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID]?.patterns),
     patternZones: createDefaultPatternZones(PRODUCTS_BY_ID[DEFAULT_PRODUCT_ID]?.patternZones),
     designObjects: [],
@@ -97,6 +100,7 @@ export const useConfiguratorStore = create((set, get) => ({
             cameraRequestId: state.cameraRequestId + 1,
             shirtColors: productColors(product),
             selectedPatternId: null,
+            patternApplyRequest: null,
             patternColors: createDefaultPatternColors(product.patterns),
             patternZones: createDefaultPatternZones(product.patternZones),
             designObjects: [],
@@ -163,15 +167,25 @@ export const useConfiguratorStore = create((set, get) => ({
         });
     },
 
-    setPattern: (patternId) => {
+    setPattern: (patternId, origin = null) => {
         const state = get();
         const nextPatternId = patternId && state.product.patterns?.some((pattern) => pattern.id === patternId)
             ? patternId
             : null;
-        if (state.selectedPatternId === nextPatternId) return;
+        const request = nextPatternId && origin ? {
+            id: (state.patternApplyRequest?.id ?? 0) + 1,
+            patternId: nextPatternId,
+            product: state.product,
+            origin,
+        } : null;
+        if (state.selectedPatternId === nextPatternId) {
+            if (request) set({ patternApplyRequest: request });
+            return;
+        }
 
         set({
             selectedPatternId: nextPatternId,
+            patternApplyRequest: request,
             patternZones: nextPatternId
                 ? createDefaultPatternZones(state.product.patternZones)
                 : state.patternZones,
@@ -401,6 +415,7 @@ export const useConfiguratorStore = create((set, get) => ({
             cameraRequestId: state.cameraRequestId + 1,
             shirtColors: productColors(state.product),
             selectedPatternId: null,
+            patternApplyRequest: null,
             patternColors: createDefaultPatternColors(state.product.patterns),
             patternZones: createDefaultPatternZones(state.product.patternZones),
             designObjects: [],
@@ -445,6 +460,7 @@ export const useConfiguratorStore = create((set, get) => ({
                 product,
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
+                patternApplyRequest: null,
                 patternColors: draft.patternColors,
                 patternZones: draft.patternZones,
                 designObjects: draft.designObjects,
@@ -478,6 +494,7 @@ export const useConfiguratorStore = create((set, get) => ({
                 product,
                 shirtColors: draft.shirtColors,
                 selectedPatternId: draft.selectedPatternId,
+                patternApplyRequest: null,
                 patternColors: draft.patternColors,
                 patternZones: draft.patternZones,
                 designObjects: draft.designObjects,

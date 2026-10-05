@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import UiIcon from '@/Components/UiIcon';
 import AdminShell from './AdminShell';
 import GlbModelPreview from './GlbModelPreview';
+import ClothMotionControls, { DEFAULT_CLOTH_MOTION } from './ClothMotionControls';
 import PrintAreaBindingSelector from './PrintAreaBindingSelector';
 import { supportsLogoPlacement } from '@/features/configurator/config/designAreas';
 
@@ -289,7 +290,7 @@ function PatternManager({ product }) {
     );
 }
 
-export default function ProductEditor({ product, audiences = [], categories = [] }) {
+export default function ProductEditor({ product, audiences = [], categories = [], canConfigureClothMotion = false }) {
     const editing = Boolean(product);
     const [modelInspection, setModelInspection] = useState({ status: 'loading', meshCount: 0, uvMeshCount: 0, meshes: [] });
     const [patternInputKey, setPatternInputKey] = useState(0);
@@ -301,6 +302,7 @@ export default function ProductEditor({ product, audiences = [], categories = []
         color_zones: JSON.stringify(product?.color_zones ?? DEFAULT_COLOR_ZONES, null, 2), allowed_colors: JSON.stringify(product?.allowed_colors ?? DEFAULT_ALLOWED_COLORS, null, 2), pattern_zones: JSON.stringify(product?.pattern_zones ?? [], null, 2),
         supports_colors: product?.supports_colors ?? true, supports_patterns: product?.supports_patterns ?? false, supports_logos: product?.supports_logos ?? false, is_published: product?.is_published ?? false, sort_order: product?.sort_order ?? 0,
         pattern_name: '', pattern_svg: null, pattern_is_active: true,
+        cloth_motion: { ...DEFAULT_CLOTH_MOTION, ...product?.cloth_motion },
     });
 
     useEffect(() => {
@@ -449,10 +451,12 @@ export default function ProductEditor({ product, audiences = [], categories = []
             },
         };
         if (editing) {
-            form.transform((data) => ({ ...data, is_published: published, _method: 'put' }));
+            form.transform(({ cloth_motion, ...data }) => ({ ...data,
+                ...(canConfigureClothMotion ? { cloth_motion } : {}), is_published: published, _method: 'put' }));
             form.post(route('admin.configurator.products.update', product.id), options);
         } else {
-            form.transform((data) => ({ ...data, is_published: published }));
+            form.transform(({ cloth_motion, ...data }) => ({ ...data,
+                ...(canConfigureClothMotion ? { cloth_motion } : {}), is_published: published }));
             form.post(route('admin.configurator.products.store'), { ...options, preserveScroll: false });
         }
     };
@@ -583,6 +587,11 @@ export default function ProductEditor({ product, audiences = [], categories = []
                     )}
 
                 </section>
+
+                <ClothMotionControls value={form.data.cloth_motion} onChange={(value) => form.setData('cloth_motion', value)}
+                    meshes={modelInspection.meshes} allowed={canConfigureClothMotion} errors={form.errors}
+                    preview={<GlbModelPreview modelFile={form.data.model} modelUrl={product?.modelUrl}
+                        colorZones={form.data.color_zones} meshZones={form.data.mesh_zones} clothMotion={form.data.cloth_motion} />} />
 
                 <section id="model-bindings" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <h2 className="text-lg font-semibold">Customer customization</h2>
